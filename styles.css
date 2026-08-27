@@ -18,6 +18,7 @@
   --blue:#1E90FF;
   --indigo:#3F5BFF;
   --violet:#A625EE;
+  --violet-ink:#C36BFF;      /* the same violet, legible as type on black */
   --grad:linear-gradient(90deg,#1E90FF 0%,#3F5BFF 45%,#A625EE 100%);
   --grad-v:linear-gradient(180deg,#1E90FF 0%,#A625EE 100%);
 
@@ -67,7 +68,7 @@ body.is-touch button,body.is-touch a{cursor:pointer}
 }
 
 /* ── cursor ────────────────────────────────────────────────────── */
-.cursor{position:fixed;top:0;left:0;z-index:99;pointer-events:none;mix-blend-mode:difference;will-change:transform}
+.cursor{position:fixed;top:0;left:0;z-index:101;pointer-events:none;mix-blend-mode:difference;will-change:transform}
 .cursor i{
   display:block;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;
   background:#fff;transition:transform .35s var(--ease),opacity .3s;
@@ -81,7 +82,7 @@ body.is-touch .cursor{display:none}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
   transition:opacity .7s var(--ease),visibility .7s;
 }
-#loader.done{opacity:0;visibility:hidden}
+#loader.done{opacity:0;visibility:hidden;pointer-events:none}
 .loader-mark{width:44px;height:44px;color:#fff;animation:spinIn 2.4s var(--ease) infinite}
 .loader-mark svg{width:100%;height:100%;display:block}
 @keyframes spinIn{0%{transform:rotate(0) scale(.94)}50%{transform:rotate(180deg) scale(1.04)}100%{transform:rotate(360deg) scale(.94)}}
@@ -426,12 +427,13 @@ body.ready .hud{opacity:1}
 .composer-line{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.5);line-height:1.95;letter-spacing:-.018em;color:var(--ink-2)}
 .fill{
   display:inline-block;min-width:5ch;padding:0 .3em;border-bottom:1px solid rgba(255,255,255,.2);
-  color:var(--ink);outline:none;transition:border-color .35s,background .35s;
+  color:var(--violet-ink);caret-color:var(--violet-ink);outline:none;
+  transition:border-color .35s,background .35s;
 }
 .fill.sm{min-width:3ch;text-align:center}
 .fill.wide{min-width:11ch}
 .fill:empty::before{content:attr(data-ph);color:var(--ink-3);opacity:.5}
-.fill:focus{border-color:var(--violet);background:rgba(166,37,238,.08)}
+.fill:focus{border-color:var(--violet);background:rgba(166,37,238,.10)}
 .composer-foot{display:flex;align-items:center;gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2.2)}
 .btn-primary{
   display:inline-flex;align-items:center;gap:12px;padding:calc(var(--u)*.7) 0;

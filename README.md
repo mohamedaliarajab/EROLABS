@@ -201,6 +201,13 @@ After that, volume lives in the nav, to the left of the CTA: a mute toggle
 and a slider whose fill shows the level in brand blue. Mobile keeps the
 toggle and drops the slider.
 
+**The slider shows what you can hear**, not the setting behind it — so when
+a melt pushes the level up, the thumb rides up with it. Without that the
+sound swells while the control sits still, which reads as a broken slider.
+Touching either control hands control straight back: `boost` drops to 1 at
+once and is held there for 1.2s, so the slider responds immediately instead
+of fighting a melt that is still fading.
+
 **The melt drives the volume.** For every second a section is left to drip,
 the bed gets 7% louder:
 
@@ -217,6 +224,19 @@ than seeming like a fault.
 The audio ships as a separate file on the real site — cacheable across
 visits, and a 4 MB data URI in the markup would block parsing. Only the
 single-file artifact build embeds it as base64.
+
+## Two overlay rules worth keeping
+
+Both of these produced bugs that looked like "the buttons don't work":
+
+- **The custom cursor must outrank every overlay.** `body { cursor: none }`
+  hides the real pointer, so if `.cursor` (z-index 101) ever sits below
+  something — the loader was z-index 100 — you are aiming blind. The clicks
+  land fine; you just cannot see where.
+- **`visibility` is transitioned, `pointer-events` is not.** `#loader.done`
+  fades over 0.7s, and for that whole time a `visibility: visible` overlay
+  keeps swallowing clicks across the entire viewport. `pointer-events: none`
+  in the same rule takes effect immediately.
 
 ## Cursor lights
 

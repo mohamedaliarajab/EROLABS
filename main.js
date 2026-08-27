@@ -447,10 +447,21 @@ function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
   if (!el || !wrap) return;
 
-  let base = +slider.value / 100, on = false, boost = 1;
-  const apply = () => { el.volume = clamp(base * boost, 0, 1); };
-  const paint = () => {
-    slider.style.setProperty('--v', Math.round(base * 100));
+  let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0;
+
+  const effective = () => clamp(base * boost, 0, 1);
+  const apply = () => { el.volume = effective(); };
+
+  /* The slider shows the volume you can actually hear, not the setting
+     behind it — so when a melt pushes the level up, the thumb rides up with
+     it. Without this the sound swells while the control sits still, which
+     reads as a broken slider. */
+  const showLevel = () => {
+    const v = Math.round(effective() * 100);
+    if (+slider.value !== v) slider.value = v;
+    slider.style.setProperty('--v', v);
+  };
+  const paintState = () => {
     wrap.classList.toggle('muted', !on || base === 0);
     wrap.classList.toggle('boost', on && boost > 1.06);
     btn.setAttribute('aria-pressed', String(!on));
@@ -461,23 +472,36 @@ function audioRig() {
     on = v;
     if (on) { try { await el.play(); } catch (e) { on = false; } }   // blocked: stay honest
     else el.pause();
-    apply(); paint();
+    apply(); showLevel(); paintState();
   };
 
-  btn.addEventListener('click', () => audioEnable(!on));
+  /* Touching either control hands control straight back to the listener:
+     the boost drops to 1 at once and is held there briefly, so the slider
+     responds immediately instead of fighting a melt that is still fading. */
+  const takeControl = () => { lastTouch = performance.now(); boost = 1; };
+
+  btn.addEventListener('click', () => {
+    takeControl();
+    if (!on && base === 0) { base = .35; slider.value = 35; }        // unmuting from zero
+    audioEnable(!on);
+  });
   slider.addEventListener('input', () => {
+    takeControl();
     base = +slider.value / 100;
+    slider.style.setProperty('--v', Math.round(base * 100));
     if (base > 0 && !on) audioEnable(true);
-    else { apply(); paint(); }
+    else { apply(); paintState(); }
   });
 
   audioRamp = (target, dt) => {
     if (!on) { boost = 1; return; }
+    if (performance.now() - lastTouch < 1200) { boost = 1; apply(); return; }
     boost += (target - boost) * (1 - Math.pow(.90, dt / 16));
-    apply();
+    apply(); showLevel();
     wrap.classList.toggle('boost', boost > 1.06);
   };
-  paint();
+
+  showLevel(); paintState();
 }
 
 /* ── idle melt ─────────────────────────────────────────────────────
