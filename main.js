@@ -437,6 +437,53 @@ function peeks() {
   }, { passive: true });
 }
 
+/* ── idle melt ─────────────────────────────────────────────────────
+   Stop scrolling for five seconds and the section you stopped on melts.
+   Any scroll — or a click, key or drag — brings it straight back.
+
+   Plain pointer movement deliberately does NOT count as activity: the
+   cursor lights mean the mouse is almost always drifting, and treating
+   that as engagement would mean the melt never fires.
+
+   Once fully melted we stop writing the filter entirely. An SVG
+   displacement map re-rasterises the whole section on every change, and an
+   idle tab has no business burning a GPU to hold a still image. */
+const MELT_AFTER = 5000, MELT_SCALE = 24;
+let lastActive = performance.now(), meltAmt = 0, meltSettled = false, meltEl = null;
+const meltDisp = $('#meltDisp');
+
+const wake = () => { lastActive = performance.now(); meltSettled = false; };
+['scroll', 'wheel', 'touchmove', 'keydown', 'pointerdown']
+  .forEach(ev => addEventListener(ev, wake, { passive: true }));
+
+function melt(t, i) {
+  if (reduced || !meltDisp) return;
+  const target = (t - lastActive) > MELT_AFTER ? 1 : 0;
+  if (meltSettled && target === 1) return;
+
+  meltAmt = lerp(meltAmt, target, target ? .011 : .17);
+  if (target === 1 && meltAmt > .995) { meltAmt = 1; meltSettled = true; }
+
+  const el = stops[i];
+  if (meltEl && meltEl !== el) {                       // travelled to another stop
+    meltEl.classList.remove('melting');
+    meltEl.style.removeProperty('--melt');
+    meltEl = null;
+  }
+  if (meltAmt < .002) {
+    if (meltEl) {
+      meltEl.classList.remove('melting');
+      meltEl.style.removeProperty('--melt');
+      meltEl = null;
+    }
+    return;
+  }
+  meltEl = el;
+  el.classList.add('melting');
+  el.style.setProperty('--melt', meltAmt.toFixed(3));
+  meltDisp.setAttribute('scale', (meltAmt * MELT_SCALE).toFixed(2));
+}
+
 /* ── the mast ──────────────────────────────────────────────────────
    The studio's four rooms orbit one vertical axis. Items in front are
    bright and large; items swinging behind the pole dim and recede.
@@ -731,6 +778,7 @@ function tick(t) {
     routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
   }
 
+  melt(t, near);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);

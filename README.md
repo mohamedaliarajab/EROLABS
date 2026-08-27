@@ -126,6 +126,29 @@ The **route is never randomised**. Stop order and direction are fixed, so
 the journey always reads ↓↘ ↓ ← ↓↘ exactly as briefed — only the world
 around it changes.
 
+## The idle melt
+
+Stop scrolling for five seconds and the section you stopped on liquefies —
+an SVG turbulence displacement plus blur and drained colour. Any scroll, or
+a click, key or drag, brings it back in about a quarter of a second.
+
+Three decisions in here are load-bearing:
+
+- **Plain pointer movement does not count as activity.** The cursor lights
+  mean the mouse is almost always drifting; treating that as engagement
+  would mean the melt never fires.
+- **The filter only exists while melting.** `.melting` is added and removed
+  by the engine, so a page in normal use computes `filter: none` and pays
+  nothing. A permanently applied `url()` filter would rasterise the section
+  every frame forever.
+- **Once fully melted, writing stops.** A displacement map re-rasterises the
+  whole section on every change, and an idle tab has no business burning a
+  GPU to hold a still image. `meltSettled` latches it.
+
+Tuning: `MELT_AFTER` (5000ms) and `MELT_SCALE` (24, how far the pixels
+travel). Mobile drops the displacement for blur alone — a filter over a
+full section is too expensive there. Reduced motion skips it entirely.
+
 ## Cursor lights
 
 Sparks are emitted by *movement*, never by position: the pointer handler

@@ -422,6 +422,18 @@ body.ready .hud{opacity:1}
 .pole.dragging .pole-hint{opacity:0}
 .pole.dragging{cursor:none}
 
+/* ── idle melt ──────────────────────────────────────────────────────
+   Five seconds without scrolling and the section you stopped on liquefies:
+   turbulence displacement, plus blur and drained colour. --melt is written
+   per frame by the engine; the class is only present while melting, so a
+   page in normal use carries no filter cost at all. */
+.stop.melting{
+  filter:url(#melt)
+         blur(calc(var(--melt,0) * 2.6px))
+         saturate(calc(1 - var(--melt,0) * .5))
+         brightness(calc(1 - var(--melt,0) * .2));
+}
+
 /* ── mobile ────────────────────────────────────────────────────── */
 @media (max-width:900px){
   :root{--u:min(2.7vw,1.5vh)}
@@ -456,6 +468,7 @@ body.ready .hud{opacity:1}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
   .proj-peek{display:none}
+  .stop.melting{filter:blur(calc(var(--melt,0) * 4px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */
@@ -490,6 +503,8 @@ body.reduced .orbit-in{transform:none}
 
 body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
 
+body.reduced .stop.melting{filter:none}
+
 </style>
 
 
@@ -506,6 +521,13 @@ body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
       <stop offset="0%"   stop-color="#1E90FF"/>
       <stop offset="100%" stop-color="#A625EE"/>
     </linearGradient>
+    <!-- idle melt: turbulence displacing the section that's been left alone -->
+    <filter id="melt" x="-12%" y="-12%" width="124%" height="132%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.021" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap id="meltDisp" in="SourceGraphic" in2="n" scale="0"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
     <!-- the aperture: the Ọ of the wordmark, lifted out as the studio's icon -->
     <symbol id="aperture" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="13"/>
@@ -681,7 +703,6 @@ body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
         </li>
         </ul>
       </div>
-      <div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
     </section>
 
     <!-- 03 · CASE STUDIES ──────────────────────────────── -->
@@ -769,6 +790,7 @@ body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
   <div class="layer layer-fg" id="layerFg"></div>
 </div>
 
+<div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
 <div id="track" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
 
@@ -1212,6 +1234,53 @@ function peeks() {
   }, { passive: true });
 }
 
+/* ── idle melt ─────────────────────────────────────────────────────
+   Stop scrolling for five seconds and the section you stopped on melts.
+   Any scroll — or a click, key or drag — brings it straight back.
+
+   Plain pointer movement deliberately does NOT count as activity: the
+   cursor lights mean the mouse is almost always drifting, and treating
+   that as engagement would mean the melt never fires.
+
+   Once fully melted we stop writing the filter entirely. An SVG
+   displacement map re-rasterises the whole section on every change, and an
+   idle tab has no business burning a GPU to hold a still image. */
+const MELT_AFTER = 5000, MELT_SCALE = 24;
+let lastActive = performance.now(), meltAmt = 0, meltSettled = false, meltEl = null;
+const meltDisp = $('#meltDisp');
+
+const wake = () => { lastActive = performance.now(); meltSettled = false; };
+['scroll', 'wheel', 'touchmove', 'keydown', 'pointerdown']
+  .forEach(ev => addEventListener(ev, wake, { passive: true }));
+
+function melt(t, i) {
+  if (reduced || !meltDisp) return;
+  const target = (t - lastActive) > MELT_AFTER ? 1 : 0;
+  if (meltSettled && target === 1) return;
+
+  meltAmt = lerp(meltAmt, target, target ? .011 : .17);
+  if (target === 1 && meltAmt > .995) { meltAmt = 1; meltSettled = true; }
+
+  const el = stops[i];
+  if (meltEl && meltEl !== el) {                       // travelled to another stop
+    meltEl.classList.remove('melting');
+    meltEl.style.removeProperty('--melt');
+    meltEl = null;
+  }
+  if (meltAmt < .002) {
+    if (meltEl) {
+      meltEl.classList.remove('melting');
+      meltEl.style.removeProperty('--melt');
+      meltEl = null;
+    }
+    return;
+  }
+  meltEl = el;
+  el.classList.add('melting');
+  el.style.setProperty('--melt', meltAmt.toFixed(3));
+  meltDisp.setAttribute('scale', (meltAmt * MELT_SCALE).toFixed(2));
+}
+
 /* ── the mast ──────────────────────────────────────────────────────
    The studio's four rooms orbit one vertical axis. Items in front are
    bright and large; items swinging behind the pole dim and recede.
@@ -1506,6 +1575,7 @@ function tick(t) {
     routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
   }
 
+  melt(t, near);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);

@@ -412,6 +412,18 @@ body.ready .hud{opacity:1}
 .pole.dragging .pole-hint{opacity:0}
 .pole.dragging{cursor:none}
 
+/* ── idle melt ──────────────────────────────────────────────────────
+   Five seconds without scrolling and the section you stopped on liquefies:
+   turbulence displacement, plus blur and drained colour. --melt is written
+   per frame by the engine; the class is only present while melting, so a
+   page in normal use carries no filter cost at all. */
+.stop.melting{
+  filter:url(#melt)
+         blur(calc(var(--melt,0) * 2.6px))
+         saturate(calc(1 - var(--melt,0) * .5))
+         brightness(calc(1 - var(--melt,0) * .2));
+}
+
 /* ── mobile ────────────────────────────────────────────────────── */
 @media (max-width:900px){
   :root{--u:min(2.7vw,1.5vh)}
@@ -446,6 +458,7 @@ body.ready .hud{opacity:1}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
   .proj-peek{display:none}
+  .stop.melting{filter:blur(calc(var(--melt,0) * 4px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */
@@ -479,3 +492,5 @@ body.reduced .orbit{position:static;transform:none!important;opacity:1!important
 body.reduced .orbit-in{transform:none}
 
 body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
+
+body.reduced .stop.melting{filter:none}

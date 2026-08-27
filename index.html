@@ -28,6 +28,13 @@
       <stop offset="0%"   stop-color="#1E90FF"/>
       <stop offset="100%" stop-color="#A625EE"/>
     </linearGradient>
+    <!-- idle melt: turbulence displacing the section that's been left alone -->
+    <filter id="melt" x="-12%" y="-12%" width="124%" height="132%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.008 0.021" numOctaves="2" seed="11" result="n"/>
+      <feDisplacementMap id="meltDisp" in="SourceGraphic" in2="n" scale="0"
+                         xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+
     <!-- the aperture: the Ọ of the wordmark, lifted out as the studio's icon -->
     <symbol id="aperture" viewBox="0 0 100 100">
       <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="13"/>
@@ -203,7 +210,6 @@
         </li>
         </ul>
       </div>
-      <div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
     </section>
 
     <!-- 03 · CASE STUDIES ──────────────────────────────── -->
@@ -291,6 +297,7 @@
   <div class="layer layer-fg" id="layerFg"></div>
 </div>
 
+<div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
 <div id="track" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
 
