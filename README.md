@@ -51,6 +51,53 @@ not what covers what. Content is always the topmost layer, and inside it
 the route line sits at `z-index: 0` with every `.stop` at `1` — so nothing
 decorative ever crosses type.
 
+## The mast
+
+The hero's right column is a vertical axis with the studio's four rooms —
+and the aperture mark — orbiting it. Pure CSS 3D, no WebGL: `.pole` holds
+the `perspective`, `.pole-stage` has `transform-style: preserve-3d`, and
+`poleUpdate()` writes each item's `translate3d(x, y, z)` every frame. Depth
+drives opacity, so items swinging behind the pole dim and recede.
+
+It spins from three sources, which is what stops it feeling mechanical:
+
+| source        | where                                  |
+|---------------|----------------------------------------|
+| idle drift    | `dt * .00015` — always turning slowly  |
+| drag          | pointer down anywhere on the mast      |
+| scroll torque | `scrollVel * 8` — it spins as you leave |
+
+The mast belongs to the hero and fades out as the camera travels away
+(`heroD` in the frame loop). The header nav is the keyboard-accessible
+twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
+screen readers get one clean set of links, not two.
+
+## A different world every load
+
+Re-rolled on each visit, in `main.js`:
+
+- **layer depths** — `bg` between 0.30–0.58, `fg` between 1.16–1.54, so the
+  parallax separation is never quite the same
+- **stop jitter** — each stop shifts up to ±3.2vw / ±2.4vh
+- **set dressing** — positions jittered, and ~18% of elements dropped
+- **node field** — positions, depths and which links carry pulses
+- **mast rotation** — a different face toward you on arrival
+
+The **route is never randomised**. Stop order and direction are fixed, so
+the journey always reads ↓↘ ↓ ← ↓↘ exactly as briefed — only the world
+around it changes.
+
+## Cursor lights
+
+Sparks are emitted by *movement*, never by position: the pointer handler
+measures px/ms between events and only emits above `0.06`. Each spark
+carries a fraction of the cursor's velocity, drifts, and burns out in
+700ms under `globalCompositeOperation = 'lighter'`. A soft halo tracks the
+cursor with its alpha tied to recent speed, decaying `0.9` per frame.
+
+Hold the cursor still and the field goes completely dark within about a
+second. That is the intended behaviour, not a bug.
+
 ## Type
 
 Display is **Sora at weight 200**, never heavier. Weight, not size, is what

@@ -24,7 +24,13 @@ const stops = $$('.stop');
 const N = stops.length;
 const DWELL = .17;          // share of each leg spent parked at a stop
 const LEG   = 1.55;         // viewport-heights of scroll per leg
-const DEPTH = { bg: .45, mid: 1, fg: 1.34 };
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+/* Every load lays the world out a little differently: layer depths, a
+   nudge on each stop, and the set dressing are all re-rolled. The ROUTE
+   is never randomised — the journey stays ↓↘ ↓ ← ↓↘ exactly as briefed. */
+const DEPTH  = { bg: rnd(.30, .58), mid: 1, fg: rnd(1.16, 1.54) };
+const jitter = stops.map(() => ({ x: rnd(-3.2, 3.2), y: rnd(-2.4, 2.4) }));
 
 let vw = 0, vh = 0, xScale = 1, pts = [];
 
@@ -34,9 +40,9 @@ function measure() {
   if (!innerWidth || !innerHeight) return;
   vw = innerWidth; vh = innerHeight;
   xScale = vw < 900 ? .42 : 1;              // tame the lateral travel on phones
-  pts = stops.map(s => ({
-    x: (+s.dataset.x / 100) * vw * xScale,
-    y: (+s.dataset.y / 100) * vh,
+  pts = stops.map((s, i) => ({
+    x: ((+s.dataset.x + jitter[i].x) / 100) * vw * xScale,
+    y: ((+s.dataset.y + jitter[i].y) / 100) * vh,
     el: s
   }));
   pts.forEach(p => {
@@ -64,11 +70,13 @@ function fitStops() {
 /* ── camera ────────────────────────────────────────────────────── */
 const track = $('#track');
 const cam = { x: 0, y: 0, tx: 0, ty: 0 };
-let progress = 0, leg = 0, legT = 0;
+let progress = 0, leg = 0, legT = 0, scrollVel = 0;
 
 function readScroll() {
   const max = Math.max(1, track.offsetHeight - vh);
+  const prev = progress;
   progress = clamp(scrollY / max, 0, 1);
+  scrollVel = progress - prev;
   const p = progress * (N - 1);
   leg = clamp(Math.floor(p), 0, N - 2);
   const raw = p - leg;
@@ -139,8 +147,11 @@ function buildRoute() {
 /* ── field: fixed world nodes, precomputed links, riding pulses ─── */
 const field = (() => {
   const cv = $('#field'), ctx = cv.getContext('2d', { alpha: true });
-  let nodes = [], links = [], dpr = 1;
+  let nodes = [], links = [], dpr = 1, lastT = 0;
   const mouse = { x: -9e9, y: -9e9 };
+  /* Cursor lights. Sparks are emitted by MOVEMENT only and burn out in
+     ~700ms, so a cursor sitting still leaves the field completely dark. */
+  let sparks = [], glow = 0, px = 0, py = 0, pt = 0;
 
   function build() {
     const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
@@ -176,6 +187,7 @@ const field = (() => {
   }
 
   function draw(t) {
+    const dt = lastT ? Math.min(64, t - lastT) : 16; lastT = t;
     ctx.clearRect(0, 0, vw, vh);
     const cx = vw / 2, cy = vh / 2;
 
@@ -210,9 +222,54 @@ const field = (() => {
       ctx.fillStyle = `rgba(200,215,255,${tw * .9})`;
       ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r, 0, 7); ctx.fill();
     }
+
+    // ── cursor lights ──
+    ctx.globalCompositeOperation = 'lighter';
+    if (glow > .012) {
+      const g = ctx.createRadialGradient(px, py, 0, px, py, 110);
+      g.addColorStop(0, `rgba(90,140,255,${glow * .17})`);
+      g.addColorStop(1, 'rgba(90,140,255,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, 110, 0, 7); ctx.fill();
+    }
+    glow *= Math.pow(.9, dt / 16);
+
+    for (const s of sparks) {
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      s.vx *= .97; s.vy *= .97;
+      s.life -= dt / 700;
+      if (s.life <= 0) continue;
+      const r = 16 * s.life + 2;
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r);
+      g.addColorStop(0, `rgba(${s.c},${.42 * s.life})`);
+      g.addColorStop(1, `rgba(${s.c},0)`);
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 7); ctx.fill();
+    }
+    sparks = sparks.filter(s => s.life > 0);
+    ctx.globalCompositeOperation = 'source-over';
   }
 
-  addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+  addEventListener('pointermove', e => {
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    const now = performance.now(), gap = Math.max(1, now - pt);
+    const dx = e.clientX - px, dy = e.clientY - py;
+    const speed = Math.hypot(dx, dy) / gap;          // px per ms
+    if (pt && speed > .06 && gap < 200) {
+      glow = Math.min(1.4, glow + speed * .5);
+      const emit = Math.min(4, 1 + (speed * 1.7 | 0));
+      for (let k = 0; k < emit; k++) {
+        const f = k / emit;
+        sparks.push({
+          x: px + dx * f, y: py + dy * f,
+          vx: (dx / gap) * .07 + (Math.random() - .5) * .06,
+          vy: (dy / gap) * .07 + (Math.random() - .5) * .06,
+          life: 1,
+          c: Math.random() < .5 ? '30,144,255' : '150,60,238'
+        });
+      }
+      if (sparks.length > 150) sparks.splice(0, sparks.length - 150);
+    }
+    px = e.clientX; py = e.clientY; pt = now;
+  }, { passive: true });
   return { resize, draw };
 })();
 
@@ -227,7 +284,9 @@ function dress() {
     [-24, 40, 'fg', 'rule'], [96, 130, 'fg', 'rule'], [-62, 244, 'fg', 'rule'],
     [24, 350, 'fg', 'rule'], [110, 236, 'fg', 'rule']
   ];
-  for (const [x, y, where, kind, txt] of seed) {
+  for (const [bx, by, where, kind, txt] of seed) {
+    if (Math.random() < .18) continue;              // thin it out differently each load
+    const x = bx + rnd(-7, 7), y = by + rnd(-6, 6);
     const el = document.createElement('div');
     el.style.cssText = `position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(${(x / 100) * vw * xScale}px,${(y / 100) * vh}px);pointer-events:none`;
     if (kind === 'glyph') {
@@ -373,6 +432,58 @@ function peeks() {
   }, { passive: true });
 }
 
+/* ── the mast ──────────────────────────────────────────────────────
+   The studio's four rooms orbit one vertical axis. Items in front are
+   bright and large; items swinging behind the pole dim and recede.
+   Idle drift + drag momentum + a torque kick from scrolling. */
+let poleUpdate = () => {};
+function poleRig() {
+  const pole = $('#pole'), stage = $('#poleStage');
+  if (!pole || !stage || reduced) return;
+  const items = $$('.orbit', stage);
+  const n = items.length;
+
+  let rot = Math.random() * Math.PI * 2;      // a different face forward each load
+  let vel = 0, dragging = false, lastX = 0;
+
+  pole.addEventListener('pointerdown', e => {
+    dragging = true; lastX = e.clientX; vel = 0;
+    pole.classList.add('dragging');
+    pole.setPointerCapture?.(e.pointerId);
+  });
+  addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX; lastX = e.clientX;
+    rot += dx * .008; vel = dx * .008;
+  }, { passive: true });
+  const release = () => { dragging = false; pole.classList.remove('dragging'); };
+  addEventListener('pointerup', release);
+  addEventListener('pointercancel', release);
+
+  poleUpdate = (t, dt, heroD) => {
+    if (!dragging) {
+      vel *= Math.pow(.94, dt / 16);                  // momentum bleeds off
+      rot += vel + dt * .00015 + scrollVel * 8;       // drift + scroll torque
+    }
+    // the mast belongs to the hero; it fades as you leave
+    const fade = clamp(1 - (heroD - .3) / .5, 0, 1);
+    pole.style.opacity = fade.toFixed(3);
+    pole.style.pointerEvents = fade > .55 ? 'auto' : 'none';
+    if (fade <= .01) return;
+
+    const R = Math.max(60, pole.clientWidth * .33);
+    const spacing = pole.clientHeight / (n + 1.3);
+    for (let i = 0; i < n; i++) {
+      const a = rot + (i / n) * Math.PI * 2;
+      const x = Math.sin(a) * R, z = Math.cos(a) * R;
+      const y = (i - (n - 1) / 2) * spacing;
+      const depth = (z + R) / (R * 2);                // 0 = behind, 1 = in front
+      items[i].style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px)`;
+      items[i].style.opacity = (.14 + depth * .86).toFixed(3);
+    }
+  };
+}
+
 /* ── counters ──────────────────────────────────────────────────── */
 function countUp(el) {
   if (el.dataset.done) return; el.dataset.done = '1';
@@ -453,7 +564,9 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
       pFill = $('#progressFill'), navLinks = $$('.nav-links a');
 let lastSector = -1;
 
+let lastTick = 0;
 function tick(t) {
+  const dt = lastTick ? Math.min(64, t - lastTick) : 16; lastTick = t;
   readScroll();
   cam.x = lerp(cam.x, cam.tx, .09);
   cam.y = lerp(cam.y, cam.ty, .09);
@@ -462,10 +575,11 @@ function tick(t) {
     L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
 
   // proximity → reveal, and cull what's far away
-  let near = 0, nearD = Infinity;
+  let near = 0, nearD = Infinity, heroD = 0;
   for (let i = 0; i < N; i++) {
     const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
     const d = Math.hypot(dx, dy);
+    if (i === 0) heroD = d;
     if (d < nearD) { nearD = d; near = i; }
     stops[i].classList.toggle('live', d < 1.05);
     stops[i].classList.toggle('hidden', d > 2.4);
@@ -490,6 +604,7 @@ function tick(t) {
     routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
   }
 
+  poleUpdate(t, dt, heroD);
   field.draw(t);
   requestAnimationFrame(tick);
 }
@@ -498,7 +613,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  paintPillars(); composer(); cursor(); nav(); peeks();
+  paintPillars(); composer(); cursor(); nav(); peeks(); poleRig();
   measure();
   addEventListener('resize', measure);
 

@@ -85,15 +85,34 @@
     <!-- 00 · ORIGIN ────────────────────────────────────── -->
     <section class="stop" id="hero" data-stop="0" data-x="0" data-y="0">
       <div class="hero-wrap">
-        <p class="eyebrow"><span class="tick"></span>Technology &amp; Innovation Studio <em>/ Est. 2026 /</em></p>
-        <h1 class="display xxl" data-split="char">We Build<br>What's Next.</h1>
-        <p class="lede" data-split="word">Intelligence meets automation meets design.</p>
-        <div class="hero-foot">
-          <button class="cue" data-goto="1">
-            <span class="cue-ring"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></span>
-            <span class="cue-txt">Begin the journey<em>Scroll to travel</em></span>
-          </button>
-          <p class="hero-note">Ẹ̀rọ <em>(Yoruba)</em> — machine. The thing that does the work for you.</p>
+        <div class="hero-col">
+          <p class="eyebrow"><span class="tick"></span>Technology &amp; Innovation Studio <em>/ Est. 2026 /</em></p>
+          <h1 class="display xxl" data-split="char">We Build<br>What's Next.</h1>
+          <p class="lede" data-split="word">Intelligence meets automation meets design.</p>
+          <div class="hero-foot">
+            <button class="cue" data-goto="1">
+              <span class="cue-ring"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></span>
+              <span class="cue-txt">Begin the journey<em>Scroll to travel</em></span>
+            </button>
+            <p class="hero-note">Ẹ̀rọ <em>(Yoruba)</em> — machine. The thing that does the work for you.</p>
+          </div>
+        </div>
+
+        <!-- The mast: the studio's four rooms, orbiting one axis.
+             Decorative twin of the header nav, which stays the keyboard path. -->
+        <div class="pole" id="pole">
+          <div class="pole-line"></div>
+          <div class="pole-cap"></div>
+          <div class="pole-stage" id="poleStage" aria-hidden="true">
+            <button class="orbit orbit-mark" data-goto="0" tabindex="-1">
+              <span class="orbit-in"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></span>
+            </button>
+            <button class="orbit" data-goto="1" tabindex="-1"><span class="orbit-in"><em>01</em>About Us</span></button>
+            <button class="orbit" data-goto="2" tabindex="-1"><span class="orbit-in"><em>02</em>Projects</span></button>
+            <button class="orbit" data-goto="3" tabindex="-1"><span class="orbit-in"><em>03</em>Case Studies</span></button>
+            <button class="orbit" data-goto="4" tabindex="-1"><span class="orbit-in"><em>04</em>Reach Us</span></button>
+          </div>
+          <p class="pole-hint">Drag to spin</p>
         </div>
       </div>
     </section>

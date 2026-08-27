@@ -165,8 +165,9 @@ body.ready .hud{opacity:1}
 
 /* ── type ──────────────────────────────────────────────────────────
    Light weights only. 200 for the largest sizes, 300 for the rest. */
-.display{font-family:var(--f-display);font-weight:200;line-height:1.02;letter-spacing:-.028em;text-wrap:balance}
-.xxl{font-size:calc(var(--u)*7.6)}
+.display{font-family:var(--f-display);font-weight:200;line-height:1.02;letter-spacing:-.028em;
+  overflow-wrap:normal;word-break:keep-all;hyphens:none}
+.xxl{font-size:calc(var(--u)*6.2)}
 .xl{font-size:calc(var(--u)*4.5)}
 
 .char,.word{display:inline-block;will-change:transform,opacity}
@@ -331,6 +332,44 @@ body.ready .hud{opacity:1}
 .foot-end{text-align:right}
 .foot-end p{font-size:calc(var(--u)*.74);font-weight:300;line-height:1.8;color:var(--ink-3)}
 
+
+/* ── the mast ──────────────────────────────────────────────────────
+   The four rooms of the studio, orbiting one axis. CSS 3D, no WebGL:
+   .pole holds the perspective, .pole-stage preserves it for the items,
+   and JS writes each item's translate3d every frame. */
+.hero-wrap{display:grid;grid-template-columns:1.32fr .68fr;gap:calc(var(--u)*2.6);align-items:center;max-width:none}
+.hero-col{min-width:0}
+
+.pole{position:relative;height:calc(var(--u)*29);perspective:1000px;perspective-origin:50% 50%;touch-action:pan-y}
+.pole-line{
+  position:absolute;left:50%;top:0;bottom:0;width:1px;margin-left:-.5px;
+  background:linear-gradient(180deg,transparent,rgba(30,144,255,.45) 20%,rgba(166,37,238,.45) 80%,transparent);
+}
+.pole-cap{
+  position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;
+  background:#fff;box-shadow:0 0 20px 4px rgba(120,150,255,.45);
+}
+.pole-stage{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
+.orbit{position:absolute;left:0;top:0;display:block;white-space:nowrap;will-change:transform,opacity}
+.orbit-in{
+  display:flex;align-items:center;gap:10px;transform:translate(-50%,-50%);
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.82);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);transition:color .35s;
+}
+.orbit-in em{font-style:normal;font-size:calc(var(--u)*.6);color:var(--ink-3);opacity:.7}
+.orbit:hover .orbit-in{color:var(--ink)}
+.orbit:hover .orbit-in em{color:var(--blue);opacity:1}
+.orbit-mark .orbit-in{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);color:#fff;gap:0}
+.orbit-mark svg{width:100%;height:100%;display:block}
+.pole-hint{
+  position:absolute;left:50%;bottom:calc(var(--u)*-1.4);transform:translateX(-50%);
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.6);
+  letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
+  transition:opacity .4s;pointer-events:none;
+}
+.pole.dragging .pole-hint{opacity:0}
+.pole.dragging{cursor:none}
+
 /* ── mobile ────────────────────────────────────────────────────── */
 @media (max-width:900px){
   :root{--u:min(2.7vw,1.5vh)}
@@ -343,8 +382,11 @@ body.ready .hud{opacity:1}
   }
   .nav.open .nav-links a{color:var(--ink)}
   .stop{width:86vw}
-  .xxl{font-size:calc(var(--u)*6.4)}
+  .xxl{font-size:calc(var(--u)*5.4)}
   .xl{font-size:calc(var(--u)*4)}
+  .hero-wrap{grid-template-columns:1fr;gap:calc(var(--u)*2.4)}
+  .pole{height:calc(var(--u)*18)}
+  .orbit-in{font-size:calc(var(--u)*.78)}
   .hero-foot{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*2)}
   .hero-note{max-width:none}
   .about-body,.case-intro{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
@@ -384,3 +426,10 @@ body.still .case-step::after{opacity:1}
 body.still .case-track::after{width:100%;transition:none}
 body.still #loader{display:none}
 body.still .nav,body.still .hud{opacity:1;transform:none;transition:none}
+
+/* the mast at rest — reduced motion gets a static column, not a spinner */
+body.reduced .pole{height:auto;perspective:none;display:flex;flex-direction:column;gap:16px}
+body.reduced .pole-line,body.reduced .pole-cap,body.reduced .pole-hint{display:none}
+body.reduced .pole-stage{position:static;width:auto;height:auto;display:flex;flex-direction:column;gap:14px}
+body.reduced .orbit{position:static;transform:none!important;opacity:1!important}
+body.reduced .orbit-in{transform:none}
