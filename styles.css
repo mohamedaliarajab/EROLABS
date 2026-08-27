@@ -110,7 +110,13 @@ body.ready .nav{opacity:1;transform:none}
 .wordmark:hover .wm-o svg{transform:rotate(180deg)}
 .wm-labs{margin-left:.34em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-.nav-links{display:flex;gap:clamp(16px,2.2vw,34px);font-family:var(--f-mono);font-weight:300;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase}
+.nav-links{
+  display:flex;gap:clamp(16px,2.2vw,34px);
+  font-family:var(--f-mono);font-weight:300;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  opacity:0;pointer-events:none;transform:translateY(-6px);
+  transition:opacity .55s var(--ease),transform .55s var(--ease);
+}
+body.nav-bar .nav-links{opacity:1;pointer-events:auto;transform:none}
 .nav-links a{position:relative;display:flex;align-items:baseline;gap:7px;padding:5px 0;color:var(--ink-3);transition:color .35s}
 .nav-links a em{font-size:9px;font-style:normal;color:var(--ink-3);opacity:.6;transition:color .35s,opacity .35s}
 .nav-links a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--grad);transition:width .45s var(--ease)}
@@ -142,8 +148,30 @@ body.ready .hud{opacity:1}
 .hud-v{color:var(--ink-2);font-variant-numeric:tabular-nums}
 .hud-v b{display:inline-block;color:var(--blue);font-weight:400}
 
-.progress-rail{position:fixed;left:0;right:0;bottom:0;height:1px;z-index:21;background:var(--line-2)}
-.progress-rail i{display:block;height:100%;width:0;background:var(--grad)}
+.progress-rail{position:fixed;left:0;right:0;top:0;height:3px;z-index:22;background:rgba(255,255,255,.05)}
+.progress-rail>i{
+  display:block;height:100%;width:0;
+  background:linear-gradient(90deg,#1E90FF,#3F5BFF,#A625EE,#3F5BFF,#1E90FF);
+  background-size:220% 100%;
+  animation:flow 7s linear infinite;
+  box-shadow:0 0 14px rgba(63,91,255,.55);
+}
+@keyframes flow{from{background-position:0 0}to{background-position:-220% 0}}
+
+/* the head of the fill, and the readout that rides along with it */
+.progress-head{position:absolute;top:0;left:0;height:3px;width:0;pointer-events:none}
+.progress-head::after{
+  content:"";position:absolute;right:-1px;top:-1px;width:2px;height:5px;
+  background:#fff;box-shadow:0 0 10px 1px rgba(160,190,255,.8);
+}
+.progress-pct{
+  position:absolute;right:0;top:11px;transform:translateX(50%);
+  font-family:var(--f-mono);font-weight:300;font-size:9px;letter-spacing:.16em;
+  color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap;
+  transition:transform .3s var(--ease);
+}
+.progress-head.at-start .progress-pct{transform:translateX(calc(100% + 6px))}
+.progress-head.at-end   .progress-pct{transform:translateX(-6px)}
 
 /* ── world ─────────────────────────────────────────────────────────
    Layer order is deliberate: content sits ABOVE every decorative
@@ -340,10 +368,11 @@ body.ready .hud{opacity:1}
 .hero-wrap{display:grid;grid-template-columns:1.32fr .68fr;gap:calc(var(--u)*2.6);align-items:center;max-width:none}
 .hero-col{min-width:0}
 
-.pole{position:relative;height:calc(var(--u)*29);perspective:1000px;perspective-origin:50% 50%;touch-action:pan-y}
+.pole{position:relative;left:calc(var(--u)*3.4);height:calc(var(--u)*29);perspective:1000px;perspective-origin:50% 50%;touch-action:pan-y}
 .pole-line{
-  position:absolute;left:50%;top:0;bottom:0;width:1px;margin-left:-.5px;
-  background:linear-gradient(180deg,transparent,rgba(30,144,255,.45) 20%,rgba(166,37,238,.45) 80%,transparent);
+  position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;border-radius:2px;
+  background:linear-gradient(180deg,transparent,rgba(30,144,255,.75) 20%,rgba(166,37,238,.75) 80%,transparent);
+  box-shadow:0 0 16px rgba(80,110,255,.35);
 }
 .pole-cap{
   position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;
@@ -380,7 +409,9 @@ body.ready .hud{opacity:1}
     position:fixed;inset:0;background:rgba(1,2,5,.97);z-index:-1;
     align-items:center;justify-content:center;font-size:15px;letter-spacing:.24em;
   }
+  .nav.open .nav-links{opacity:1;pointer-events:auto;transform:none}
   .nav.open .nav-links a{color:var(--ink)}
+  .pole{left:0}
   .stop{width:86vw}
   .xxl{font-size:calc(var(--u)*5.4)}
   .xl{font-size:calc(var(--u)*4)}
@@ -433,3 +464,5 @@ body.reduced .pole-line,body.reduced .pole-cap,body.reduced .pole-hint{display:n
 body.reduced .pole-stage{position:static;width:auto;height:auto;display:flex;flex-direction:column;gap:14px}
 body.reduced .orbit{position:static;transform:none!important;opacity:1!important}
 body.reduced .orbit-in{transform:none}
+
+body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}

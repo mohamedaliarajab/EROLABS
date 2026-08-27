@@ -56,7 +56,7 @@
   <a class="wordmark" href="#hero" data-goto="0" aria-label="Ẹ̀rọ Labs — home">
     <span class="wm-e">E<i class="wm-grave"></i><i class="wm-dot"></i></span><span class="wm-r">R</span><span class="wm-o"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg><i class="wm-dot"></i></span><span class="wm-labs">LABS</span>
   </a>
-  <nav class="nav-links" aria-label="Primary">
+  <nav class="nav-links" id="navLinks" aria-label="Sections">
     <a href="#about"   data-goto="1"><em>01</em> About Us</a>
     <a href="#projects"    data-goto="2"><em>02</em> Projects</a>
     <a href="#cases"   data-goto="3"><em>03</em> Case Studies</a>
@@ -75,7 +75,10 @@
   <span class="hud-k">VECTOR</span>
   <span class="hud-v"><b id="hudArrow">↓</b> <span id="hudCoord">X+000 Y+000</span></span>
 </div>
-<div class="progress-rail" aria-hidden="true"><i id="progressFill"></i></div>
+<div class="progress-rail" aria-hidden="true">
+  <i id="progressFill"></i>
+  <span class="progress-head" id="progressHead"><b class="progress-pct" id="progressPct">0%</b></span>
+</div>
 
 <!-- ─────────────────────────── the world ─────────────────────────── -->
 <div id="viewport">
@@ -103,15 +106,15 @@
         <div class="pole" id="pole">
           <div class="pole-line"></div>
           <div class="pole-cap"></div>
-          <div class="pole-stage" id="poleStage" aria-hidden="true">
-            <button class="orbit orbit-mark" data-goto="0" tabindex="-1">
-              <span class="orbit-in"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></span>
+          <nav class="pole-stage" id="poleStage" aria-label="Primary">
+            <button class="orbit orbit-mark" data-goto="0" aria-label="Top of page">
+              <span class="orbit-in"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#aperture"/></svg></span>
             </button>
-            <button class="orbit" data-goto="1" tabindex="-1"><span class="orbit-in"><em>01</em>About Us</span></button>
-            <button class="orbit" data-goto="2" tabindex="-1"><span class="orbit-in"><em>02</em>Projects</span></button>
-            <button class="orbit" data-goto="3" tabindex="-1"><span class="orbit-in"><em>03</em>Case Studies</span></button>
-            <button class="orbit" data-goto="4" tabindex="-1"><span class="orbit-in"><em>04</em>Reach Us</span></button>
-          </div>
+            <button class="orbit" data-goto="1"><span class="orbit-in"><em>01</em>About Us</span></button>
+            <button class="orbit" data-goto="2"><span class="orbit-in"><em>02</em>Projects</span></button>
+            <button class="orbit" data-goto="3"><span class="orbit-in"><em>03</em>Case Studies</span></button>
+            <button class="orbit" data-goto="4"><span class="orbit-in"><em>04</em>Reach Us</span></button>
+          </nav>
           <p class="pole-hint">Drag to spin</p>
         </div>
       </div>

@@ -561,8 +561,10 @@ function nav() {
 const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / PROJECTS', '03 / CASE STUDIES', '04 / REACH'];
 const ARROWS  = ['↘', '↓', '←', '↘'];
 const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hudCoord'),
-      pFill = $('#progressFill'), navLinks = $$('.nav-links a');
-let lastSector = -1;
+      pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
+      pHead = $('#progressHead'), pPct = $('#progressPct'),
+      navLinksEl = $('#navLinks'), poleEl = $('#pole');
+let lastSector = -1, lastNavMode = null;
 
 let lastTick = 0;
 function tick(t) {
@@ -595,7 +597,24 @@ function tick(t) {
   hudCoord.textContent =
     `X${cam.x < 0 ? '−' : '+'}${String(Math.abs(Math.round(cam.x))).padStart(4, '0')} ` +
     `Y${cam.y < 0 ? '−' : '+'}${String(Math.abs(Math.round(cam.y))).padStart(4, '0')}`;
-  pFill.style.width = (progress * 100) + '%';
+  // top rail: the fill, its head, and the readout riding along with it
+  const pct = progress * 100;
+  pFill.style.width = pct + '%';
+  pHead.style.width = pct + '%';
+  pPct.textContent = Math.round(pct) + '%';
+  pHead.classList.toggle('at-start', progress < .04);
+  pHead.classList.toggle('at-end', progress > .96);
+
+  // The mast IS the navigation on the hero. Once it has faded out, the top
+  // menu takes over — only ever one of the two is live, for pointer and
+  // keyboard alike.
+  const barMode = heroD > .78;
+  if (barMode !== lastNavMode) {
+    lastNavMode = barMode;
+    document.body.classList.toggle('nav-bar', barMode);
+    navLinksEl.inert = !barMode;
+    if (poleEl) poleEl.inert = barMode;
+  }
 
   if (routeTrail) {
     const L = routeLen * progress;
@@ -619,7 +638,7 @@ function boot() {
 
   if (reduced) {
     stops.forEach(s => s.classList.add('live'));
-    document.body.classList.add('ready');
+    document.body.classList.add('ready', 'nav-bar');   // no mast to wait for
     $('#loader').classList.add('done');
     $$('.stat').forEach(countUp);
     return;
@@ -633,16 +652,15 @@ function boot() {
     scrollTo(0, (i / (N - 1)) * (track.offsetHeight - vh));
     readScroll();
     cam.x = cam.tx; cam.y = cam.ty;
-    for (const L of layers) L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
     stops[i].classList.add('live');
-    document.body.classList.add('still');
+    document.body.classList.add('still', 'ready');
     $('#loader').classList.add('done');
-    document.body.classList.add('ready');
     $$('.stat').forEach(countUp);
-    requestAnimationFrame(tick);
+    tick(performance.now());        // one complete frame, synchronously
     return;
   }
 
+  navLinksEl.inert = true;        // the mast has the floor until the hero exits
   requestAnimationFrame(tick);
 
   // loader — a short, honest calibration, not a fake wait

@@ -59,6 +59,18 @@ the `perspective`, `.pole-stage` has `transform-style: preserve-3d`, and
 `poleUpdate()` writes each item's `translate3d(x, y, z)` every frame. Depth
 drives opacity, so items swinging behind the pole dim and recede.
 
+**The mast is the real navigation on the hero** — not a decorative twin.
+Only ever one menu is live at a time:
+
+| where you are        | live menu | the other one            |
+|----------------------|-----------|--------------------------|
+| hero (`heroD ≤ .78`) | the mast  | top menu `inert`, faded  |
+| anywhere else        | top menu  | mast `inert`, opacity 0  |
+
+The swap is driven by `heroD` in the frame loop and applied with the `inert`
+attribute, so pointer and keyboard agree — you can never tab into a menu you
+cannot see. Reduced motion skips the mast and shows the top menu outright.
+
 It spins from three sources, which is what stops it feeling mechanical:
 
 | source        | where                                  |
@@ -71,6 +83,17 @@ The mast belongs to the hero and fades out as the camera travels away
 (`heroD` in the frame loop). The header nav is the keyboard-accessible
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
+
+## The progress rail
+
+A 3px rail across the top of the viewport. The fill is the brand gradient
+laid out at `220%` width and scrolled by a 7s `flow` animation, so the
+colour moves through the bar independently of your scrolling — it reads as
+alive even when the page is still.
+
+The head of the fill carries a small white tick and the percentage, in the
+faint grey (`--ink-3`) so it never competes with content. The label flips
+side near either end (`.at-start` / `.at-end`) so it can't clip off screen.
 
 ## A different world every load
 
