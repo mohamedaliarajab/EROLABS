@@ -379,9 +379,10 @@ body.ready .hud{opacity:1}
   background:#fff;box-shadow:0 0 20px 4px rgba(120,150,255,.45);
 }
 .pole-stage{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d}
-.orbit{position:absolute;left:0;top:0;display:block;white-space:nowrap;will-change:transform,opacity}
+.orbit{position:absolute;left:0;top:0;display:block;white-space:nowrap;
+  padding:calc(var(--u)*.5) calc(var(--u)*.7);will-change:transform,opacity}
 .orbit-in{
-  display:flex;align-items:center;gap:10px;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:10px;
   font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.82);
   letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);transition:color .35s;
 }

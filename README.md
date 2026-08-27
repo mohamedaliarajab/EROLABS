@@ -79,6 +79,18 @@ It spins from three sources, which is what stops it feeling mechanical:
 | drag          | pointer down anywhere on the mast      |
 | scroll torque | `scrollVel * 8` — it spins as you leave |
 
+**Click vs drag.** A press stays a click until it travels more than 5px,
+at which point it becomes a drag. This matters more than it sounds: calling
+`setPointerCapture` on `pointerdown` retargets `pointerup` to the mast, so
+the browser fires `click` on the mast instead of the button and navigation
+silently dies. So capture happens only once a drag is real, and the click
+trailing a genuine drag is swallowed in the capture phase.
+
+Each orbit item is centred by its **own** transform (`translate3d(...)
+translate(-50%,-50%)`), not by an inner span. If the inner element carries
+the centring, the visible label shifts but the button's hit box stays put,
+and you end up clicking empty space down-right of the text.
+
 The mast belongs to the hero and fades out as the camera travels away
 (`heroD` in the frame loop). The header nav is the keyboard-accessible
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so

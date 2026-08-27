@@ -446,19 +446,40 @@ function poleRig() {
   let rot = Math.random() * Math.PI * 2;      // a different face forward each load
   let vel = 0, dragging = false, lastX = 0;
 
+  /* A press is a click until it travels far enough to be a drag. Capturing
+     the pointer up front would retarget pointerup to the mast and the
+     button's click would never fire — so we capture only once dragging is
+     real, and swallow the click that trails a genuine drag. */
+  let down = false, moved = false, held = false, downX = 0, downY = 0, swallow = false;
+
   pole.addEventListener('pointerdown', e => {
-    dragging = true; lastX = e.clientX; vel = 0;
-    pole.classList.add('dragging');
-    pole.setPointerCapture?.(e.pointerId);
+    down = true; moved = false; held = false;
+    downX = e.clientX; downY = e.clientY; lastX = e.clientX; vel = 0;
   });
   addEventListener('pointermove', e => {
-    if (!dragging) return;
-    const dx = e.clientX - lastX; lastX = e.clientX;
-    rot += dx * .008; vel = dx * .008;
+    if (!down) return;
+    if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > 5) {
+      moved = true; dragging = true;
+      pole.classList.add('dragging');
+      try { pole.setPointerCapture(e.pointerId); held = true; } catch {}
+    }
+    if (moved) { rot += (e.clientX - lastX) * .008; vel = (e.clientX - lastX) * .008; }
+    lastX = e.clientX;
   }, { passive: true });
-  const release = () => { dragging = false; pole.classList.remove('dragging'); };
+  const release = e => {
+    if (!down) return;
+    down = false; dragging = false;
+    pole.classList.remove('dragging');
+    if (held) { try { pole.releasePointerCapture(e.pointerId); } catch {} held = false; }
+    if (moved) swallow = true;
+  };
   addEventListener('pointerup', release);
   addEventListener('pointercancel', release);
+  pole.addEventListener('click', e => {
+    if (!swallow) return;
+    swallow = false;
+    e.preventDefault(); e.stopPropagation();
+  }, true);
 
   poleUpdate = (t, dt, heroD) => {
     if (!dragging) {
@@ -478,7 +499,8 @@ function poleRig() {
       const x = Math.sin(a) * R, z = Math.cos(a) * R;
       const y = (i - (n - 1) / 2) * spacing;
       const depth = (z + R) / (R * 2);                // 0 = behind, 1 = in front
-      items[i].style.transform = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px)`;
+      items[i].style.transform =
+        `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,${z.toFixed(1)}px) translate(-50%,-50%)`;
       items[i].style.opacity = (.14 + depth * .86).toFixed(3);
     }
   };
