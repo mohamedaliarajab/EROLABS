@@ -437,6 +437,49 @@ function peeks() {
   }, { passive: true });
 }
 
+/* ── audio ─────────────────────────────────────────────────────────
+   Ambient bed. Browsers will not start audio without a user gesture, so
+   the loader asks before it lets anyone in — that click is the gesture.
+   `boost` is driven by the melt: the longer a section is left to drip, the
+   louder the room gets. */
+let audioEnable = () => {}, audioRamp = () => {};
+function audioRig() {
+  const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
+  if (!el || !wrap) return;
+
+  let base = +slider.value / 100, on = false, boost = 1;
+  const apply = () => { el.volume = clamp(base * boost, 0, 1); };
+  const paint = () => {
+    slider.style.setProperty('--v', Math.round(base * 100));
+    wrap.classList.toggle('muted', !on || base === 0);
+    wrap.classList.toggle('boost', on && boost > 1.06);
+    btn.setAttribute('aria-pressed', String(!on));
+    btn.setAttribute('aria-label', on ? 'Mute' : 'Unmute');
+  };
+
+  audioEnable = async v => {
+    on = v;
+    if (on) { try { await el.play(); } catch (e) { on = false; } }   // blocked: stay honest
+    else el.pause();
+    apply(); paint();
+  };
+
+  btn.addEventListener('click', () => audioEnable(!on));
+  slider.addEventListener('input', () => {
+    base = +slider.value / 100;
+    if (base > 0 && !on) audioEnable(true);
+    else { apply(); paint(); }
+  });
+
+  audioRamp = (target, dt) => {
+    if (!on) { boost = 1; return; }
+    boost += (target - boost) * (1 - Math.pow(.90, dt / 16));
+    apply();
+    wrap.classList.toggle('boost', boost > 1.06);
+  };
+  paint();
+}
+
 /* ── idle melt ─────────────────────────────────────────────────────
    Stop scrolling and the section you stopped on liquefies — and keeps
    liquefying. There is no plateau: `meltT` simply accumulates for as long
@@ -449,7 +492,7 @@ function peeks() {
    Plain pointer movement deliberately does NOT count as activity: the
    cursor lights mean the mouse is almost always drifting, and treating
    that as engagement would mean the melt never fires. */
-const MELT_AFTER = 5000;
+const MELT_AFTER = 15000;
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -825,6 +868,8 @@ function tick(t) {
   }
 
   melt(t, dt, near);
+  // 7% louder for every second the section is left to melt; back on scroll
+  audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);
@@ -835,7 +880,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
@@ -868,6 +913,18 @@ function boot() {
 
   // loader — a short, honest calibration, not a fake wait
   const bar = $('#loaderBar'), num = $('#loaderCount'), box = $('#loader');
+  let entered = false;
+  const enter = withAudio => {
+    if (entered) return;
+    entered = true;
+    if (withAudio) audioEnable(true);
+    box.classList.add('done');
+    document.body.classList.add('ready');
+    stops[0].classList.add('live');
+  };
+  $('#audioOn') ?.addEventListener('click', () => enter(true));
+  $('#audioOff')?.addEventListener('click', () => enter(false));
+
   const t0 = performance.now(), DUR = 1250;
   (function run(now) {
     const k = clamp((now - t0) / DUR, 0, 1);
@@ -875,9 +932,8 @@ function boot() {
     num.textContent = String(Math.round(e * 100)).padStart(2, '0');
     bar.style.width = (e * 100) + '%';
     if (k < 1) return requestAnimationFrame(run);
-    box.classList.add('done');
-    document.body.classList.add('ready');
-    stops[0].classList.add('live');
+    box.classList.add('asks');                 // hand the choice over
+    $('#audioOn')?.focus({ preventScroll: true });
   })(t0);
 }
 

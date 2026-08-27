@@ -43,6 +43,8 @@
   </defs>
 </svg>
 
+<audio id="ambient" src="audio/ambient.mp3" loop preload="auto"></audio>
+
 <!-- ─────────────────────────── loader ─────────────────────────── -->
 <div id="loader" aria-hidden="true">
   <div class="loader-mark"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></div>
@@ -51,6 +53,13 @@
     <span class="loader-count" id="loaderCount">00</span>
   </div>
   <div class="loader-bar"><i id="loaderBar"></i></div>
+  <div class="loader-audio">
+    <p class="loader-audio-k">Better experience with audio on</p>
+    <div class="loader-audio-btns">
+      <button class="la-btn la-on" id="audioOn">Sound on</button>
+      <button class="la-btn" id="audioOff">Sound off</button>
+    </div>
+  </div>
 </div>
 
 <!-- ─────────────────────────── field canvas ─────────────────────────── -->
@@ -69,7 +78,19 @@
     <a href="#cases"   data-goto="3"><em>03</em> Case Studies</a>
     <a href="#reach"   data-goto="4"><em>04</em> Reach Us</a>
   </nav>
-  <button class="nav-cta" data-goto="4">Start a Conversation</button>
+  <div class="nav-right">
+    <div class="vol muted" id="vol">
+      <button class="vol-btn" id="volBtn" aria-label="Unmute" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5h3.5L12 6v12L7.5 14.5H4z" fill="currentColor"/>
+          <path class="wave-1" d="M15.5 9.5a4 4 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path class="wave-2" d="M18 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <input class="vol-slider" id="volSlider" type="range" min="0" max="100" value="35" aria-label="Volume">
+    </div>
+    <button class="nav-cta" data-goto="4">Start a Conversation</button>
+  </div>
   <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
 </header>
 

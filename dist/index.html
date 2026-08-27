@@ -106,6 +106,29 @@ body.is-touch .cursor{display:none}
 .loader-bar{width:150px;height:1px;background:var(--line)}
 .loader-bar i{display:block;height:100%;width:0;background:var(--grad)}
 
+/* The loader waits for a choice rather than dismissing itself — that click
+   is also the gesture browsers require before audio may play. */
+.loader-audio{
+  display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;
+  opacity:0;transform:translateY(8px);pointer-events:none;
+  transition:opacity .6s var(--ease),transform .6s var(--ease);
+}
+#loader.asks .loader-audio{opacity:1;transform:none;pointer-events:auto}
+.loader-audio-k{
+  font-family:var(--f-mono);font-weight:300;font-size:10px;
+  letter-spacing:.26em;text-transform:uppercase;color:var(--ink-2);
+}
+.loader-audio-btns{display:flex;gap:10px}
+.la-btn{
+  padding:9px 20px;border:1px solid var(--line);border-radius:100px;
+  font-family:var(--f-mono);font-weight:300;font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);
+  transition:color .3s,border-color .3s,background .3s;cursor:pointer;
+}
+.la-btn:hover{color:var(--ink);border-color:var(--ink-3)}
+.la-on{color:var(--ink);border-color:transparent;background:var(--grad)}
+.la-on:hover{color:#fff;border-color:transparent;filter:brightness(1.15)}
+
 /* ── nav ───────────────────────────────────────────────────────── */
 .nav{
   position:fixed;top:0;left:0;right:0;z-index:20;
@@ -163,6 +186,39 @@ body.nav-bar .nav-links{opacity:1;pointer-events:auto;transform:none}
 .nav-links a:hover,.nav-links a.on{color:var(--ink)}
 .nav-links a:hover em,.nav-links a.on em{color:var(--blue);opacity:1}
 .nav-links a:hover::after,.nav-links a.on::after{width:100%}
+
+.nav-right{display:flex;align-items:center;gap:clamp(14px,2vw,26px)}
+
+.vol{display:flex;align-items:center;gap:9px}
+.vol-btn{display:grid;place-items:center;width:20px;height:20px;color:var(--ink-2);transition:color .3s,opacity .3s}
+.vol-btn svg{width:100%;height:100%;display:block}
+.vol-btn:hover{color:var(--ink)}
+.vol.muted .vol-btn{opacity:.5}
+.vol.muted .wave-1,.vol.muted .wave-2{opacity:0}
+.wave-1,.wave-2{transition:opacity .35s}
+/* the boost while a section melts, shown rather than left mysterious */
+.vol.boost .vol-btn{color:var(--violet)}
+
+.vol-slider{
+  -webkit-appearance:none;appearance:none;width:62px;height:14px;
+  background:none;cursor:none;--v:35;
+}
+body.is-touch .vol-slider{cursor:pointer}
+.vol-slider::-webkit-slider-runnable-track{
+  height:1px;
+  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*1%),rgba(255,255,255,.13) 0);
+}
+.vol-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;width:7px;height:7px;margin-top:-3px;border-radius:50%;
+  background:var(--ink-2);transition:background .3s,transform .3s;
+}
+.vol-slider:hover::-webkit-slider-thumb{background:#fff;transform:scale(1.3)}
+.vol-slider::-moz-range-track{
+  height:1px;
+  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*1%),rgba(255,255,255,.13) 0);
+}
+.vol-slider::-moz-range-thumb{width:7px;height:7px;border:0;border-radius:50%;background:var(--ink-2)}
+.vol-slider:focus-visible{outline:1px solid var(--blue);outline-offset:4px}
 
 .nav-cta{
   font-family:var(--f-mono);font-weight:300;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
@@ -469,6 +525,8 @@ body.ready .hud{opacity:1}
 @media (max-width:900px){
   :root{--u:min(2.7vw,1.5vh)}
   .nav-links,.nav-cta{display:none}
+  .vol-slider{display:none}
+  .nav-right{gap:0}
   .nav-burger{display:flex}
   .nav.open .nav-links{
     display:flex;flex-direction:column;gap:26px;
@@ -569,6 +627,8 @@ body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{
   </defs>
 </svg>
 
+<audio id="ambient" src="audio/ambient.mp3" loop preload="auto"></audio>
+
 <!-- ─────────────────────────── loader ─────────────────────────── -->
 <div id="loader" aria-hidden="true">
   <div class="loader-mark"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></div>
@@ -577,6 +637,13 @@ body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{
     <span class="loader-count" id="loaderCount">00</span>
   </div>
   <div class="loader-bar"><i id="loaderBar"></i></div>
+  <div class="loader-audio">
+    <p class="loader-audio-k">Better experience with audio on</p>
+    <div class="loader-audio-btns">
+      <button class="la-btn la-on" id="audioOn">Sound on</button>
+      <button class="la-btn" id="audioOff">Sound off</button>
+    </div>
+  </div>
 </div>
 
 <!-- ─────────────────────────── field canvas ─────────────────────────── -->
@@ -595,7 +662,19 @@ body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{
     <a href="#cases"   data-goto="3"><em>03</em> Case Studies</a>
     <a href="#reach"   data-goto="4"><em>04</em> Reach Us</a>
   </nav>
-  <button class="nav-cta" data-goto="4">Start a Conversation</button>
+  <div class="nav-right">
+    <div class="vol muted" id="vol">
+      <button class="vol-btn" id="volBtn" aria-label="Unmute" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 9.5h3.5L12 6v12L7.5 14.5H4z" fill="currentColor"/>
+          <path class="wave-1" d="M15.5 9.5a4 4 0 0 1 0 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <path class="wave-2" d="M18 7a7.5 7.5 0 0 1 0 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <input class="vol-slider" id="volSlider" type="range" min="0" max="100" value="35" aria-label="Volume">
+    </div>
+    <button class="nav-cta" data-goto="4">Start a Conversation</button>
+  </div>
   <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
 </header>
 
@@ -1267,6 +1346,49 @@ function peeks() {
   }, { passive: true });
 }
 
+/* ── audio ─────────────────────────────────────────────────────────
+   Ambient bed. Browsers will not start audio without a user gesture, so
+   the loader asks before it lets anyone in — that click is the gesture.
+   `boost` is driven by the melt: the longer a section is left to drip, the
+   louder the room gets. */
+let audioEnable = () => {}, audioRamp = () => {};
+function audioRig() {
+  const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
+  if (!el || !wrap) return;
+
+  let base = +slider.value / 100, on = false, boost = 1;
+  const apply = () => { el.volume = clamp(base * boost, 0, 1); };
+  const paint = () => {
+    slider.style.setProperty('--v', Math.round(base * 100));
+    wrap.classList.toggle('muted', !on || base === 0);
+    wrap.classList.toggle('boost', on && boost > 1.06);
+    btn.setAttribute('aria-pressed', String(!on));
+    btn.setAttribute('aria-label', on ? 'Mute' : 'Unmute');
+  };
+
+  audioEnable = async v => {
+    on = v;
+    if (on) { try { await el.play(); } catch (e) { on = false; } }   // blocked: stay honest
+    else el.pause();
+    apply(); paint();
+  };
+
+  btn.addEventListener('click', () => audioEnable(!on));
+  slider.addEventListener('input', () => {
+    base = +slider.value / 100;
+    if (base > 0 && !on) audioEnable(true);
+    else { apply(); paint(); }
+  });
+
+  audioRamp = (target, dt) => {
+    if (!on) { boost = 1; return; }
+    boost += (target - boost) * (1 - Math.pow(.90, dt / 16));
+    apply();
+    wrap.classList.toggle('boost', boost > 1.06);
+  };
+  paint();
+}
+
 /* ── idle melt ─────────────────────────────────────────────────────
    Stop scrolling and the section you stopped on liquefies — and keeps
    liquefying. There is no plateau: `meltT` simply accumulates for as long
@@ -1279,7 +1401,7 @@ function peeks() {
    Plain pointer movement deliberately does NOT count as activity: the
    cursor lights mean the mouse is almost always drifting, and treating
    that as engagement would mean the melt never fires. */
-const MELT_AFTER = 5000;
+const MELT_AFTER = 15000;
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -1655,6 +1777,8 @@ function tick(t) {
   }
 
   melt(t, dt, near);
+  // 7% louder for every second the section is left to melt; back on scroll
+  audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);
@@ -1665,7 +1789,7 @@ function tick(t) {
 function boot() {
   $('[data-split]').forEach(split);
   $('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
@@ -1698,6 +1822,18 @@ function boot() {
 
   // loader — a short, honest calibration, not a fake wait
   const bar = $('#loaderBar'), num = $('#loaderCount'), box = $('#loader');
+  let entered = false;
+  const enter = withAudio => {
+    if (entered) return;
+    entered = true;
+    if (withAudio) audioEnable(true);
+    box.classList.add('done');
+    document.body.classList.add('ready');
+    stops[0].classList.add('live');
+  };
+  $('#audioOn') ?.addEventListener('click', () => enter(true));
+  $('#audioOff')?.addEventListener('click', () => enter(false));
+
   const t0 = performance.now(), DUR = 1250;
   (function run(now) {
     const k = clamp((now - t0) / DUR, 0, 1);
@@ -1705,9 +1841,8 @@ function boot() {
     num.textContent = String(Math.round(e * 100)).padStart(2, '0');
     bar.style.width = (e * 100) + '%';
     if (k < 1) return requestAnimationFrame(run);
-    box.classList.add('done');
-    document.body.classList.add('ready');
-    stops[0].classList.add('live');
+    box.classList.add('asks');                 // hand the choice over
+    $('#audioOn')?.focus({ preventScroll: true });
   })(t0);
 }
 

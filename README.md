@@ -142,7 +142,7 @@ around it changes.
 
 ## The idle melt
 
-Stop scrolling for five seconds and the section you stopped on liquefies —
+Stop scrolling for fifteen seconds and the section you stopped on liquefies —
 and keeps liquefying. `meltT` simply accumulates for as long as you leave it
 alone, and everything else is a function of it. Any scroll, click, key or
 drag brings it back in about 0.4s, at the same speed however deep the melt
@@ -183,9 +183,40 @@ Three performance decisions hold this together:
   displacement stops being written at all — nobody can see a smear that is
   off-screen. The sag keeps moving regardless, so nothing appears to stall.
 
-Tuning: `MELT_AFTER` (5000ms) and the two coefficients in `sag`. Mobile
+Tuning: `MELT_AFTER` (15000ms) and the two coefficients in `sag`. Mobile
 drops the displacement for blur alone — a filter over a full section is too
 expensive there. Reduced motion skips it entirely.
+
+## Audio
+
+`audio/ambient.mp3` — 3.0 MB, 4:11, looping, ~64kbps.
+
+Browsers refuse to start audio without a user gesture, so the loader **asks
+before it lets anyone in**: it runs its calibration to 100%, then offers
+"Sound on" / "Sound off". Either choice enters the site; the click is the
+gesture. If `play()` is still refused the rig quietly reverts to muted
+rather than showing a control that lies about its state.
+
+After that, volume lives in the nav, to the left of the CTA: a mute toggle
+and a slider whose fill shows the level in brand blue. Mobile keeps the
+toggle and drops the slider.
+
+**The melt drives the volume.** For every second a section is left to drip,
+the bed gets 7% louder:
+
+```
+volume = base × (1 + 0.07 × secondsMelting)
+```
+
+At the default 0.35 base that reaches full at about 26s into the melt — so
+roughly 41s of stillness. Scrolling returns it to base over ~0.3s. The
+boost is eased rather than stepped, and the speaker icon turns violet while
+it is running, so the change is visibly attributable to something rather
+than seeming like a fault.
+
+The audio ships as a separate file on the real site — cacheable across
+visits, and a 4 MB data URI in the markup would block parsing. Only the
+single-file artifact build embeds it as base64.
 
 ## Cursor lights
 
