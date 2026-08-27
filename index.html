@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ẹ̀rọ Labs — We Build What's Next</title>
+<meta name="description" content="Ẹ̀rọ Labs is a technology and innovation studio. We use intelligence, automation and design to help businesses save time, reduce repetitive work, and focus on what drives revenue.">
+<meta name="theme-color" content="#06070B">
+<meta property="og:title" content="Ẹ̀rọ Labs — We Build What's Next">
+<meta property="og:description" content="Intelligence meets automation meets design.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400&family=IBM+Plex+Mono:wght@300;400&family=Poppins:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─────────────────────────── shared defs ─────────────────────────── -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <linearGradient id="gBrand" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#1E90FF"/>
+      <stop offset="45%"  stop-color="#3F5BFF"/>
+      <stop offset="100%" stop-color="#A625EE"/>
+    </linearGradient>
+    <linearGradient id="gBrandV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1E90FF"/>
+      <stop offset="100%" stop-color="#A625EE"/>
+    </linearGradient>
+    <!-- the aperture: the Ọ of the wordmark, lifted out as the studio's icon -->
+    <symbol id="aperture" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="13"/>
+      <circle cx="50" cy="50" r="15" fill="url(#gBrandV)"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ─────────────────────────── loader ─────────────────────────── -->
+<div id="loader" aria-hidden="true">
+  <div class="loader-mark"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></div>
+  <div class="loader-meta">
+    <span class="loader-label">CALIBRATING</span>
+    <span class="loader-count" id="loaderCount">00</span>
+  </div>
+  <div class="loader-bar"><i id="loaderBar"></i></div>
+</div>
+
+<!-- ─────────────────────────── field canvas ─────────────────────────── -->
+<canvas id="field" aria-hidden="true"></canvas>
+<div id="grain" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- ─────────────────────────── nav ─────────────────────────── -->
+<header class="nav" id="nav">
+  <a class="wordmark" href="#hero" data-goto="0" aria-label="Ẹ̀rọ Labs — home">
+    <span class="wm-e">E<i class="wm-grave"></i><i class="wm-dot"></i></span><span class="wm-r">R</span><span class="wm-o"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg><i class="wm-dot"></i></span><span class="wm-labs">LABS</span>
+  </a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="#about"   data-goto="1"><em>01</em> About Us</a>
+    <a href="#projects"    data-goto="2"><em>02</em> Projects</a>
+    <a href="#cases"   data-goto="3"><em>03</em> Case Studies</a>
+    <a href="#reach"   data-goto="4"><em>04</em> Reach Us</a>
+  </nav>
+  <button class="nav-cta" data-goto="4">Start a Conversation</button>
+  <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
+</header>
+
+<!-- ─────────────────────────── HUD ─────────────────────────── -->
+<div class="hud hud-l" aria-hidden="true">
+  <span class="hud-k">SECTOR</span>
+  <span class="hud-v" id="hudSector">00 / ORIGIN</span>
+</div>
+<div class="hud hud-r" aria-hidden="true">
+  <span class="hud-k">VECTOR</span>
+  <span class="hud-v"><b id="hudArrow">↓</b> <span id="hudCoord">X+000 Y+000</span></span>
+</div>
+<div class="progress-rail" aria-hidden="true"><i id="progressFill"></i></div>
+
+<!-- ─────────────────────────── the world ─────────────────────────── -->
+<div id="viewport">
+  <div class="layer layer-bg"  id="layerBg"></div>
+  <div class="layer layer-mid" id="layerMid">
+
+    <!-- 00 · ORIGIN ────────────────────────────────────── -->
+    <section class="stop" id="hero" data-stop="0" data-x="0" data-y="0">
+      <div class="hero-wrap">
+        <p class="eyebrow"><span class="tick"></span>Technology &amp; Innovation Studio <em>/ Est. 2026 /</em></p>
+        <h1 class="display xxl" data-split="char">We Build<br>What's Next.</h1>
+        <p class="lede" data-split="word">Intelligence meets automation meets design.</p>
+        <div class="hero-foot">
+          <button class="cue" data-goto="1">
+            <span class="cue-ring"><svg viewBox="0 0 100 100"><use href="#aperture"/></svg></span>
+            <span class="cue-txt">Begin the journey<em>Scroll to travel</em></span>
+          </button>
+          <p class="hero-note">Ẹ̀rọ <em>(Yoruba)</em> — machine. The thing that does the work for you.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 01 · ABOUT ─────────────────────────────────────── -->
+    <section class="stop" id="about" data-stop="1" data-x="62" data-y="104">
+      <header class="stop-head">
+        <span class="idx">(01)</span>
+        <span class="stop-name">About Us</span>
+        <span class="stop-move">↓↘ descent</span>
+      </header>
+      <p class="kicker">What We Do</p>
+      <h2 class="display xl" data-split="char">Make Work<br>Do Itself</h2>
+      <p class="triad"><span>Automation</span><i>•</i><span>Intelligence</span><i>•</i><span>Design</span></p>
+      <div class="about-body">
+        <p data-split="word">If your business spends hours copying, pasting, forwarding, updating and chasing tasks, we can automate it.</p>
+        <p data-split="word">We use intelligence, automation and design to save your team time — so they can focus on the work that drives more revenue.</p>
+      </div>
+      <div class="pillars">
+        <article class="pillar" data-depth="1.08">
+          <span class="p-idx">I</span>
+          <h3>Intelligence</h3>
+          <div class="p-vis" data-vis="intelligence"></div>
+          <p>Systems that read context, spot the pattern, and decide — so the judgement call happens before anyone opens a tab.</p>
+        </article>
+        <article class="pillar" data-depth="1.14">
+          <span class="p-idx">II</span>
+          <h3>Automation</h3>
+          <div class="p-vis" data-vis="automation"></div>
+          <p>The invisible relay between your tools. Work moves on its own, arrives finished, and nobody had to chase it.</p>
+        </article>
+        <article class="pillar" data-depth="1.2">
+          <span class="p-idx">III</span>
+          <h3>Design</h3>
+          <div class="p-vis" data-vis="design"></div>
+          <p>Precision made visible. Interfaces so clear the machinery underneath disappears completely.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 02 · PROJECTS ──────────────────────────────────── -->
+    <section class="stop" id="projects" data-stop="2" data-x="62" data-y="214">
+      <header class="stop-head">
+        <span class="idx">(02)</span>
+        <span class="stop-name">Projects</span>
+        <span class="stop-move">↓ straight down</span>
+      </header>
+      <h2 class="display xl" data-split="char">Things We've<br>Brought to Life.</h2>
+      <div class="proj-intro">
+        <p data-split="word">A collection of ideas, systems, automations and digital experiences we've designed and built. Every project starts with a problem — and ends with something that actually works.</p>
+        <p class="triad sm"><span>Automation</span><i>•</i><span>Intelligence</span><i>•</i><span>Design</span></p>
+      </div>
+      <ul class="proj-list" id="projList">
+        <li class="proj" data-tone="#1E90FF" data-glyph="ops">
+          <span class="pn">01</span>
+          <h3>Studio OS</h3>
+          <p class="pmeta">Operations dashboard · Creative studio</p>
+          <p class="pdesc">One screen that replaced a database nobody wanted to open.</p>
+        </li>
+        <li class="proj" data-tone="#3F5BFF" data-glyph="relay">
+          <span class="pn">02</span>
+          <h3>Change Note</h3>
+          <p class="pmeta">Notification engine · Multi-table sync</p>
+          <p class="pdesc">Staff stopped asking what changed. The system tells them.</p>
+        </li>
+        <li class="proj" data-tone="#6A46F5" data-glyph="signal">
+          <span class="pn">03</span>
+          <h3>Signal</h3>
+          <p class="pmeta">Lead engine · Built environment</p>
+          <p class="pdesc">A prospect list that qualifies and routes itself.</p>
+        </li>
+        <li class="proj" data-tone="#8E33F0" data-glyph="stage">
+          <span class="pn">04</span>
+          <h3>Release Room</h3>
+          <p class="pmeta">Artist site · Motion &amp; identity</p>
+          <p class="pdesc">A record launch you scroll through instead of read.</p>
+        </li>
+        <li class="proj" data-tone="#A625EE" data-glyph="grid">
+          <span class="pn">05</span>
+          <h3>Showroom</h3>
+          <p class="pmeta">Site rebuild · Catalogue at scale</p>
+          <p class="pdesc">Thousands of products, one coherent experience.</p>
+        </li>
+      </ul>
+      <div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
+    </section>
+
+    <!-- 03 · CASE STUDIES ──────────────────────────────── -->
+    <section class="stop" id="cases" data-stop="3" data-x="-44" data-y="220">
+      <header class="stop-head">
+        <span class="idx">(03)</span>
+        <span class="stop-name">Case Studies</span>
+        <span class="stop-move">← lateral</span>
+      </header>
+      <h2 class="display xl" data-split="char">The Problem.<br>The Process.<br>The Result.</h2>
+      <div class="case-intro">
+        <p data-split="word">Good work is easy to show. Great work is worth explaining.</p>
+        <p class="dim">Our case studies take you behind the scenes — from the challenge we set out to solve to the thinking, technology and design that brought the solution to life. Because sometimes the best part isn't just what we built. It's what it changed.</p>
+      </div>
+      <ol class="case-track" id="caseTrack">
+        <li class="case-step" data-step="1">
+          <span class="cs-k">Problem</span>
+          <h3>Nine hours a week, gone.</h3>
+          <p>Every booking was retyped three times across three tools. Errors were inevitable, and the person catching them was the one who should have been selling.</p>
+        </li>
+        <li class="case-step" data-step="2">
+          <span class="cs-k">Process</span>
+          <h3>We followed the paperwork.</h3>
+          <p>We mapped every hand-off, timed each one, and found the four moments where information actually changed shape. Only those four needed a machine.</p>
+        </li>
+        <li class="case-step" data-step="3">
+          <span class="cs-k">Solution</span>
+          <h3>One source. Everything downstream.</h3>
+          <p>A single record now triggers the calendar, the invoice, the confirmation and the staff brief — with a written note explaining exactly what changed and why.</p>
+        </li>
+        <li class="case-step" data-step="4">
+          <span class="cs-k">Result</span>
+          <h3>Nobody opens the database.</h3>
+          <p><b class="stat" data-count="94">0</b><i>% fewer manual updates</i><br><b class="stat" data-count="9">0</b><i> hours returned every week</i></p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- 04 · REACH US ──────────────────────────────────── -->
+    <section class="stop" id="reach" data-stop="4" data-x="30" data-y="330">
+      <header class="stop-head">
+        <span class="idx">(04)</span>
+        <span class="stop-name">Reach Us</span>
+        <span class="stop-move">↓↘ arrival</span>
+      </header>
+      <h2 class="display xl" data-split="char">Got a Problem<br>Worth Solving?</h2>
+      <p class="reach-lede" data-split="word">Tell us what's taking too much time, causing unnecessary work, or simply not working the way it should. We'll explore how intelligence, automation and design can help.</p>
+
+      <div class="composer" id="composer">
+        <p class="composer-label">Compose your brief <em>— fill in the blanks</em></p>
+        <p class="composer-line">
+          At <span class="fill" contenteditable="true" data-ph="company name" data-k="company"></span>,
+          my team loses roughly <span class="fill sm" contenteditable="true" data-ph="00" data-k="hours"></span> hours a week to
+          <span class="fill wide" contenteditable="true" data-ph="the repetitive thing" data-k="pain"></span>.
+          What I'd really like is for <span class="fill wide" contenteditable="true" data-ph="the outcome you want" data-k="want"></span>.
+        </p>
+        <div class="composer-foot">
+          <button class="btn-primary" id="sendBrief">
+            <span>Start a Conversation</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <p class="composer-hint" id="composerHint">Let's build something that works.</p>
+        </div>
+      </div>
+
+      <footer class="foot">
+        <div class="foot-col">
+          <span class="foot-k">Direct</span>
+          <a class="foot-mail" href="mailto:hello@erolabs.studio">hello@erolabs.studio</a>
+        </div>
+        <div class="foot-col">
+          <span class="foot-k">Elsewhere</span>
+          <div class="foot-social">
+            <a href="#" rel="noopener">LinkedIn</a><a href="#" rel="noopener">Instagram</a><a href="#" rel="noopener">X</a>
+          </div>
+        </div>
+        <div class="foot-col foot-end">
+          <span class="foot-k">Ẹ̀rọ Labs</span>
+          <p>Intelligence · Automation · Design<br>© 2026 — All rights reserved</p>
+        </div>
+      </footer>
+    </section>
+
+  </div>
+  <div class="layer layer-fg" id="layerFg"></div>
+</div>
+
+<div id="track" aria-hidden="true"></div>
+<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+
+<script src="main.js"></script>
+</body>
+</html>

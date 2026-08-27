@@ -1,0 +1,549 @@
+/* ══════════════════════════════════════════════════════════════════
+   Ẹ̀RỌ LABS — the travel engine
+   Scroll drives a camera along a fixed route through a 2D world.
+   Three layers move against that camera at different rates (parallax),
+   and the route itself is drawn in world space as the circuit you ride.
+   No libraries.
+   ══════════════════════════════════════════════════════════════════ */
+(() => {
+'use strict';
+
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp  = (a, b, t) => a + (b - a) * t;
+const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const touch   = matchMedia('(hover: none)').matches;
+if (touch) document.body.classList.add('is-touch');
+if (reduced) document.body.classList.add('reduced');
+
+/* ── geometry ──────────────────────────────────────────────────── */
+const stops = $$('.stop');
+const N = stops.length;
+const DWELL = .17;          // share of each leg spent parked at a stop
+const LEG   = 1.55;         // viewport-heights of scroll per leg
+const DEPTH = { bg: .45, mid: 1, fg: 1.34 };
+
+let vw = 0, vh = 0, xScale = 1, pts = [];
+
+function measure() {
+  // A zero-size viewport (hidden tab, display:none container) would bake
+  // nonsense into --fit. Wait for real dimensions; resize brings us back.
+  if (!innerWidth || !innerHeight) return;
+  vw = innerWidth; vh = innerHeight;
+  xScale = vw < 900 ? .42 : 1;              // tame the lateral travel on phones
+  pts = stops.map(s => ({
+    x: (+s.dataset.x / 100) * vw * xScale,
+    y: (+s.dataset.y / 100) * vh,
+    el: s
+  }));
+  pts.forEach(p => {
+    p.el.style.setProperty('--wx', p.x + 'px');
+    p.el.style.setProperty('--wy', p.y + 'px');
+  });
+  fitStops();
+  if (!reduced) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
+  buildRoute();
+  dress();
+  field.resize();
+}
+
+/* Nothing may overflow the frame: scale any stop that outgrows it. */
+function fitStops() {
+  if (reduced) { stops.forEach(s => s.style.removeProperty('--fit')); return; }
+  for (const s of stops) {
+    s.style.setProperty('--fit', 1);
+    const h = s.offsetHeight;
+    const f = h > vh * .88 ? Math.max((vh * .88) / h, .6) : 1;
+    s.style.setProperty('--fit', +f.toFixed(4));
+  }
+}
+
+/* ── camera ────────────────────────────────────────────────────── */
+const track = $('#track');
+const cam = { x: 0, y: 0, tx: 0, ty: 0 };
+let progress = 0, leg = 0, legT = 0;
+
+function readScroll() {
+  const max = Math.max(1, track.offsetHeight - vh);
+  progress = clamp(scrollY / max, 0, 1);
+  const p = progress * (N - 1);
+  leg = clamp(Math.floor(p), 0, N - 2);
+  const raw = p - leg;
+  // hold at each end of the leg, then ease across — travel, not sliding
+  legT = easeInOut(clamp((raw - DWELL) / (1 - DWELL * 2), 0, 1));
+  cam.tx = lerp(pts[leg].x, pts[leg + 1].x, legT);
+  cam.ty = lerp(pts[leg].y, pts[leg + 1].y, legT);
+}
+
+/* ── layers ────────────────────────────────────────────────────── */
+const layers = [
+  { el: $('#layerBg'),  d: DEPTH.bg  },
+  { el: $('#layerMid'), d: DEPTH.mid },
+  { el: $('#layerFg'),  d: DEPTH.fg  }
+];
+
+/* ── route drawn in world space ────────────────────────────────── */
+let routeSvg = null, routePath = null, routeTrail = null, routePulse = null, routeLen = 0;
+
+function buildRoute() {
+  const pad = Math.max(vw, vh) * .55;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const minX = Math.min(...xs) - pad, minY = Math.min(...ys) - pad;
+  const w = Math.max(...xs) - Math.min(...xs) + pad * 2;
+  const h = Math.max(...ys) - Math.min(...ys) + pad * 2;
+
+  if (!routeSvg) {
+    routeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    routeSvg.setAttribute('class', 'route-svg');
+    routeSvg.style.cssText = 'position:absolute;left:50%;top:50%;z-index:0;pointer-events:none;overflow:visible';
+    routeSvg.innerHTML = `
+      <defs>
+        <linearGradient id="gRoute" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#1E90FF"/><stop offset="100%" stop-color="#A625EE"/>
+        </linearGradient>
+        <filter id="fGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path class="r-base"  fill="none" stroke="rgba(255,255,255,.07)" stroke-width="1" stroke-dasharray="2 10" stroke-linecap="round"/>
+      <path class="r-trail" fill="none" stroke="url(#gRoute)" stroke-width="1.4" stroke-linecap="round" filter="url(#fGlow)"/>
+      <circle class="r-pulse" r="3.5" fill="#fff" filter="url(#fGlow)"/>`;
+    $('#layerMid').prepend(routeSvg);
+    routePath  = routeSvg.querySelector('.r-base');
+    routeTrail = routeSvg.querySelector('.r-trail');
+    routePulse = routeSvg.querySelector('.r-pulse');
+  }
+
+  routeSvg.setAttribute('width', w);
+  routeSvg.setAttribute('height', h);
+  routeSvg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  routeSvg.style.transform = `translate(${minX}px,${minY}px)`;
+
+  // rounded elbows between stops so the path reads as circuitry, not a scribble
+  const P = pts.map(p => [p.x - minX, p.y - minY]);
+  let d = `M${P[0][0]} ${P[0][1]}`;
+  for (let i = 1; i < P.length; i++) {
+    const [px, py] = P[i - 1], [cx, cy] = P[i];
+    const mx = px + (cx - px) * .5;
+    d += ` C${mx} ${py} ${mx} ${cy} ${cx} ${cy}`;
+  }
+  routePath.setAttribute('d', d);
+  routeTrail.setAttribute('d', d);
+  routeLen = routePath.getTotalLength();
+  routeTrail.style.strokeDasharray = routeLen;
+}
+
+/* ── field: fixed world nodes, precomputed links, riding pulses ─── */
+const field = (() => {
+  const cv = $('#field'), ctx = cv.getContext('2d', { alpha: true });
+  let nodes = [], links = [], dpr = 1;
+  const mouse = { x: -9e9, y: -9e9 };
+
+  function build() {
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const pad = Math.max(vw, vh) * .85;
+    const x0 = Math.min(...xs) - pad, x1 = Math.max(...xs) + pad;
+    const y0 = Math.min(...ys) - pad, y1 = Math.max(...ys) + pad;
+
+    const count = vw < 900 ? 58 : 112;
+    nodes = Array.from({ length: count }, () => ({
+      x: x0 + Math.random() * (x1 - x0),
+      y: y0 + Math.random() * (y1 - y0),
+      d: .5 + Math.random() * .9,          // parallax depth
+      r: .7 + Math.random() * 1.5,
+      ph: Math.random() * Math.PI * 2
+    }));
+
+    links = [];
+    const R = Math.min(vw, vh) * .46;
+    for (let i = 0; i < nodes.length; i++)
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i], b = nodes[j];
+        if (Math.abs(a.d - b.d) > .34) continue;
+        const dx = a.x - b.x, dy = a.y - b.y, dist = Math.hypot(dx, dy);
+        if (dist < R) links.push({ a, b, dist, flow: Math.random() < .22, off: Math.random() });
+      }
+  }
+
+  function resize() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    cv.width = vw * dpr; cv.height = vh * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    build();
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, vw, vh);
+    const cx = vw / 2, cy = vh / 2;
+
+    for (const n of nodes) {
+      n.sx = n.x - cam.x * n.d + cx;
+      n.sy = n.y - cam.y * n.d + cy;
+      const mdx = n.sx - mouse.x, mdy = n.sy - mouse.y, md = Math.hypot(mdx, mdy);
+      if (md < 150) { const f = (1 - md / 150) * 26; n.sx += (mdx / md) * f; n.sy += (mdy / md) * f; }
+    }
+
+    ctx.lineWidth = 1;
+    for (const l of links) {
+      const { a, b } = l;
+      if ((a.sx < -200 && b.sx < -200) || (a.sx > vw + 200 && b.sx > vw + 200)) continue;
+      if ((a.sy < -200 && b.sy < -200) || (a.sy > vh + 200 && b.sy > vh + 200)) continue;
+      const o = (1 - l.dist / (Math.min(vw, vh) * .46)) * .2;
+      ctx.strokeStyle = `rgba(150,175,255,${o})`;
+      ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
+
+      if (l.flow) {                                   // automation, made visible
+        const k = ((t * .00016) + l.off) % 1;
+        const px = lerp(a.sx, b.sx, k), py = lerp(a.sy, b.sy, k);
+        const g = ctx.createRadialGradient(px, py, 0, px, py, 7);
+        g.addColorStop(0, 'rgba(120,170,255,.85)'); g.addColorStop(1, 'rgba(120,170,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, 7, 0, 7); ctx.fill();
+      }
+    }
+
+    for (const n of nodes) {
+      if (n.sx < -40 || n.sx > vw + 40 || n.sy < -40 || n.sy > vh + 40) continue;
+      const tw = .38 + Math.sin(t * .001 + n.ph) * .3;
+      ctx.fillStyle = `rgba(200,215,255,${tw * .9})`;
+      ctx.beginPath(); ctx.arc(n.sx, n.sy, n.r, 0, 7); ctx.fill();
+    }
+  }
+
+  addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+  return { resize, draw };
+})();
+
+/* ── world set dressing ────────────────────────────────────────── */
+function dress() {
+  const bg = $('#layerBg'), fg = $('#layerFg');
+  bg.innerHTML = ''; fg.innerHTML = '';
+  const seed = [
+    [-38, -26, 'bg', 'glyph'], [72, 34, 'bg', 'num', '01'], [18, 152, 'bg', 'frame'],
+    [104, 176, 'bg', 'glyph'], [-4, 262, 'bg', 'num', '03'], [-96, 190, 'bg', 'frame'],
+    [-70, 300, 'bg', 'glyph'], [86, 292, 'bg', 'num', '04'], [40, 62, 'bg', 'frame'],
+    [-24, 40, 'fg', 'rule'], [96, 130, 'fg', 'rule'], [-62, 244, 'fg', 'rule'],
+    [24, 350, 'fg', 'rule'], [110, 236, 'fg', 'rule']
+  ];
+  for (const [x, y, where, kind, txt] of seed) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(${(x / 100) * vw * xScale}px,${(y / 100) * vh}px);pointer-events:none`;
+    if (kind === 'glyph') {
+      el.innerHTML = `<svg width="150" height="150" viewBox="0 0 100 100" style="opacity:.055"><use href="#aperture" color="#fff"/></svg>`;
+    } else if (kind === 'num') {
+      el.innerHTML = `<span style="font-family:Poppins,sans-serif;font-weight:600;font-size:26vh;line-height:1;letter-spacing:-.05em;color:rgba(255,255,255,.028)">${txt}</span>`;
+    } else if (kind === 'frame') {
+      el.innerHTML = `<div style="width:46vw;height:34vh;border:1px solid rgba(255,255,255,.045);border-radius:8px"></div>`;
+    } else {
+      el.innerHTML = `<div style="width:24vw;height:1px;background:linear-gradient(90deg,transparent,rgba(120,160,255,.28),transparent)"></div>`;
+    }
+    (where === 'bg' ? bg : fg).appendChild(el);
+  }
+}
+
+/* ── split text ────────────────────────────────────────────────── */
+let splitIndex = 0;
+function split(el) {
+  const mode = el.dataset.split;
+  const out = document.createDocumentFragment();
+  let i = 0;
+  for (const node of [...el.childNodes]) {
+    if (node.nodeName === 'BR') { out.appendChild(node.cloneNode()); continue; }
+    if (node.nodeType !== 3) { out.appendChild(node.cloneNode(true)); continue; }
+    const units = mode === 'char' ? [...node.textContent] : node.textContent.split(/(\s+)/);
+    for (const u of units) {
+      if (!u.trim()) { out.appendChild(document.createTextNode(' ')); continue; }
+      const wrap = document.createElement('span');
+      wrap.className = mode === 'char' ? 'char-w' : 'word-w';
+      const inner = document.createElement('span');
+      inner.className = mode === 'char' ? 'char' : 'word';
+      inner.textContent = u;
+      inner.style.setProperty('--i', i++);
+      wrap.appendChild(inner); out.appendChild(wrap);
+      if (mode === 'word') out.appendChild(document.createTextNode(' '));
+    }
+  }
+  el.textContent = ''; el.appendChild(out);
+}
+
+/* ── pillar visuals: abstract, not illustrative ────────────────── */
+const VIS = {
+  intelligence: `<svg viewBox="0 0 200 90">
+    <g stroke="rgba(140,175,255,.35)" fill="none" stroke-width="1">
+      <path d="M20 62 L58 26 L100 50 L142 20 L180 44"/><path d="M20 62 L62 70 L100 50 L146 66 L180 44"/>
+    </g>
+    ${[[20,62,0],[58,26,.3],[100,50,.6],[142,20,.9],[180,44,1.2],[62,70,.45],[146,66,1.05]]
+      .map(([x,y,d]) => `<circle cx="${x}" cy="${y}" r="3" fill="url(#gBrand)"><animate attributeName="r" values="2.4;5;2.4" dur="2.8s" begin="${d}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;1;.45" dur="2.8s" begin="${d}s" repeatCount="indefinite"/></circle>`).join('')}
+  </svg>`,
+  automation: `<svg viewBox="0 0 200 90">
+    ${[22,45,68].map((y,i) => `
+      <line x1="10" y1="${y}" x2="190" y2="${y}" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
+      <rect x="0" y="${y-3}" width="16" height="6" rx="3" fill="url(#gBrand)">
+        <animate attributeName="x" from="-16" to="196" dur="${2.6+i*.7}s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;1;0" dur="${2.6+i*.7}s" repeatCount="indefinite"/>
+      </rect>`).join('')}
+  </svg>`,
+  design: `<svg viewBox="0 0 200 90">
+    <g fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1">
+      ${Array.from({length:9},(_,i)=>`<rect x="${16+i*19}" y="24" width="13" height="42" rx="2"/>`).join('')}
+    </g>
+    <rect x="73" y="14" width="13" height="62" rx="2" fill="url(#gBrandV)" opacity=".9">
+      <animate attributeName="x" values="73;130;54;73" dur="6s" repeatCount="indefinite"/>
+    </rect>
+    <circle cx="100" cy="80" r="2.5" fill="#A625EE"/>
+  </svg>`
+};
+function paintPillars() { $$('.p-vis').forEach(el => el.innerHTML = VIS[el.dataset.vis] || ''); }
+
+/* ── project hover peek ────────────────────────────────────────── */
+function peeks() {
+  const peek = $('#projPeek'), cv = $('#peekCanvas'), tag = $('.peek-tag', peek);
+  if (!cv || touch) return;
+  const ctx = cv.getContext('2d');
+  let raf = null, tone = '#1E90FF', kind = 'ops', t0 = 0;
+
+  const sizeIt = () => { const r = peek.getBoundingClientRect(); const d = Math.min(devicePixelRatio || 1, 2);
+    cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); return r; };
+
+  function frame(ts) {
+    const r = peek.getBoundingClientRect(), w = r.width, h = r.height;
+    if (!t0) t0 = ts; const t = (ts - t0) * .001;
+    ctx.fillStyle = '#0A0C13'; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = tone; ctx.fillStyle = tone;
+
+    if (kind === 'ops') {                        // stacked bars settling
+      for (let i = 0; i < 7; i++) {
+        const a = .18 + .1 * Math.sin(t * 1.6 + i);
+        ctx.globalAlpha = a;
+        ctx.fillRect(w * .12, h * .18 + i * (h * .095), w * (.2 + .55 * Math.abs(Math.sin(t * .8 + i * .6))), h * .05);
+      }
+    } else if (kind === 'relay') {               // hand-offs firing down a chain
+      ctx.globalAlpha = .3; ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
+        ctx.beginPath(); ctx.moveTo(w * .12, y); ctx.lineTo(w * .88, y); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
+        const k = ((t * .35 + i * .25) % 1); const x = w * (.12 + .76 * k);
+        ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 7); ctx.fill(); }
+    } else if (kind === 'signal') {              // scatter resolving into a wedge
+      for (let i = 0; i < 46; i++) {
+        const a = i * 2.399 + t * .3, rr = (i / 46) * Math.min(w, h) * .42;
+        ctx.globalAlpha = .16 + .5 * (i / 46);
+        ctx.beginPath(); ctx.arc(w / 2 + Math.cos(a) * rr, h / 2 + Math.sin(a) * rr, 1.9, 0, 7); ctx.fill();
+      }
+    } else if (kind === 'stage') {               // waveform
+      ctx.globalAlpha = .9; ctx.lineWidth = 1.6; ctx.beginPath();
+      for (let x = 0; x <= w; x += 4) {
+        const y = h / 2 + Math.sin(x * .045 + t * 2.2) * h * .18 * Math.sin(x * .008 + t);
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      } ctx.stroke();
+    } else {                                     // grid coming into order
+      ctx.globalAlpha = .5;
+      for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
+        const p = Math.sin(t * 1.4 + i * .5 + j * .3) * .5 + .5;
+        ctx.globalAlpha = .12 + p * .5;
+        ctx.fillRect(w * (.14 + i * .16), h * (.18 + j * .19), w * .1 * (.5 + p * .6), h * .1);
+      }
+    }
+    ctx.globalAlpha = 1;
+    raf = requestAnimationFrame(frame);
+  }
+
+  $$('.proj').forEach(li => {
+    li.addEventListener('pointerenter', () => {
+      tone = li.dataset.tone; kind = li.dataset.glyph; t0 = 0;
+      li.style.setProperty('--tone', tone);
+      tag.textContent = $('h3', li).textContent;
+      peek.classList.add('on'); sizeIt();
+      if (!raf) raf = requestAnimationFrame(frame);
+    });
+    li.addEventListener('pointerleave', () => {
+      peek.classList.remove('on');
+      if (raf) { cancelAnimationFrame(raf); raf = null; }
+    });
+    li.style.setProperty('--tone', li.dataset.tone);
+  });
+
+  addEventListener('pointermove', e => {
+    if (!peek.classList.contains('on')) return;
+    peek.style.left = e.clientX + 'px';
+    peek.style.top  = e.clientY + 'px';
+  }, { passive: true });
+}
+
+/* ── counters ──────────────────────────────────────────────────── */
+function countUp(el) {
+  if (el.dataset.done) return; el.dataset.done = '1';
+  const to = +el.dataset.count; const dur = 1400; const t0 = performance.now();
+  (function step(now) {
+    const k = clamp((now - t0) / dur, 0, 1);
+    el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ── composer ──────────────────────────────────────────────────── */
+function composer() {
+  const box = $('#composer'); if (!box) return;
+  const hint = $('#composerHint');
+  const fills = $$('.fill', box);
+  fills.forEach(f => {
+    f.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); f.blur(); } });
+    f.addEventListener('paste', e => {                        // keep it plain text
+      e.preventDefault();
+      document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text'));
+    });
+  });
+  $('#sendBrief').addEventListener('click', () => {
+    const v = {};
+    fills.forEach(f => v[f.dataset.k] = f.textContent.trim());
+    if (!v.pain && !v.want) {
+      hint.textContent = 'Fill in a blank or two first — even roughly.';
+      hint.style.color = '#A625EE';
+      fills[2].focus();
+      return;
+    }
+    const body =
+`At ${v.company || '[company]'}, my team loses roughly ${v.hours || '[?]'} hours a week to ${v.pain || '[?]'}.
+What I'd really like is for ${v.want || '[?]'}.
+
+—
+Sent from erolabs.studio`;
+    location.href = `mailto:hello@erolabs.studio?subject=${encodeURIComponent('A problem worth solving — ' + (v.company || 'new enquiry'))}&body=${encodeURIComponent(body)}`;
+    hint.textContent = 'Opening your mail client…';
+    hint.style.color = '';
+  });
+}
+
+/* ── cursor ────────────────────────────────────────────────────── */
+function cursor() {
+  const c = $('#cursor'); if (touch || reduced) return;
+  let x = 0, y = 0, tx = 0, ty = 0;
+  addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; }, { passive: true });
+  (function loop() { x = lerp(x, tx, .2); y = lerp(y, ty, .2);
+    c.style.transform = `translate(${x}px,${y}px)`; requestAnimationFrame(loop); })();
+  document.addEventListener('pointerover', e => {
+    c.classList.toggle('is-lg', !!e.target.closest('a,button,.proj,.fill,.pillar'));
+  });
+}
+
+/* ── nav ───────────────────────────────────────────────────────── */
+function nav() {
+  const navEl = $('#nav'), burger = $('#burger');
+  $$('[data-goto]').forEach(el => el.addEventListener('click', e => {
+    e.preventDefault();
+    const i = +el.dataset.goto;
+    navEl.classList.remove('open'); burger.setAttribute('aria-expanded', 'false');
+    if (reduced) { stops[i].scrollIntoView({ behavior: 'smooth' }); return; }
+    const max = track.offsetHeight - vh;
+    scrollTo({ top: (i / (N - 1)) * max, behavior: 'smooth' });
+  }));
+  burger.addEventListener('click', () => {
+    const open = navEl.classList.toggle('open');
+    burger.setAttribute('aria-expanded', String(open));
+  });
+}
+
+/* ── frame ─────────────────────────────────────────────────────── */
+const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / PROJECTS', '03 / CASE STUDIES', '04 / REACH'];
+const ARROWS  = ['↘', '↓', '←', '↘'];
+const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hudCoord'),
+      pFill = $('#progressFill'), navLinks = $$('.nav-links a');
+let lastSector = -1;
+
+function tick(t) {
+  readScroll();
+  cam.x = lerp(cam.x, cam.tx, .09);
+  cam.y = lerp(cam.y, cam.ty, .09);
+
+  for (const L of layers)
+    L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
+
+  // proximity → reveal, and cull what's far away
+  let near = 0, nearD = Infinity;
+  for (let i = 0; i < N; i++) {
+    const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
+    const d = Math.hypot(dx, dy);
+    if (d < nearD) { nearD = d; near = i; }
+    stops[i].classList.toggle('live', d < 1.05);
+    stops[i].classList.toggle('hidden', d > 2.4);
+  }
+  if (near !== lastSector) {
+    lastSector = near;
+    hudSector.textContent = SECTORS[near];
+    navLinks.forEach((a, k) => a.classList.toggle('on', k + 1 === near));
+    if (near === 3) $$('.stat').forEach(countUp);
+  }
+
+  hudArrow.textContent = ARROWS[Math.min(leg, ARROWS.length - 1)];
+  hudCoord.textContent =
+    `X${cam.x < 0 ? '−' : '+'}${String(Math.abs(Math.round(cam.x))).padStart(4, '0')} ` +
+    `Y${cam.y < 0 ? '−' : '+'}${String(Math.abs(Math.round(cam.y))).padStart(4, '0')}`;
+  pFill.style.width = (progress * 100) + '%';
+
+  if (routeTrail) {
+    const L = routeLen * progress;
+    routeTrail.style.strokeDashoffset = routeLen - L;
+    const pt = routePath.getPointAtLength(L);
+    routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
+  }
+
+  field.draw(t);
+  requestAnimationFrame(tick);
+}
+
+/* ── boot ──────────────────────────────────────────────────────── */
+function boot() {
+  $$('[data-split]').forEach(split);
+  $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
+  paintPillars(); composer(); cursor(); nav(); peeks();
+  measure();
+  addEventListener('resize', measure);
+
+  if (reduced) {
+    stops.forEach(s => s.classList.add('live'));
+    document.body.classList.add('ready');
+    $('#loader').classList.add('done');
+    $$('.stat').forEach(countUp);
+    return;
+  }
+  // ?stop=N — land directly on a stop, painted on the first frame.
+  // Used for preview captures and OG images.
+  const forced = new URLSearchParams(location.search).get('stop')
+    ?? (location.hash.match(/stop=(\d+)/)?.[1] ?? null);
+  if (forced !== null) {
+    const i = clamp(+forced | 0, 0, N - 1);
+    scrollTo(0, (i / (N - 1)) * (track.offsetHeight - vh));
+    readScroll();
+    cam.x = cam.tx; cam.y = cam.ty;
+    for (const L of layers) L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
+    stops[i].classList.add('live');
+    document.body.classList.add('still');
+    $('#loader').classList.add('done');
+    document.body.classList.add('ready');
+    $$('.stat').forEach(countUp);
+    requestAnimationFrame(tick);
+    return;
+  }
+
+  requestAnimationFrame(tick);
+
+  // loader — a short, honest calibration, not a fake wait
+  const bar = $('#loaderBar'), num = $('#loaderCount'), box = $('#loader');
+  const t0 = performance.now(), DUR = 1250;
+  (function run(now) {
+    const k = clamp((now - t0) / DUR, 0, 1);
+    const e = 1 - Math.pow(1 - k, 2.2);
+    num.textContent = String(Math.round(e * 100)).padStart(2, '0');
+    bar.style.width = (e * 100) + '%';
+    if (k < 1) return requestAnimationFrame(run);
+    box.classList.add('done');
+    document.body.classList.add('ready');
+    stops[0].classList.add('live');
+  })(t0);
+}
+
+document.fonts?.ready.then(boot).catch(boot) ?? boot();
+})();
