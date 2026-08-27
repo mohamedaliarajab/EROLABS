@@ -236,7 +236,8 @@ body.ready .hud{opacity:1}
 .stop{
   position:absolute;top:50%;left:50%;z-index:1;
   width:min(1080px,84vw);
-  transform:translate(-50%,-50%) translate(var(--wx,0px),var(--wy,0px)) scale(var(--fit,1));
+  transform:translate(-50%,-50%) translate(var(--wx,0px),var(--wy,0px)) scale(var(--fit,1))
+            translateY(var(--sag,0px)) scaleY(var(--sagY,1));
   transform-origin:50% 50%;
 }
 .stop.hidden{visibility:hidden}
@@ -459,9 +460,9 @@ body.ready .hud{opacity:1}
    page in normal use carries no filter cost at all. */
 .stop.melting{
   filter:url(#melt)
-         blur(calc(var(--melt,0) * 2.6px))
-         saturate(calc(1 - var(--melt,0) * .5))
-         brightness(calc(1 - var(--melt,0) * .2));
+         blur(var(--blur,0px))
+         saturate(calc(1 - var(--melt,0) * .55))
+         brightness(calc(1 - var(--melt,0) * .22));
 }
 
 /* ── mobile ────────────────────────────────────────────────────── */
@@ -498,7 +499,7 @@ body.ready .hud{opacity:1}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
   .proj-peek{display:none}
-  .stop.melting{filter:blur(calc(var(--melt,0) * 4px)) saturate(calc(1 - var(--melt,0) * .55))}
+  .stop.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */
@@ -1267,50 +1268,78 @@ function peeks() {
 }
 
 /* ── idle melt ─────────────────────────────────────────────────────
-   Stop scrolling for five seconds and the section you stopped on melts.
-   Any scroll — or a click, key or drag — brings it straight back.
+   Stop scrolling and the section you stopped on liquefies — and keeps
+   liquefying. There is no plateau: `meltT` simply accumulates for as long
+   as you leave it alone, and everything downstream is a function of it.
+
+   Two curves do the work. `ramp` (~1.8s) is the initial liquefy. `drift`
+   (~14s) never actually arrives, so the smear keeps spreading and the
+   section keeps sagging out of frame the longer you stay away.
 
    Plain pointer movement deliberately does NOT count as activity: the
    cursor lights mean the mouse is almost always drifting, and treating
-   that as engagement would mean the melt never fires.
-
-   Once fully melted we stop writing the filter entirely. An SVG
-   displacement map re-rasterises the whole section on every change, and an
-   idle tab has no business burning a GPU to hold a still image. */
-const MELT_AFTER = 5000, MELT_SCALE = 24;
-let lastActive = performance.now(), meltAmt = 0, meltSettled = false, meltEl = null;
+   that as engagement would mean the melt never fires. */
+const MELT_AFTER = 5000;
+let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
-const wake = () => { lastActive = performance.now(); meltSettled = false; };
+const wake = () => { lastActive = performance.now(); };
 ['scroll', 'wheel', 'touchmove', 'keydown', 'pointerdown']
   .forEach(ev => addEventListener(ev, wake, { passive: true }));
 
-function melt(t, i) {
-  if (reduced || !meltDisp) return;
-  const target = (t - lastActive) > MELT_AFTER ? 1 : 0;
-  if (meltSettled && target === 1) return;
+function clearMelt() {
+  if (!meltEl) return;
+  meltEl.classList.remove('melting');
+  ['--melt', '--blur', '--sag', '--sagY'].forEach(v => meltEl.style.removeProperty(v));
+  meltEl = null; meltT = 0;
+  meltDisp.setAttribute('scale', '0');
+}
 
-  meltAmt = lerp(meltAmt, target, target ? .011 : .17);
-  if (target === 1 && meltAmt > .995) { meltAmt = 1; meltSettled = true; }
+function writeMelt(el, t, urgent) {
+  const s    = meltT / 1000;
+  const ramp = 1 - Math.exp(-s / 1.8);       // the initial liquefy, quick
+  const soft = 1 - Math.exp(-s / 20);        // blur and stretch, which do settle
 
-  const el = stops[i];
-  if (meltEl && meltEl !== el) {                       // travelled to another stop
-    meltEl.classList.remove('melting');
-    meltEl.style.removeProperty('--melt');
-    meltEl = null;
-  }
-  if (meltAmt < .002) {
-    if (meltEl) {
-      meltEl.classList.remove('melting');
-      meltEl.style.removeProperty('--melt');
-      meltEl = null;
-    }
-    return;
-  }
+  /* The sag has NO ceiling. An asymptote looks identical at 60s and at 180s,
+     which reads as the melt having stopped — so the drag carries a linear
+     term that just keeps going: roughly 14px a second, for as long as you
+     leave it. Given long enough the section drips out of frame entirely. */
+  const sag  = 120 * (1 - Math.exp(-s / 6)) + 14 * s;
+  const disp = 20 * ramp + 3.2 * s;          // the smear keeps spreading too
+
   meltEl = el;
   el.classList.add('melting');
-  el.style.setProperty('--melt', meltAmt.toFixed(3));
-  meltDisp.setAttribute('scale', (meltAmt * MELT_SCALE).toFixed(2));
+  el.style.setProperty('--melt', ramp.toFixed(3));
+  el.style.setProperty('--blur', (2.2 * ramp + 8 * soft).toFixed(2) + 'px');
+  el.style.setProperty('--sag',  sag.toFixed(1) + 'px');
+  el.style.setProperty('--sagY', (1 + 1.2 * soft).toFixed(3));
+
+  /* The transform above is composited and free. The displacement map is not
+     — it re-rasterises the whole section — so it is written at ~15fps, and
+     not at all once the section has dripped past the bottom of the frame
+     where no one can see it. The sag keeps moving regardless. */
+  if (sag > vh * 1.4) return;
+  if (urgent || t - lastDispWrite > 66) {
+    lastDispWrite = t;
+    meltDisp.setAttribute('scale', disp.toFixed(1));
+  }
+}
+
+function melt(t, dt, i) {
+  if (reduced || !meltDisp) return;
+  const el = stops[i];
+  if (meltEl && meltEl !== el) clearMelt();
+
+  if (t - lastActive < MELT_AFTER) {
+    if (meltT <= 0) return;
+    // recover fast, and at the same speed however deep the melt had got
+    meltT = meltT * Math.pow(.80, dt / 16) - dt;
+    if (meltT < 12) { clearMelt(); return; }
+    writeMelt(el, t, true);
+    return;
+  }
+  meltT += dt;                                // no latch: it keeps going
+  writeMelt(el, t, false);
 }
 
 /* ── the mast ──────────────────────────────────────────────────────
@@ -1625,7 +1654,7 @@ function tick(t) {
     routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
   }
 
-  melt(t, near);
+  melt(t, dt, near);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);

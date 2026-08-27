@@ -143,25 +143,49 @@ around it changes.
 ## The idle melt
 
 Stop scrolling for five seconds and the section you stopped on liquefies —
-an SVG turbulence displacement plus blur and drained colour. Any scroll, or
-a click, key or drag, brings it back in about a quarter of a second.
+and keeps liquefying. `meltT` simply accumulates for as long as you leave it
+alone, and everything else is a function of it. Any scroll, click, key or
+drag brings it back in about 0.4s, at the same speed however deep the melt
+had got.
 
-Three decisions in here are load-bearing:
+The important shape is the **sag**, which has no ceiling:
 
-- **Plain pointer movement does not count as activity.** The cursor lights
-  mean the mouse is almost always drifting; treating that as engagement
-  would mean the melt never fires.
+```
+sag = 120 * (1 - e^(-s/6))  +  14 * s
+      └── settles in ~15s ──┘   └── never stops ──┘
+```
+
+| idle  | sag     | displacement | stretch |
+|-------|---------|--------------|---------|
+| 2s    | 62px    | 20           | 1.11    |
+| 15s   | 320px   | 68           | 1.63    |
+| 60s   | 960px   | 212          | 2.14    |
+| 5min  | 4320px  | 980          | 2.20    |
+
+An asymptote was the first thing I tried and it was wrong: it looked
+identical at 60s and 180s, which reads as the melt having *stopped*. The
+linear term is what keeps it alive. Given long enough the section drips out
+of frame entirely — and one scroll snaps it straight back.
+
+Blur and stretch do settle, deliberately. Unbounded blur gets expensive and
+unbounded stretch turns to mush; the sense of continuous motion comes from
+the sag, which is the part you actually watch.
+
+Three performance decisions hold this together:
+
 - **The filter only exists while melting.** `.melting` is added and removed
   by the engine, so a page in normal use computes `filter: none` and pays
-  nothing. A permanently applied `url()` filter would rasterise the section
-  every frame forever.
-- **Once fully melted, writing stops.** A displacement map re-rasterises the
-  whole section on every change, and an idle tab has no business burning a
-  GPU to hold a still image. `meltSettled` latches it.
+  nothing.
+- **The transform is free, the filter is not.** The sag is a composited
+  transform written every frame; the displacement map re-rasterises the
+  whole section, so it is written at ~15fps. At this speed nobody can tell.
+- **Once the section has dripped past the bottom of the frame** the
+  displacement stops being written at all — nobody can see a smear that is
+  off-screen. The sag keeps moving regardless, so nothing appears to stall.
 
-Tuning: `MELT_AFTER` (5000ms) and `MELT_SCALE` (24, how far the pixels
-travel). Mobile drops the displacement for blur alone — a filter over a
-full section is too expensive there. Reduced motion skips it entirely.
+Tuning: `MELT_AFTER` (5000ms) and the two coefficients in `sag`. Mobile
+drops the displacement for blur alone — a filter over a full section is too
+expensive there. Reduced motion skips it entirely.
 
 ## Cursor lights
 
