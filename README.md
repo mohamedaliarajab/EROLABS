@@ -148,24 +148,33 @@ alone, and everything else is a function of it. Any scroll, click, key or
 drag brings it back in about 0.4s, at the same speed however deep the melt
 had got.
 
-The important shape is the **sag**, which has no ceiling:
+Two shapes matter, and both were wrong on the first attempt.
+
+**The onset has to be invisible.** A plain exponential like `1 - e^(-s/1.8)`
+is 67% deep two seconds in — you watch it arrive, which defeats the point.
+Every curve now leaves zero with zero *slope*:
 
 ```
-sag = 120 * (1 - e^(-s/6))  +  14 * s
-      └── settles in ~15s ──┘   └── never stops ──┘
+gate = 1 - e^(-(s/8)^2.5)      the slow opener
+sag  = (120 + 14*s) * gate     no ceiling past the opening
 ```
 
-| idle  | sag     | displacement | stretch |
-|-------|---------|--------------|---------|
-| 2s    | 62px    | 20           | 1.11    |
-| 15s   | 320px   | 68           | 1.63    |
-| 60s   | 960px   | 212          | 2.14    |
-| 5min  | 4320px  | 980          | 2.20    |
+**The tail must never settle.** An asymptote looked identical at 60s and
+180s, which reads as the melt having stopped. The linear term keeps it
+alive; given long enough the section drips out of frame entirely.
 
-An asymptote was the first thing I tried and it was wrong: it looked
-identical at 60s and 180s, which reads as the melt having *stopped*. The
-linear term is what keeps it alive. Given long enough the section drips out
-of frame entirely — and one scroll snaps it straight back.
+| melting | sag     | displacement | stretch |
+|---------|---------|--------------|---------|
+| 1s      | 0.7px   | 0.4          | 1.00    |
+| 3s      | 13px    | 4.7          | 1.01    |
+| 8s      | 147px   | 33           | 1.25    |
+| 20s     | 400px   | 84           | 1.76    |
+| 60s     | 960px   | 212          | 2.14    |
+| 2min    | 1800px  | 404          | 2.20    |
+
+The two curves converge by about 12s, so the long drag is unchanged — only
+the opening is different. With `MELT_AFTER` at 15s, nothing is visible until
+roughly 18 seconds of stillness.
 
 Blur and stretch do settle, deliberately. Unbounded blur gets expensive and
 unbounded stretch turns to mush; the sense of continuous motion comes from

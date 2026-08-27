@@ -533,16 +533,21 @@ function clearMelt() {
 }
 
 function writeMelt(el, t, urgent) {
-  const s    = meltT / 1000;
-  const ramp = 1 - Math.exp(-s / 1.8);       // the initial liquefy, quick
-  const soft = 1 - Math.exp(-s / 20);        // blur and stretch, which do settle
+  const s = meltT / 1000;
 
-  /* The sag has NO ceiling. An asymptote looks identical at 60s and at 180s,
-     which reads as the melt having stopped — so the drag carries a linear
-     term that just keeps going: roughly 14px a second, for as long as you
-     leave it. Given long enough the section drips out of frame entirely. */
-  const sag  = 120 * (1 - Math.exp(-s / 6)) + 14 * s;
-  const disp = 20 * ramp + 3.2 * s;          // the smear keeps spreading too
+  /* The onset must be invisible. A plain exponential like 1-e^(-s/1.8) is
+     already 67% deep two seconds in — you watch it arrive, which defeats
+     the whole idea. These curves leave zero with zero SLOPE, so the first
+     few seconds genuinely read as nothing happening, and the melt only
+     becomes apparent once you have long since stopped paying attention. */
+  const gate = 1 - Math.exp(-Math.pow(s / 8, 2.5));   // the slow opener
+  const ramp = 1 - Math.exp(-Math.pow(s / 6, 2.2));   // the liquefy itself
+  const soft = (1 - Math.exp(-s / 20)) * gate;        // blur and stretch
+
+  /* Still no ceiling: past the opening, the linear term keeps dragging for
+     as long as you leave it, so the melt never appears to have finished. */
+  const sag  = (120 + 14 * s) * gate;
+  const disp = 20 * ramp + 3.2 * s * gate;
 
   meltEl = el;
   el.classList.add('melting');
