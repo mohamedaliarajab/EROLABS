@@ -50,6 +50,7 @@ function measure() {
     p.el.style.setProperty('--wy', p.y + 'px');
   });
   fitStops();
+  flowLayout();
   if (!reduced) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
   buildRoute();
   dress();
@@ -130,13 +131,17 @@ function buildRoute() {
   routeSvg.setAttribute('viewBox', `0 0 ${w} ${h}`);
   routeSvg.style.transform = `translate(${minX}px,${minY}px)`;
 
-  // rounded elbows between stops so the path reads as circuitry, not a scribble
+  /* One continuous Catmull-Rom spline through the stops. Per-segment
+     beziers meeting at a shared point still kink, because their tangents
+     disagree — this matches tangents across every joint, so the line reads
+     as a single sweeping route instead of a folded elbow. */
   const P = pts.map(p => [p.x - minX, p.y - minY]);
   let d = `M${P[0][0]} ${P[0][1]}`;
-  for (let i = 1; i < P.length; i++) {
-    const [px, py] = P[i - 1], [cx, cy] = P[i];
-    const mx = px + (cx - px) * .5;
-    d += ` C${mx} ${py} ${mx} ${cy} ${cx} ${cy}`;
+  for (let i = 0; i < P.length - 1; i++) {
+    const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+    d += ` C${p1[0] + (p2[0] - p0[0]) / 6} ${p1[1] + (p2[1] - p0[1]) / 6}`
+       + ` ${p2[0] - (p3[0] - p1[0]) / 6} ${p2[1] - (p3[1] - p1[1]) / 6}`
+       + ` ${p2[0]} ${p2[1]}`;
   }
   routePath.setAttribute('d', d);
   routeTrail.setAttribute('d', d);
@@ -506,6 +511,80 @@ function poleRig() {
   };
 }
 
+/* ── projects: work moving through the machine ─────────────────────
+   Five lanes, one per project, with packets running left to right through
+   gates. A packet reaching a gate sometimes reroutes to a neighbouring
+   lane — the diagonal is the point: this is work being handed off, not a
+   decorative loop. */
+let flowUpdate = () => {}, flowLayout = () => {};
+function projFlow() {
+  const stage = $('.proj-stage'), cv = $('#projFlow');
+  if (!stage || !cv) return;
+  const ctx = cv.getContext('2d');
+  const rows = $$('.proj', stage), list = $('.proj-list', stage);
+  let W = 0, H = 0, lanes = [], gates = [], packets = [];
+
+  flowLayout = () => {
+    W = stage.offsetWidth; H = stage.offsetHeight;
+    if (!W || !H) return;
+    const d = Math.min(devicePixelRatio || 1, 2);
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+
+    // offsetTop, not getBoundingClientRect — the stop carries a scale()
+    lanes = rows.map(r => ({ y: list.offsetTop + r.offsetTop + r.offsetHeight / 2, tone: r.dataset.tone }));
+    gates = [];
+    lanes.forEach((ln, i) => [.26, .48, .70, .88].forEach(f =>
+      gates.push({ x: W * f, y: ln.y, lane: i, flash: 0 })));
+    packets = [];
+    for (let i = 0; i < lanes.length; i++)
+      for (let k = 0; k < 2; k++)
+        packets.push({ lane: i, x: Math.random() * W, y: lanes[i].y,
+                       sp: .022 + Math.random() * .045, seen: -1 });
+  };
+
+  flowUpdate = (t, dt, live) => {
+    if (!live || !lanes.length) return;
+    ctx.clearRect(0, 0, W, H);
+
+    for (const g of gates) {
+      g.flash *= Math.pow(.90, dt / 16);
+      const a = .10 + g.flash * .8;
+      ctx.fillStyle = `rgba(190,210,255,${a})`;
+      ctx.fillRect(g.x - .5, g.y - 5, 1, 10);
+    }
+
+    for (const p of packets) {
+      p.x += p.sp * dt;
+      if (p.x > W + 30) { p.x = -30; p.seen = -1; p.sp = .022 + Math.random() * .045; }
+
+      for (let gi = 0; gi < gates.length; gi++) {
+        const g = gates[gi];
+        if (g.lane !== p.lane || gi === p.seen) continue;
+        if (Math.abs(p.x - g.x) < 6) {
+          g.flash = 1; p.seen = gi;
+          if (Math.random() < .3) {                       // hand off to a neighbour
+            const dir = Math.random() < .5 ? -1 : 1;
+            const next = p.lane + dir;
+            if (next >= 0 && next < lanes.length) p.lane = next;
+          }
+        }
+      }
+      p.y += (lanes[p.lane].y - p.y) * (1 - Math.pow(.992, dt));
+
+      const tone = lanes[p.lane].tone;
+      const g = ctx.createLinearGradient(p.x - 26, 0, p.x + 3, 0);
+      g.addColorStop(0, 'rgba(255,255,255,0)');
+      g.addColorStop(1, tone);
+      ctx.strokeStyle = g; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(p.x - 26, p.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+
+      ctx.fillStyle = tone;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, 7); ctx.fill();
+    }
+  };
+}
+
 /* ── counters ──────────────────────────────────────────────────── */
 function countUp(el) {
   if (el.dataset.done) return; el.dataset.done = '1';
@@ -638,6 +717,13 @@ function tick(t) {
     if (poleEl) poleEl.inert = barMode;
   }
 
+  /* The route belongs to the journey, not to the destination. Parked at a
+     stop it drops right back so the section owns the screen; in transit it
+     comes up to full. */
+  if (routeSvg) {
+    const moving = clamp((nearD - .16) / .34, 0, 1);
+    routeSvg.style.opacity = (.10 + moving * .9).toFixed(3);
+  }
   if (routeTrail) {
     const L = routeLen * progress;
     routeTrail.style.strokeDashoffset = routeLen - L;
@@ -646,6 +732,7 @@ function tick(t) {
   }
 
   poleUpdate(t, dt, heroD);
+  flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);
   requestAnimationFrame(tick);
 }
@@ -654,7 +741,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  paintPillars(); composer(); cursor(); nav(); peeks(); poleRig();
+  paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

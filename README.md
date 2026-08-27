@@ -103,6 +103,10 @@ laid out at `220%` width and scrolled by a 7s `flow` animation, so the
 colour moves through the bar independently of your scrolling — it reads as
 alive even when the page is still.
 
+The head throws a beam ahead of itself — a soft radial flare on a 1.9s
+pulse, plus a hard white tick with a double glow, so the leading edge reads
+as a light travelling the bar rather than a bar simply getting longer.
+
 The head of the fill carries a small white tick and the percentage, in the
 faint grey (`--ink-3`) so it never competes with content. The label flips
 side near either end (`.at-start` / `.at-end`) so it can't clip off screen.
@@ -163,6 +167,24 @@ scales it down if it would overflow the viewport (`--fit`). This is why you
 can add a paragraph without anything getting clipped. It also means a very
 long section quietly shrinks — if `--fit` drops below ~0.8, cut copy rather
 than letting it shrink further.
+
+**The route is one continuous spline.** Stops are joined with a Catmull-Rom
+curve converted to beziers, which matches tangents across every joint. Per-
+segment beziers meeting at a shared point still kink, because their tangents
+disagree — that produced a hard elbow through the middle of Projects.
+
+**The route recedes when you arrive.** Its opacity is driven by `nearD`: 0.10
+parked at a stop, up to 1.0 mid-transit. It marks the journey, so it has no
+business competing with a section you are actually reading.
+
+**The Projects flow** (`projFlow()`) is five lanes, one per project, with
+packets running left to right through gates. A packet reaching a gate has a
+30% chance of rerouting to a neighbouring lane, and the diagonal it takes is
+the whole point — that is work being handed off between systems, not a
+decorative loop. Lanes are measured with `offsetTop` rather than
+`getBoundingClientRect`, because the stop carries a `scale()` and rects come
+back in scaled pixels while the canvas is sized in layout pixels. It only
+animates while Projects is on screen.
 
 **The route line is the automation metaphor.** It's generated in `buildRoute()`
 from the same coordinates the camera uses, and the glowing trail draws itself
