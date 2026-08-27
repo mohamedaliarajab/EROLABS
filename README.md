@@ -198,7 +198,24 @@ expensive there. Reduced motion skips it entirely.
 
 ## Audio
 
-`audio/ambient.mp3` — 3.0 MB, 4:11, looping, ~64kbps.
+`audio/ambient.mp3` — "Echoes Without Words", 1.91 MB, 4:10, looping.
+CBR 64kbps, 44.1kHz stereo, encoded from the 45.7 MB WAV.
+
+Two encoding notes, since this Mac has no ffmpeg, lame or sox:
+
+- `afconvert` (built into macOS) lists MP3 as a file type but **cannot
+  encode it** — CoreAudio ships an MP3 decoder only. LAME came from the
+  `lameenc` Python wheel in a throwaway venv.
+- **CBR, not VBR, deliberately.** VBR at q7 was slightly smaller (1.87 MB)
+  and better sounding, but `lameenc` writes no Xing header — so players
+  derive duration from the first frame and got **357s for a 250s track**,
+  43% wrong. With `loop` on the audio element that matters. CBR needs no
+  header and the browser reports 249.89s against a 249.84s source.
+
+Feed LAME 44.1kHz, not the original 48kHz: below ~96kbps it silently drops
+to MPEG-2 and halves the output rate to 24kHz, which caps the bandwidth
+around 12kHz and takes the air off an ambient pad. `set_out_sample_rate`
+pins it.
 
 Browsers refuse to start audio without a user gesture, so the loader **asks
 before it lets anyone in**: it runs its calibration to 100%, then offers
