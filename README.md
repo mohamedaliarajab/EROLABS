@@ -96,6 +96,20 @@ The mast belongs to the hero and fades out as the camera travels away
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
 
+## Back to top
+
+On the hero the mast makes navigation obvious. Off it, the mast is gone and
+nothing says the wordmark is the way home — so on **each new arrival** a
+star shoots along a rail beneath it. It fires on arrival (`nearD < .35`),
+not at the midpoint where the nearest-stop index flips, so it plays while
+you are looking at the section rather than mid-flight between two.
+
+It never fires on the hero, where the mast is already doing that job.
+
+Hovering the wordmark holds the rail steady, so the affordance is still
+there after the animation has passed, and `title="Back to top"` covers the
+case where someone missed both.
+
 ## The progress rail
 
 A 3px rail across the top of the viewport. The fill is the brand gradient

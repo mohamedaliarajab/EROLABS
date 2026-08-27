@@ -711,8 +711,20 @@ const ARROWS  = ['↘', '↓', '←', '↘'];
 const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hudCoord'),
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
       pHead = $('#progressHead'), pPct = $('#progressPct'),
-      navLinksEl = $('#navLinks'), poleEl = $('#pole');
-let lastSector = -1, lastNavMode = null;
+      navLinksEl = $('#navLinks'), poleEl = $('#pole'), wordmark = $('.wordmark');
+let lastSector = -1, lastNavMode = null, lastArrived = -1;
+
+/* Off the hero, the mast is gone and nothing says the wordmark is the way
+   back. So on each new arrival a star shoots along a rail beneath it. */
+function flashWordmark() {
+  if (!wordmark || reduced) return;
+  wordmark.classList.remove('shoot');
+  void wordmark.offsetWidth;            // restart, rather than ignore a re-add
+  wordmark.classList.add('shoot');
+}
+wordmark?.addEventListener('animationend', e => {
+  if (e.animationName === 'trailWake') wordmark.classList.remove('shoot');
+});
 
 let lastTick = 0;
 function tick(t) {
@@ -739,6 +751,12 @@ function tick(t) {
     hudSector.textContent = SECTORS[near];
     navLinks.forEach((a, k) => a.classList.toggle('on', k + 1 === near));
     if (near === 3) $$('.stat').forEach(countUp);
+  }
+
+  // fire on arrival, not at the midpoint where `near` flips over
+  if (nearD < .35 && near !== lastArrived) {
+    lastArrived = near;
+    if (near !== 0) flashWordmark();
   }
 
   hudArrow.textContent = ARROWS[Math.min(leg, ARROWS.length - 1)];
