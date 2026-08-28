@@ -1761,7 +1761,13 @@ function tick(t) {
     if (i === 0) heroD = d;
     if (d < dists[best]) best = i;
     stops[i].classList.toggle('live', d < 1.05);
-    stops[i].classList.toggle('hidden', d > 2.4);
+    /* Fade by distance. Without this, neighbouring stops sit in frame at full
+       strength during a leg and the screen reads as several sections piled on
+       each other — which is exactly what "mixed up" looks like. Full at a
+       third of a viewport, gone by four fifths, so a leg is a crossfade
+       between two sections and never a pile of four. */
+    stops[i].style.opacity = clamp(1.65 - d * 2.05, 0, 1).toFixed(3);
+    stops[i].classList.toggle('hidden', d > 1.4);
   }
   /* Hysteresis, and it matters more than it looks. The camera lerps toward
      its target and never exactly arrives, so if you stop scrolling roughly
