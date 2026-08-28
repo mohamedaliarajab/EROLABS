@@ -53,6 +53,7 @@ body.is-touch button,body.is-touch a{cursor:pointer}
 :focus-visible{outline:1px solid var(--blue);outline-offset:3px}
 
 /* ── canvas + film ─────────────────────────────────────────────── */
+#galaxy{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #grain{
   position:fixed;inset:-50%;z-index:6;pointer-events:none;opacity:.13;
@@ -70,7 +71,12 @@ body.is-touch button,body.is-touch a{cursor:pointer}
    entirely when it is not showing, so normal browsing pays nothing. */
 /* the meteor crosses in front of the page and the aurora, but under anything
    lifted above the world — a film or a reading panel is never behind it */
-#meteor{position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;display:none}
+#meteor{
+  position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;display:none;
+  /* a whole-canvas softening on top of the per-frame echoes — the artwork is
+     a sharp still, and a sharp still crossing at speed reads as a stamp */
+  filter:blur(1.4px);opacity:.9;
+}
 #meteor.on{display:block}
 body.reduced #meteor{display:none!important}
 
@@ -312,7 +318,11 @@ body.ready .hud{opacity:1}
 /* ── world ─────────────────────────────────────────────────────────
    Layer order is deliberate: content sits ABOVE every decorative
    layer, so the route line and the drifting rules never cross type. */
-#viewport{position:fixed;inset:0;z-index:2;overflow:hidden}
+#viewport{
+  position:fixed;inset:0;z-index:2;overflow:hidden;
+  /* the melt takes the entire screen, so it lives here rather than on a stop */
+  transform:translateY(var(--sag,0px)) scaleY(var(--sagY,1));
+}
 .layer{position:absolute;inset:0;will-change:transform}
 .layer-bg{z-index:1}
 .layer-fg{z-index:2;pointer-events:none}
@@ -322,8 +332,7 @@ body.ready .hud{opacity:1}
 .stop{
   position:absolute;top:50%;left:50%;z-index:1;
   width:min(1080px,84vw);
-  transform:translate(-50%,-50%) translate(var(--wx,0px),var(--wy,0px)) scale(var(--fit,1))
-            translateY(var(--sag,0px)) scaleY(var(--sagY,1));
+  transform:translate(-50%,-50%) translate(var(--wx,0px),var(--wy,0px)) scale(var(--fit,1));
   transform-origin:50% 50%;
 }
 .stop.hidden{visibility:hidden}
@@ -760,7 +769,7 @@ body.ready .hud{opacity:1}
    turbulence displacement, plus blur and drained colour. --melt is written
    per frame by the engine; the class is only present while melting, so a
    page in normal use carries no filter cost at all. */
-.stop.melting,.reader-glass.melting{
+#viewport.melting{
   filter:url(#melt)
          blur(var(--blur,0px))
          saturate(calc(1 - var(--melt,0) * .55))
@@ -805,7 +814,7 @@ body.ready .hud{opacity:1}
   .eq-done-msg{font-size:calc(var(--u)*2)}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
-  .stop.melting,.reader-glass.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
+  #viewport.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */

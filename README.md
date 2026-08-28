@@ -169,10 +169,10 @@ Three details that matter:
   wreck the camera layout it sits in. The clone drops `.cat-media`, `canvas`
   and `video`, since a cloned video would play over the original and a cloned
   canvas is dead pixels.
-- **The melt never touches the panel.** Only the page melts. A panel — or a
-  film — sits above the world at body level and stays crisp; it is not part of
-  what the camera is travelling through. Whatever is lifted is only affected
-  once it is back in place.
+- **The whole screen melts.** The sag and the filter are applied to `#viewport`,
+  not to whichever section happens to be nearest — the effect is the page
+  giving way, and the page is all of it. A panel or a film sits above the world
+  at body level and is never touched.
 - **Closing counts as activity.** It calls `clearMelt()` and `wake()`, so a
   melt that crept in while reading is gone the moment the panel closes, exactly
   as if you had scrolled.
@@ -441,16 +441,35 @@ separate field, versus almost no blue without it.
 No WebGL, or a lost context, falls back to the three gradient blobs in
 `#aurora.no-gl`.
 
+## The hero's sky
+
+`galaxy` bakes a Milky Way once into an offscreen texture — a diagonal band of
+blue, violet and white blobs, dust lanes cut back out with `destination-out`,
+and 2,800 stars weighted toward the band. Per frame it is one transformed
+`drawImage` plus 46 live twinkles, so a drifting galaxy costs about what a
+gradient would.
+
+**It belongs to the hero alone** — `1 - heroD/.8`, so it is gone by the time
+you have left, and it returns nothing at all past that point. Kept dark on
+purpose: composited over the black ground it means a **10.6/255** average, with
+a few hundred genuinely bright star pixels doing the contrast. Most of the
+nebula sits under 5% alpha.
+
 ## The meteor
 
 `media/meteor.png` (900px, 442 KB — the supplied artwork resampled from
-1.4 MB). It crosses about 2.5s after the aurora has risen, then again every
-7–12s, taking ~1.15s corner to corner.
+1.4 MB). It crosses about 2.5s after the aurora has risen and **twice per idle, then
+rests** — each pass on a freshly randomised diagonal, entering off one top
+corner and leaving through the opposite bottom.
 
 The artwork already carries its own plasma trail, so the work here is *speed*:
 
-- **Motion blur** is seven echoes drawn back along the path with rising alpha
-  under `globalCompositeOperation = 'lighter'`.
+- **Motion blur** is fifteen echoes drawn back along the path on a squared
+  alpha ramp under `globalCompositeOperation = 'lighter'`, the head itself is
+  drawn soft (two passes at 55% and 82%) rather than stamped, each pass fades
+  up entering frame and away leaving it, and the whole canvas carries a 1.4px
+  blur at 90% opacity. A sharp still crossing at speed reads as a stamp; all
+  of that is what stops it.
 - **A plasma bloom** trails the head on a radial gradient that breathes.
 - **Sparks** are thrown off the head against the direction of travel and drawn
   as short lines along their own velocity, so they streak rather than dot.

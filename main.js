@@ -73,6 +73,7 @@ function measure() {
   buildRoute();
   dress();
   field.resize();
+  galaxy.size();
   meteor.size();
 }
 
@@ -167,6 +168,117 @@ function buildRoute() {
   routeLen = routePath.getTotalLength();
   routeTrail.style.strokeDasharray = routeLen;
 }
+
+/* ── the milky way ─────────────────────────────────────────────────
+   Baked once into an offscreen texture — a diagonal band of overlapping
+   blue, violet and white blobs, dust lanes cut back out of it, and a few
+   thousand stars weighted toward the band. Per frame it is one transformed
+   drawImage plus a handful of live twinkles, so a galaxy that drifts and
+   breathes costs about as much as a gradient. */
+const galaxy = (() => {
+  const cv = $('#galaxy');
+  if (!cv) return { size(){}, draw(){} };
+  const ctx = cv.getContext('2d');
+  let tex = null, W = 0, H = 0, twinkle = [];
+
+  function bake() {
+    const w = 1500, h = 950, ang = -.44;
+    const off = document.createElement('canvas');
+    off.width = w; off.height = h;
+    const c = off.getContext('2d');
+    const along = t => ({
+      x: w / 2 + Math.cos(ang) * t.a - Math.sin(ang) * t.c,
+      y: h / 2 + Math.sin(ang) * t.a + Math.cos(ang) * t.c
+    });
+
+    c.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 190; i++) {                       // the band itself
+      const p = along({ a: (Math.random() - .5) * w * 1.6,
+                        c: (Math.random() - .5) * h * .40 * (.45 + Math.random()) });
+      const r = 70 + Math.random() * 240;
+      const k = Math.random();
+      const col = k < .44 ? '52,104,255' : k < .78 ? '146,70,255' : '206,222,255';
+      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, `rgba(${col},${(.016 + Math.random() * .034).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${col},0)`);
+      c.fillStyle = g;
+      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
+    }
+
+    c.globalCompositeOperation = 'destination-out';       // dust lanes
+    for (let i = 0; i < 40; i++) {
+      const p = along({ a: (Math.random() - .5) * w * 1.4,
+                        c: (Math.random() - .5) * h * .16 });
+      const r = 40 + Math.random() * 150;
+      const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+      g.addColorStop(0, `rgba(0,0,0,${(.26 + Math.random() * .38).toFixed(2)})`);
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g;
+      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
+    }
+
+    c.globalCompositeOperation = 'lighter';               // stars, densest in the band
+    for (let i = 0; i < 2800; i++) {
+      const inBand = Math.random() < .72;
+      const p = inBand
+        ? along({ a: (Math.random() - .5) * w * 1.7,
+                  c: (Math.random() - .5) * h * .34 * Math.random() })
+        : { x: Math.random() * w, y: Math.random() * h };
+      const b = Math.random();
+      const r = b > .990 ? 2.1 : b > .94 ? 1.2 : .6;
+      const k = Math.random();
+      const col = k < .30 ? '150,190,255' : k < .52 ? '190,160,255' : '240,246,255';
+      // contrast, not haze: most stars faint, a few genuinely bright
+      const bright = b > .94 ? .55 + Math.random() * .45 : .08 + Math.random() * .30;
+      c.fillStyle = `rgba(${col},${bright.toFixed(2)})`;
+      c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
+    }
+    tex = off;
+  }
+
+  const size = () => {
+    const d = Math.min(devicePixelRatio || 1, 1.25);      // it is all soft light
+    W = innerWidth; H = innerHeight;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    if (!tex) bake();
+    twinkle = Array.from({ length: 46 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: .8 + Math.random() * 1.5, ph: Math.random() * 7,
+      sp: .4 + Math.random() * 1.1
+    }));
+  };
+
+  const draw = (t, heroD) => {
+    if (!tex || !W) return;
+    ctx.clearRect(0, 0, W, H);
+    // the hero's sky, and only the hero's — gone by the time you have left it
+    const near = clamp(1 - heroD / .8, 0, 1);
+    if (near <= .002) return;
+    ctx.globalAlpha = near * .62;
+
+    const scale = Math.max(W / tex.width, H / tex.height) * 1.22;
+    const drift = t * .0000085;
+    ctx.save();
+    ctx.translate(W / 2 - cam.x * .05, H / 2 - cam.y * .05);
+    ctx.rotate(Math.sin(drift * 3.1) * .035);             // a slow wheel
+    ctx.scale(scale * (1 + Math.sin(drift * 5.2) * .015), scale * (1 + Math.sin(drift * 5.2) * .015));
+    ctx.translate(Math.sin(drift * 2.2) * 60, Math.cos(drift * 1.7) * 40);
+    ctx.drawImage(tex, -tex.width / 2, -tex.height / 2);
+    ctx.restore();
+
+    ctx.globalCompositeOperation = 'lighter';             // the live twinkles
+    for (const s of twinkle) {
+      const a = .18 + .55 * Math.pow(Math.max(0, Math.sin(t * .0009 * s.sp + s.ph)), 3);
+      ctx.fillStyle = `rgba(226,238,255,${a.toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  };
+
+  return { size, draw };
+})();
 
 /* ── field: fixed world nodes, precomputed links, riding pulses ─── */
 const field = (() => {
@@ -648,8 +760,9 @@ const meteor = (() => {
   img.src = METEOR_SRC;
 
   let W = 0, H = 0, dpr = 1;
-  let flying = false, t0 = 0, next = 0, sparks = [], px = 0, py = 0;
-  const DUR = 1150;                       // one crossing, in ms
+  let flying = false, t0 = 0, next = 0, sparks = [], passes = 0, path = null;
+  const DUR = 1250;                       // one crossing, in ms
+  const PASSES = 2;                       // two per idle, then it rests
   const IMG_ANGLE = Math.atan2(380, -720); // the artwork's own head direction
 
   const size = () => {
@@ -659,14 +772,19 @@ const meteor = (() => {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   };
   const reset = () => {
-    flying = false; next = 0; sparks = [];
+    flying = false; next = 0; sparks = []; passes = 0; path = null;
     if (W) ctx.clearRect(0, 0, W, H);
     cv.classList.remove('on');
   };
 
-  // the path: in past one corner, out through the opposite one
-  const A = () => ({ x: W * 1.22, y: -H * 0.28 });
-  const B = () => ({ x: -W * 0.42, y: H * 1.26 });
+  /* A fresh diagonal each pass, entering off one top corner and leaving
+     through the opposite bottom. Rotation derives from the path, so any
+     direction flies head-first. */
+  const newPath = () => Math.random() < .5
+    ? { a: { x:  W * (1.08 + Math.random() * .28), y: -H * (.12 + Math.random() * .40) },
+        b: { x: -W * (.22 + Math.random() * .34),  y:  H * (1.04 + Math.random() * .32) } }
+    : { a: { x: -W * (.08 + Math.random() * .28),  y: -H * (.12 + Math.random() * .40) },
+        b: { x:  W * (1.02 + Math.random() * .34), y:  H * (1.04 + Math.random() * .32) } };
 
   function draw(now) {
     const k = (now - t0) / DUR;
@@ -675,7 +793,7 @@ const meteor = (() => {
     }
     ctx.clearRect(0, 0, W, H);
 
-    const a = A(), b = B();
+    const a = path.a, b = path.b;
     const ang = Math.atan2(b.y - a.y, b.x - a.x);
     const rot = ang - IMG_ANGLE;
     // ease so it arrives fast and leaves faster
@@ -685,15 +803,20 @@ const meteor = (() => {
 
     const stepX = (b.x - a.x) * .012, stepY = (b.y - a.y) * .012;
 
+    // never a hard cut: it fades up entering frame and away leaving it
+    const fade = Math.max(0, Math.min(Math.min(1, k / .16), Math.min(1, (1 - k) / .22)));
+
     if (k < 1 && ready) {
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      for (let i = 7; i >= 1; i--) {            // motion blur, drawn as echoes
-        ctx.globalAlpha = .05 + (7 - i) * .022;
+      const ECHOES = 15;                        // the smear that sells the speed
+      for (let i = ECHOES; i >= 1; i--) {
+        const f = 1 - i / ECHOES;
+        ctx.globalAlpha = (.012 + f * f * .085) * fade;
         ctx.save();
-        ctx.translate(x - stepX * i, y - stepY * i);
+        ctx.translate(x - stepX * i * 1.15, y - stepY * i * 1.15);
         ctx.rotate(rot);
-        ctx.drawImage(img, -w * .18, -h * .5, w, h);
+        ctx.drawImage(img, -w * .18, -h * .5, w * (1 + i * .006), h * (1 + i * .006));
         ctx.restore();
       }
       // the plasma the trail rides on, breathing as it goes
@@ -703,15 +826,17 @@ const meteor = (() => {
       g.addColorStop(0, 'rgba(150,190,255,.30)');
       g.addColorStop(.45, 'rgba(120,80,255,.14)');
       g.addColorStop(1, 'rgba(90,40,200,0)');
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = fade;
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(gx, gy, w * .5 * puls, 0, 7); ctx.fill();
       ctx.restore();
 
-      ctx.save();                               // the meteor itself, crisp
+      ctx.save();                               // the head — soft, not stamped
       ctx.translate(x, y);
       ctx.rotate(rot);
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = .55 * fade;
+      ctx.drawImage(img, -w * .19, -h * .52, w * 1.04, h * 1.04);
+      ctx.globalAlpha = .82 * fade;
       ctx.drawImage(img, -w * .18, -h * .5, w, h);
       ctx.restore();
 
@@ -757,10 +882,12 @@ const meteor = (() => {
       if (s < 7.5 || reduced) { if (flying || sparks.length) reset(); return; }
       if (!ready) return;
       if (!flying) {
-        if (!next) next = now + 400;
+        if (passes >= PASSES) { if (sparks.length) draw(now); return; }
+        if (!next) next = now + 500;
         if (now < next) return;
-        flying = true; t0 = now; cv.classList.add('on');
-        next = now + DUR + 7000 + Math.random() * 5000;
+        flying = true; t0 = now; passes++; path = newPath();
+        cv.classList.add('on');
+        next = now + DUR + 4500 + Math.random() * 3500;
       }
       draw(now);
     }
@@ -829,16 +956,17 @@ function writeMelt(el, t, urgent) {
   }
 }
 
-function melt(t, dt, i) {
+const viewportEl = $('#viewport');
+function melt(t, dt) {
   if (reduced || !meltDisp) return;
   /* rAF is suspended while the tab is hidden, so on return `t - lastActive`
      can be minutes. Treat a long frame gap as coming back to the page and
      restart the countdown, rather than snapping straight to a deep melt. */
   if (dt > 500) { lastActive = t; meltT = 0; }
-  /* Only the page melts. A reading panel or a film sits above it at body
-     level and stays crisp — it is the thing being looked at, and it is not
-     part of the world the camera is travelling. */
-  const el = stops[i];
+  /* The whole screen melts, not whichever section happens to be nearest —
+     the effect is the page giving way, and the page is all of it. Panels and
+     films sit above the world at body level and are never touched. */
+  const el = viewportEl;
   if (meltEl && meltEl !== el) clearMelt();
 
   if (t - lastActive < MELT_AFTER) {
@@ -1692,13 +1820,14 @@ function tick(t) {
     routePulse.setAttribute('cx', pt.x); routePulse.setAttribute('cy', pt.y);
   }
 
-  melt(t, dt, near);
+  melt(t, dt);
   auroraUpdate(meltT, t);
   meteor.update(meltT, t);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
+  galaxy.draw(t, heroD);
   field.draw(t);
   requestAnimationFrame(tick);
 }
