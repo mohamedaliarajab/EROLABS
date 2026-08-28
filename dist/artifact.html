@@ -2356,7 +2356,9 @@ function reader() {
         body  = $('#readerBody'),
         x     = $('.reader-x', shell),
         scrim = $('.reader-scrim', shell);
-  const BLOCKS = '.case-step, .cd-panel, .cat, .pillar';
+  /* The case study only. About and Projects each have their own plan for
+     these blocks, so they are deliberately not part of the reading view. */
+  const BLOCKS = '.case-step, .cd-panel';
   let dwell = null, open = false;
 
   const show = src => {
@@ -2365,6 +2367,8 @@ function reader() {
     const clone = src.cloneNode(true);
     clone.removeAttribute('id');
     clone.hidden = false;
+    clone.classList.remove('readable');          // no hover affordance inside the panel
+    clone.querySelectorAll('.readable').forEach(n => n.classList.remove('readable'));
     // strip anything that would run twice: a cloned video would play over
     // the original, and a cloned canvas is dead pixels
     clone.querySelectorAll('.cat-media, canvas, video').forEach(n => n.remove());

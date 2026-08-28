@@ -104,7 +104,9 @@ panel at 75% x 75% of the viewport — headings go from ~11px to ~39px, body fro
 ~11px to ~18px — and blurs everything behind it. Close with the X, the scrim,
 or Escape.
 
-Applied to `.case-step`, `.cd-panel`, `.cat` and `.pillar` — 13 blocks.
+Applied to the case study only — `.case-step` and `.cd-panel`, 7 blocks.
+**About and Projects are deliberately excluded**; those sections have their own
+plans for these blocks. Don't add them back without being asked.
 
 Three details that matter:
 
