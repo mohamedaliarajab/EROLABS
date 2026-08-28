@@ -856,8 +856,8 @@ body.reduced .star{animation:none}
   width:min(75vw,1180px);height:min(75vh,900px);
   border-radius:calc(var(--u)*1.4);overflow:hidden;isolation:isolate;
   background:
-    linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 26%,rgba(255,255,255,0) 58%),
-    linear-gradient(158deg,rgba(58,64,92,.58),rgba(11,13,22,.74));
+    linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 62%),
+    linear-gradient(158deg,rgba(44,49,74,.60),rgba(12,14,24,.74));
   -webkit-backdrop-filter:blur(34px) saturate(1.9) brightness(1.06);
   backdrop-filter:blur(34px) saturate(1.9) brightness(1.06);
   border:1px solid rgba(255,255,255,.13);
@@ -887,7 +887,7 @@ body.reduced .star{animation:none}
 /* the highlight that sells it as a curved surface */
 .reader-sheen{
   position:absolute;left:-20%;top:-45%;width:140%;height:70%;pointer-events:none;z-index:1;
-  background:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.13),transparent 62%);
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.06),transparent 68%);
   animation:sheenDrift 11s ease-in-out infinite;
 }
 @keyframes sheenDrift{0%,100%{transform:translateX(-4%)}50%{transform:translateX(6%)}}
@@ -897,7 +897,10 @@ body.reduced .star{animation:none}
 
 .reader-head{position:relative;z-index:3;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:calc(var(--u)*1.1) calc(var(--u)*1.1) 0}
 /* a strip that animates to match whatever is being read */
-.reader-vis{flex:1;height:clamp(38px,4.4vh,60px);display:block;opacity:.9}
+/* the panel is large and the copy rarely fills it, so whatever is left over
+   becomes a stage for an animation of what is being read */
+.reader-stage{position:relative;z-index:2;flex:1 1 auto;min-height:clamp(110px,16vh,200px)}
+.reader-vis{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.95}
 .reader-x{
   display:grid;place-items:center;width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);
   border-radius:50%;border:1px solid rgba(255,255,255,.16);color:var(--ink-2);
@@ -906,7 +909,7 @@ body.reduced .star{animation:none}
 .reader-x svg{width:58%;height:58%}
 .reader-x:hover{color:#fff;border-color:var(--violet);background:rgba(166,37,238,.16);transform:rotate(90deg)}
 .reader-body{
-  position:relative;z-index:3;flex:1;overflow-y:auto;overscroll-behavior:contain;
+  position:relative;z-index:3;flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
   padding:calc(var(--u)*.6) clamp(24px,3.4vw,60px) clamp(28px,3.4vw,56px);
 }
 
@@ -1383,12 +1386,12 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
     <i class="reader-ring" aria-hidden="true"></i>
     <i class="reader-sheen" aria-hidden="true"></i>
     <div class="reader-head">
-      <canvas class="reader-vis" id="readerVis" aria-hidden="true"></canvas>
       <button class="reader-x" aria-label="Close reading view">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
     <div class="reader-body" id="readerBody"></div>
+    <div class="reader-stage"><canvas class="reader-vis" id="readerVis" aria-hidden="true"></canvas></div>
   </div>
 </div>
 
@@ -2408,69 +2411,142 @@ const readerVis = (() => {
     ctx.setTransform(d, 0, 0, d, 0, 0);
   };
 
+  const lerpc = (a, b, k) => `rgba(${Math.round(a[0]+(b[0]-a[0])*k)},${Math.round(a[1]+(b[1]-a[1])*k)},${Math.round(a[2]+(b[2]-a[2])*k)},`;
+  const BLUE = [30,144,255], VIOLET = [166,37,238];
+
   function draw(ts) {
     if (!t0) t0 = ts;
     const t = (ts - t0) / 1000, mid = H / 2;
     ctx.clearRect(0, 0, W, H);
 
-    if (mode === 'scatter') {                       // nothing is tracked
+    /* PROBLEM — jobs drifting with nothing holding them; some simply lost */
+    if (mode === 'scatter') {
       for (const p of pts) {
         p.x += p.vx; p.y += p.vy;
-        if (p.x < 3 || p.x > W - 3) p.vx *= -1;
-        if (p.y < 4 || p.y > H - 4) p.vy *= -1;
-        const fl = Math.max(0, Math.sin(t * 1.8 + p.ph));
-        ctx.fillStyle = `rgba(255,120,150,${.22 + fl * .55})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 1.5 + fl * 1.7, 0, 7); ctx.fill();
+        if (p.x < 6 || p.x > W - 6) p.vx *= -1;
+        if (p.y < 6 || p.y > H - 6) p.vy *= -1;
+        p.life -= .0016;
+        if (p.life <= 0) { p.life = 1; p.x = Math.random() * W; p.y = Math.random() * H; }
       }
-    } else if (mode === 'measure') {                // every hand-off, timed
-      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
-      for (let i = 0; i <= 20; i++) {
-        const x = W * i / 20, big = i % 5 === 0;
-        ctx.strokeStyle = `rgba(200,215,255,${big ? .42 : .16})`;
-        ctx.beginPath(); ctx.moveTo(x, mid); ctx.lineTo(x, mid - (big ? 11 : 5)); ctx.stroke();
+      ctx.lineWidth = 1;                              // links that keep breaking
+      for (let i = 0; i < pts.length; i++)
+        for (let j = i + 1; j < pts.length; j++) {
+          const a = pts[i], b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d > 108) continue;
+          const flick = .5 + .5 * Math.sin(t * 2.4 + i * .7 + j);
+          ctx.strokeStyle = `rgba(255,130,160,${(1 - d / 108) * .16 * flick})`;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      for (const p of pts) {
+        const fade = Math.min(1, p.life * 3);
+        ctx.fillStyle = `rgba(255,${120 + p.warm * 90},${150 + p.warm * 60},${.30 * fade})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.4 + p.warm * 1.6, 0, 7); ctx.fill();
       }
-      const x = W * ((t * .26) % 1);
+
+    /* PROCESS — every hand-off measured; four of them actually mattered */
+    } else if (mode === 'measure') {
+      const N = 12, pad = W * .05, span = W - pad * 2, seg = span / N;
+      const keep = [2, 5, 8, 10];
+      ctx.strokeStyle = 'rgba(255,255,255,.13)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(W - pad, mid); ctx.stroke();
+      const sweep = pad + span * ((t * .18) % 1);
+      for (let i = 0; i < N; i++) {
+        const x0 = pad + i * seg, x1 = x0 + seg * .82, cx = (x0 + x1) / 2;
+        const hit = sweep > cx, k = keep.includes(i);
+        const h = (k ? 34 : 14) * (hit ? 1 : .32);
+        ctx.strokeStyle = k ? `rgba(140,180,255,${hit ? .85 : .3})` : `rgba(200,215,255,${hit ? .3 : .12})`;
+        ctx.lineWidth = k ? 1.5 : 1;
+        ctx.beginPath();
+        ctx.moveTo(x0, mid); ctx.lineTo(x0, mid - h);
+        ctx.lineTo(x1, mid - h); ctx.lineTo(x1, mid); ctx.stroke();
+        if (k && hit) {
+          ctx.fillStyle = 'rgba(160,195,255,.9)';
+          ctx.beginPath(); ctx.arc(cx, mid - h - 6, 2.6, 0, 7); ctx.fill();
+        }
+      }
       ctx.strokeStyle = '#8FB6FF'; ctx.lineWidth = 1.4;
-      ctx.beginPath(); ctx.moveTo(x, mid - 15); ctx.lineTo(x, mid + 9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sweep, mid - 46); ctx.lineTo(sweep, mid + 18); ctx.stroke();
       ctx.fillStyle = 'rgba(143,182,255,.95)';
-      ctx.beginPath(); ctx.arc(x, mid, 3, 0, 7); ctx.fill();
-    } else if (mode === 'route') {                  // raised once, routed, closed
-      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
-      const gates = [.22, .46, .70, .92], k = (t * .22) % 1, px = W * k;
-      gates.forEach(g => {
-        const gx = W * g, near = Math.max(0, 1 - Math.abs(px - gx) / 26);
-        ctx.fillStyle = `rgba(190,210,255,${.14 + near * .8})`;
-        ctx.fillRect(gx - .75, mid - 8, 1.5, 16);
-      });
-      const grd = ctx.createLinearGradient(px - 34, 0, px + 4, 0);
-      grd.addColorStop(0, 'rgba(120,170,255,0)'); grd.addColorStop(1, '#A66BFF');
-      ctx.strokeStyle = grd; ctx.lineWidth = 2; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(px - 34, mid); ctx.lineTo(px, mid); ctx.stroke();
-      ctx.fillStyle = '#C36BFF'; ctx.beginPath(); ctx.arc(px, mid, 2.6, 0, 7); ctx.fill();
-    } else if (mode === 'steady') {                 // it simply runs
-      ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(sweep, mid, 3.4, 0, 7); ctx.fill();
+
+    /* SOLUTION — the email arrives, routes, escalates if ignored, closes on a photo */
+    } else if (mode === 'route') {
+      const pad = W * .07, span = W - pad * 2, stages = 5;
+      const gx = i => pad + span * (i / (stages - 1));
+      ctx.strokeStyle = 'rgba(255,255,255,.11)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad, mid); ctx.lineTo(W - pad, mid); ctx.stroke();
+
+      const k = (t * .17) % 1, px = pad + span * k;
+      for (let i = 0; i < stages; i++) {
+        const x = gx(i), near = Math.max(0, 1 - Math.abs(px - x) / 40);
+        ctx.strokeStyle = `rgba(190,210,255,${.16 + near * .8})`;
+        ctx.lineWidth = 1 + near;
+        ctx.beginPath(); ctx.arc(x, mid, 9 + near * 5, 0, 7); ctx.stroke();
+        if (near > .5) {
+          ctx.fillStyle = `rgba(200,225,255,${(near - .5) * 1.4})`;
+          ctx.beginPath(); ctx.arc(x, mid, 3, 0, 7); ctx.fill();
+        }
+      }
+      // the escalation arc, drawn as the packet passes the third stage
+      const esc = Math.max(0, 1 - Math.abs(px - gx(2)) / 90);
+      if (esc > 0) {
+        ctx.strokeStyle = `rgba(166,37,238,${esc * .7})`; ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(gx(2), mid);
+        ctx.quadraticCurveTo((gx(2) + gx(3)) / 2, mid - H * .30, gx(3), mid);
+        ctx.stroke();
+      }
+      const grad = ctx.createLinearGradient(px - 60, 0, px + 6, 0);
+      grad.addColorStop(0, 'rgba(120,170,255,0)'); grad.addColorStop(1, '#B57BFF');
+      ctx.strokeStyle = grad; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(px - 60, mid); ctx.lineTo(px, mid); ctx.stroke();
+      ctx.fillStyle = '#D08BFF';
+      ctx.beginPath(); ctx.arc(px, mid, 3.4, 0, 7); ctx.fill();
+
+    /* RESULT — it simply runs, month after month */
+    } else if (mode === 'steady') {
+      ctx.lineWidth = 1.8; ctx.lineCap = 'round';
       const g = ctx.createLinearGradient(0, 0, W, 0);
-      g.addColorStop(0, 'rgba(30,144,255,.15)'); g.addColorStop(.5, '#6FA5FF');
-      g.addColorStop(1, 'rgba(166,37,238,.15)');
+      g.addColorStop(0, 'rgba(30,144,255,.12)'); g.addColorStop(.5, '#6FA5FF');
+      g.addColorStop(1, 'rgba(166,37,238,.16)');
       ctx.strokeStyle = g; ctx.beginPath();
       for (let x = 0; x <= W; x += 3) {
-        const y = mid + Math.sin(x * .035 - t * 2.4) * (H * .2) * (.4 + .6 * Math.sin(x * .006 + t * .5));
+        const y = mid + Math.sin(x * .018 - t * 1.6) * (H * .16)
+                      * (.45 + .55 * Math.sin(x * .0045 + t * .4));
         x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
       }
       ctx.stroke();
-    } else {                                        // climb: the figures
-      const n = 22, bw = W / n;
-      for (let i = 0; i < n; i++) {
-        const p = Math.min(1, Math.max(0, t * .7 - i * .045));
-        const e = 1 - Math.pow(1 - p, 3);
-        const h = (H - 8) * e * (.35 + .65 * (i / n));
-        const g = ctx.createLinearGradient(0, H, 0, H - h);
-        g.addColorStop(0, 'rgba(30,144,255,.25)'); g.addColorStop(1, '#A66BFF');
-        ctx.fillStyle = g;
-        ctx.fillRect(i * bw + bw * .22, H - 4 - h, bw * .5, h);
+      for (let i = 0; i < 12; i++) {                 // one steady mark a month
+        const x = W * ((i + .5) / 12);
+        const pulse = Math.max(0, Math.sin(t * 1.4 - i * .5));
+        ctx.fillStyle = `rgba(190,215,255,${.18 + pulse * .7})`;
+        ctx.beginPath(); ctx.arc(x, mid + H * .30, 2.2 + pulse * 2.2, 0, 7); ctx.fill();
       }
+
+    /* FIGURES — the line goes up and stays up */
+    } else {
+      const n = 26, bw = W / n, base = H - 10;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const target = .28 + .62 * (i / (n - 1)) + Math.sin(i * 1.7) * .05;
+        const p = Math.min(1, Math.max(0, t * .8 - i * .05));
+        const h = (base - 12) * target * (1 - Math.pow(1 - p, 3));
+        const g = ctx.createLinearGradient(0, base, 0, base - h);
+        g.addColorStop(0, lerpc(BLUE, VIOLET, i / n) + '.20)');
+        g.addColorStop(1, lerpc(BLUE, VIOLET, i / n) + '.95)');
+        ctx.fillStyle = g;
+        ctx.fillRect(i * bw + bw * .26, base - h, bw * .46, h);
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,.30)'; ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      for (let i = 0; i < n; i++) {
+        const target = .28 + .62 * (i / (n - 1)) + Math.sin(i * 1.7) * .05;
+        const p = Math.min(1, Math.max(0, t * .8 - i * .05));
+        const h = (base - 12) * target * (1 - Math.pow(1 - p, 3));
+        const x = i * bw + bw * .49, y = base - h;
+        i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
     }
   }
   const frame = ts => { draw(ts); raf = requestAnimationFrame(frame); };
@@ -2479,14 +2555,11 @@ const readerVis = (() => {
     size,
     start(m) {
       mode = m || 'steady'; t0 = 0;
-      /* the panel is already displayed when this runs, so measure now rather
-         than waiting a frame — and paint once immediately, so the strip is
-         never blank on the way in */
       size();
-      pts = Array.from({ length: 24 }, () => ({
-        x: Math.random() * W, y: 4 + Math.random() * (H - 8),
-        vx: (Math.random() - .5) * .9, vy: (Math.random() - .5) * .7,
-        ph: Math.random() * 7
+      pts = Array.from({ length: 42 }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        vx: (Math.random() - .5) * 1.1, vy: (Math.random() - .5) * .9,
+        life: Math.random(), warm: Math.random()
       }));
       draw(performance.now());
       if (!raf) raf = requestAnimationFrame(frame);

@@ -119,11 +119,22 @@ That last one only arms once the pointer has actually been *inside* — opening
 from a block near the screen edge leaves the cursor outside the panel, and
 without the guard the same motion that opened it would close it.
 
-**The strip at the top animates to match the block.** Each declares `data-vis`:
-`scatter` for the problem (drifting points, nothing tracked), `measure` for the
-process (a caliper sweeping a ruler), `route` for the solution (a packet
-through gates), `steady` for the result (a calm pulse), `climb` for figures and
-tables (bars rising).
+**Whatever the copy does not fill becomes a stage.** The panel is large and
+the text rarely reaches the bottom, so `.reader-body` is `flex: 0 1 auto` and
+`.reader-stage` takes everything left over — short blocks get a large animation,
+long ones (the tables) shrink it to its `min-height` and scroll the body
+instead. Verified: a table panel gives 479px of body, 144px of stage, inside a
+675px glass, with nothing overflowing.
+
+Each block declares `data-vis`, and the stage draws to suit:
+
+| mode | block | what it shows |
+|------|-------|----------------|
+| `scatter` | Problem | jobs drifting, links flickering, some simply lost |
+| `measure` | Process | a caliper sweeping a timeline; four segments matter |
+| `route` | Solution | a packet through five stages, with an escalation arc |
+| `steady` | Result | a calm wave and one steady mark a month |
+| `climb` | brief, figures, tables | bars rising to a trend line |
 
 Three details that matter:
 
