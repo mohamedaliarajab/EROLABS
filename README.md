@@ -588,3 +588,26 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
       already public in the footer, but FormSubmit can issue an alias
       endpoint after activation if you would rather it were not.
 - [ ] **OG image** — none set. Capture `?stop=0` at 1200×630.
+
+## A warning, learned the hard way
+
+**Never delete CSS rules with a line-based regex.** Removing the pillars this
+way ate three selector lines and left their declaration bodies behind, which
+produced stray `}` characters. A stray `}` does not fail loudly — it silently
+terminates parsing for *everything after it*, so Projects, Case Studies, Reach,
+the reader, the film box and the layers all lost their rules at once and the
+page looked as though the scroll engine had broken. It had not; only the
+stylesheet had.
+
+If a section ever renders as huge unstyled text, check the braces first:
+
+```bash
+python3 -c "
+s=open('styles.css').read(); d=0; bad=0
+for c in s:
+    d += c=='{'; d -= c=='}'
+    if d<0: bad+=1; d=0
+print('stray closers:', bad, ' unclosed:', d)"
+```
+
+Both numbers must be zero. There are currently 436 parsed rules.
