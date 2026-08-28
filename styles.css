@@ -509,11 +509,29 @@ body.ready .hud{opacity:1}
   transition:color .3s;
 }
 .eq-field input{
-  display:block;width:100%;background:none;border:0;
+  display:block;width:100%;background:none;border:0;border-radius:0;
+  -webkit-appearance:none;appearance:none;box-shadow:none;
   padding:calc(var(--u)*.42) 0;outline:none;
   font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.18);letter-spacing:-.012em;
   color:var(--violet-ink);caret-color:var(--violet-ink);
 }
+/* No box, ever. Chrome's autofill paints its own solid background and forces
+   its own text colour — the only way out is a colossal transition delay on
+   background-color plus -webkit-text-fill-color. */
+.eq-field input:-webkit-autofill,
+.eq-field input:-webkit-autofill:hover,
+.eq-field input:-webkit-autofill:focus,
+.eq-field input:-webkit-autofill:active{
+  -webkit-text-fill-color:var(--violet-ink);
+  caret-color:var(--violet-ink);
+  -webkit-box-shadow:0 0 0 100vmax transparent inset;
+  box-shadow:0 0 0 100vmax transparent inset;
+  background-clip:text;
+  transition:background-color 600000s 0s,color 600000s 0s;
+}
+/* the travelling glow and the label colour ARE the focus indicator here, so
+   the global focus ring would only draw the box we just removed */
+.eq-field input:focus,.eq-field input:focus-visible{outline:none;box-shadow:none}
 /* the field never gets a filled background — the light does the work.
    ::before is the resting hairline, ::after the glow travelling beneath it. */
 .eq-field::before{

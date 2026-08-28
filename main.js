@@ -9,21 +9,22 @@
 'use strict';
 
 /* ═══ WHERE ENQUIRIES GO ═══════════════════════════════════════════
-   A static page cannot send email by itself — something has to receive
-   the POST. Two ways, pick one:
+   A web page cannot put mail on the wire by itself — something has to
+   accept the POST and send it. This posts to FormSubmit, which needs no
+   account and no key: it emails whatever it receives to the address in the
+   URL, and its /ajax/ endpoint answers with CORS so the page never
+   navigates away.
 
-   1. Leave ENQUIRY_WEBHOOK empty. The form posts to the Netlify Form
-      already declared in the markup. Submissions land under Forms in the
-      Netlify dashboard; set the notification address there once and they
-      arrive by email from then on. Nothing else to do.
+   ONE-TIME STEP, and enquiries do not arrive until it is done: the very
+   first submission makes FormSubmit send a confirmation link to
+   ENQUIRY_EMAIL. Open it once, and from then on every enquiry lands in
+   that inbox within seconds.
 
-   2. Paste a Make webhook URL below. Enquiries are posted straight to the
-      scenario as JSON and it emails them on — one op per enquiry, which is
-      nothing against the 10k ceiling, and it arrives in seconds.
-
-   ENQUIRY_EMAIL is only the address shown to a visitor if delivery fails.  */
-const ENQUIRY_WEBHOOK = '';
-const ENQUIRY_EMAIL   = 'mohamedali.a.rajab@gmail.com';
+   To route through Make instead, put the webhook URL in ENQUIRY_WEBHOOK —
+   it takes precedence and the enquiry is posted to it as plain JSON.     */
+const ENQUIRY_EMAIL    = 'mohamedali.a.rajab@gmail.com';
+const ENQUIRY_ENDPOINT = 'https://formsubmit.co/ajax/' + ENQUIRY_EMAIL;
+const ENQUIRY_WEBHOOK  = '';
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -936,25 +937,30 @@ function enquiry() {
     setNote('Sending…', false);
 
     try {
-      const fd = new FormData(form);
-      let res;
-      if (ENQUIRY_WEBHOOK) {
-        const data = {};
-        fd.forEach((v, k) => { if (k !== 'bot-field' && k !== 'form-name') data[k] = v; });
-        data.sentAt = new Date().toISOString();
-        data.source = location.hostname || 'local';
-        res = await fetch(ENQUIRY_WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-      } else {
-        res = await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(fd).toString()
-        });
-      }
+      const v = {};
+      new FormData(form).forEach((val, k) => { if (k !== '_honey') v[k] = val; });
+
+      const payload = ENQUIRY_WEBHOOK ? {
+        ...v,
+        sentAt: new Date().toISOString(),
+        source: location.hostname || 'local'
+      } : {
+        _subject: 'New enquiry — ' + v.company,
+        _template: 'table',
+        _captcha: 'false',
+        Company: v.company,
+        Email: v.email,
+        Phone: v.phone,
+        'Problem they face': v.problem,
+        'What they want': v.want,
+        Sent: new Date().toLocaleString()
+      };
+
+      const res = await fetch(ENQUIRY_WEBHOOK || ENQUIRY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      });
       if (!res.ok) throw new Error(res.status);
     } catch (err) {
       busy = false;

@@ -203,16 +203,6 @@
 
           <article class="cat" data-tone="#1E90FF">
             <span class="cat-n">01</span>
-            <h3>Automation</h3>
-            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
-            <p>The relay between the tools you already pay for. One record fires the
-               calendar, the invoice, the confirmation and the staff brief, in order,
-               without anyone opening a tab. Work that used to take a morning now
-               takes nobody.</p>
-          </article>
-
-          <article class="cat" data-tone="#6A46F5">
-            <span class="cat-n">02</span>
             <h3>Intelligence</h3>
             <div class="cat-media" data-slot="intelligence"><span class="cat-media-k">Video</span></div>
             <p>Systems that read the situation and decide. They separate what matters
@@ -220,7 +210,15 @@
                your team arrives at the judgement call instead of assembling it from
                six tabs.</p>
           </article>
-
+          <article class="cat" data-tone="#6A46F5">
+            <span class="cat-n">02</span>
+            <h3>Automation</h3>
+            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
+            <p>The relay between the tools you already pay for. One record fires the
+               calendar, the invoice, the confirmation and the staff brief, in order,
+               without anyone opening a tab. Work that used to take a morning now
+               takes nobody.</p>
+          </article>
           <article class="cat" data-tone="#A625EE">
             <span class="cat-n">03</span>
             <h3>Design</h3>
@@ -229,7 +227,6 @@
                open and your clients remember — clear enough that nobody has to think
                about the machinery running underneath it.</p>
           </article>
-
         </div>
       </div>
     </section>
@@ -283,10 +280,8 @@
       <div class="eq-stage">
         <!-- data-netlify makes this a real Netlify Form on deploy; the POST
              below is the AJAX path so the page never navigates away. -->
-        <form class="enquiry" id="enquiry" name="enquiry" method="POST"
-              data-netlify="true" netlify-honeypot="bot-field" novalidate>
-          <input type="hidden" name="form-name" value="enquiry">
-          <p class="eq-hp"><label>Leave this empty <input name="bot-field" tabindex="-1"></label></p>
+        <form class="enquiry" id="enquiry" name="enquiry" method="POST" novalidate>
+          <p class="eq-hp"><label>Leave this empty <input name="_honey" tabindex="-1" autocomplete="off"></label></p>
 
           <div class="eq-grid">
             <label class="eq-field">

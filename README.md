@@ -103,11 +103,25 @@ Submitting shows "Problem received, we will solve it" letter by letter over a
 violet bloom, holds for five seconds against a draining bar, then hands back
 a cleared form for the next enquiry.
 
-**It only claims to have received something when it has.** Delivery is a
-Netlify Form, POSTed as AJAX so the page never navigates. If that POST fails
-— locally, or on a host that is not Netlify — the form says so and offers the
-email address instead. A confirmation for an enquiry that went nowhere is
-worse than any error message.
+**It only claims to have received something when it has.** Delivery goes to
+FormSubmit, which needs no account and no key — it emails whatever it receives
+to the address in the endpoint URL, and its `/ajax/` route answers with CORS so
+the page never navigates. If the POST fails, the form says so and offers the
+email address instead; a confirmation for an enquiry that went nowhere is worse
+than any error message.
+
+**One-time activation, and nothing is delivered until it is done:** the first
+submission makes FormSubmit send a confirmation link to `ENQUIRY_EMAIL`. Open
+it once and every enquiry after that arrives in seconds. To route through Make
+instead, set `ENQUIRY_WEBHOOK` at the top of `main.js` — it takes precedence
+and posts plain JSON.
+
+**No boxes anywhere.** The inputs are borderless and transparent; the
+travelling glow beneath and the label colour are the focus indicator, so the
+global focus ring is suppressed on them. Chrome's autofill is the one thing
+that will draw a solid background and override the violet text — it is
+defeated with a 600000s `background-color` transition plus
+`-webkit-text-fill-color`, which is genuinely the only reliable way.
 
 Validation is inline and specific: empty fields and a malformed email get
 different messages, the offending field takes focus, and the error colour
@@ -406,10 +420,9 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
 - [ ] **Email** is `hello@erolabs.studio` in two places — `index.html` footer
       and the `mailto:` in `composer()` in `main.js`.
 - [ ] **Social links** are `href="#"`.
-- [ ] **Enquiries go to a Netlify Form** (`name="enquiry"`, five required
-      fields). This only works once deployed to Netlify — submissions appear
-      under Forms in the site dashboard, and email notifications are set up
-      there, not in code. **Locally the POST fails and the form says so**;
-      that is correct behaviour, not a bug. To send them somewhere else
-      instead, change the one `fetch('/')` in `enquiry()` to a Make webhook.
+- [ ] **Activate delivery**: send one enquiry from the live site and click the
+      confirmation link FormSubmit emails to `ENQUIRY_EMAIL`. Until then
+      nothing arrives. Note the address sits in the page source — it is
+      already public in the footer, but FormSubmit can issue an alias
+      endpoint after activation if you would rather it were not.
 - [ ] **OG image** — none set. Capture `?stop=0` at 1200×630.

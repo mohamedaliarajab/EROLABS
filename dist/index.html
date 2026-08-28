@@ -524,11 +524,29 @@ body.ready .hud{opacity:1}
   transition:color .3s;
 }
 .eq-field input{
-  display:block;width:100%;background:none;border:0;
+  display:block;width:100%;background:none;border:0;border-radius:0;
+  -webkit-appearance:none;appearance:none;box-shadow:none;
   padding:calc(var(--u)*.42) 0;outline:none;
   font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.18);letter-spacing:-.012em;
   color:var(--violet-ink);caret-color:var(--violet-ink);
 }
+/* No box, ever. Chrome's autofill paints its own solid background and forces
+   its own text colour — the only way out is a colossal transition delay on
+   background-color plus -webkit-text-fill-color. */
+.eq-field input:-webkit-autofill,
+.eq-field input:-webkit-autofill:hover,
+.eq-field input:-webkit-autofill:focus,
+.eq-field input:-webkit-autofill:active{
+  -webkit-text-fill-color:var(--violet-ink);
+  caret-color:var(--violet-ink);
+  -webkit-box-shadow:0 0 0 100vmax transparent inset;
+  box-shadow:0 0 0 100vmax transparent inset;
+  background-clip:text;
+  transition:background-color 600000s 0s,color 600000s 0s;
+}
+/* the travelling glow and the label colour ARE the focus indicator here, so
+   the global focus ring would only draw the box we just removed */
+.eq-field input:focus,.eq-field input:focus-visible{outline:none;box-shadow:none}
 /* the field never gets a filled background — the light does the work.
    ::before is the resting hairline, ::after the glow travelling beneath it. */
 .eq-field::before{
@@ -961,16 +979,6 @@ body.reduced .star{animation:none}
 
           <article class="cat" data-tone="#1E90FF">
             <span class="cat-n">01</span>
-            <h3>Automation</h3>
-            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
-            <p>The relay between the tools you already pay for. One record fires the
-               calendar, the invoice, the confirmation and the staff brief, in order,
-               without anyone opening a tab. Work that used to take a morning now
-               takes nobody.</p>
-          </article>
-
-          <article class="cat" data-tone="#6A46F5">
-            <span class="cat-n">02</span>
             <h3>Intelligence</h3>
             <div class="cat-media" data-slot="intelligence"><span class="cat-media-k">Video</span></div>
             <p>Systems that read the situation and decide. They separate what matters
@@ -978,7 +986,15 @@ body.reduced .star{animation:none}
                your team arrives at the judgement call instead of assembling it from
                six tabs.</p>
           </article>
-
+          <article class="cat" data-tone="#6A46F5">
+            <span class="cat-n">02</span>
+            <h3>Automation</h3>
+            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
+            <p>The relay between the tools you already pay for. One record fires the
+               calendar, the invoice, the confirmation and the staff brief, in order,
+               without anyone opening a tab. Work that used to take a morning now
+               takes nobody.</p>
+          </article>
           <article class="cat" data-tone="#A625EE">
             <span class="cat-n">03</span>
             <h3>Design</h3>
@@ -987,7 +1003,6 @@ body.reduced .star{animation:none}
                open and your clients remember — clear enough that nobody has to think
                about the machinery running underneath it.</p>
           </article>
-
         </div>
       </div>
     </section>
@@ -1041,10 +1056,8 @@ body.reduced .star{animation:none}
       <div class="eq-stage">
         <!-- data-netlify makes this a real Netlify Form on deploy; the POST
              below is the AJAX path so the page never navigates away. -->
-        <form class="enquiry" id="enquiry" name="enquiry" method="POST"
-              data-netlify="true" netlify-honeypot="bot-field" novalidate>
-          <input type="hidden" name="form-name" value="enquiry">
-          <p class="eq-hp"><label>Leave this empty <input name="bot-field" tabindex="-1"></label></p>
+        <form class="enquiry" id="enquiry" name="enquiry" method="POST" novalidate>
+          <p class="eq-hp"><label>Leave this empty <input name="_honey" tabindex="-1" autocomplete="off"></label></p>
 
           <div class="eq-grid">
             <label class="eq-field">
@@ -1122,21 +1135,22 @@ body.reduced .star{animation:none}
 'use strict';
 
 /* ═══ WHERE ENQUIRIES GO ═══════════════════════════════════════════
-   A static page cannot send email by itself — something has to receive
-   the POST. Two ways, pick one:
+   A web page cannot put mail on the wire by itself — something has to
+   accept the POST and send it. This posts to FormSubmit, which needs no
+   account and no key: it emails whatever it receives to the address in the
+   URL, and its /ajax/ endpoint answers with CORS so the page never
+   navigates away.
 
-   1. Leave ENQUIRY_WEBHOOK empty. The form posts to the Netlify Form
-      already declared in the markup. Submissions land under Forms in the
-      Netlify dashboard; set the notification address there once and they
-      arrive by email from then on. Nothing else to do.
+   ONE-TIME STEP, and enquiries do not arrive until it is done: the very
+   first submission makes FormSubmit send a confirmation link to
+   ENQUIRY_EMAIL. Open it once, and from then on every enquiry lands in
+   that inbox within seconds.
 
-   2. Paste a Make webhook URL below. Enquiries are posted straight to the
-      scenario as JSON and it emails them on — one op per enquiry, which is
-      nothing against the 10k ceiling, and it arrives in seconds.
-
-   ENQUIRY_EMAIL is only the address shown to a visitor if delivery fails.  */
-const ENQUIRY_WEBHOOK = '';
-const ENQUIRY_EMAIL   = 'mohamedali.a.rajab@gmail.com';
+   To route through Make instead, put the webhook URL in ENQUIRY_WEBHOOK —
+   it takes precedence and the enquiry is posted to it as plain JSON.     */
+const ENQUIRY_EMAIL    = 'mohamedali.a.rajab@gmail.com';
+const ENQUIRY_ENDPOINT = 'https://formsubmit.co/ajax/' + ENQUIRY_EMAIL;
+const ENQUIRY_WEBHOOK  = '';
 
 const $  = (s, r = document) => r.querySelector(s);
 const $ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -2049,25 +2063,30 @@ function enquiry() {
     setNote('Sending…', false);
 
     try {
-      const fd = new FormData(form);
-      let res;
-      if (ENQUIRY_WEBHOOK) {
-        const data = {};
-        fd.forEach((v, k) => { if (k !== 'bot-field' && k !== 'form-name') data[k] = v; });
-        data.sentAt = new Date().toISOString();
-        data.source = location.hostname || 'local';
-        res = await fetch(ENQUIRY_WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-      } else {
-        res = await fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(fd).toString()
-        });
-      }
+      const v = {};
+      new FormData(form).forEach((val, k) => { if (k !== '_honey') v[k] = val; });
+
+      const payload = ENQUIRY_WEBHOOK ? {
+        ...v,
+        sentAt: new Date().toISOString(),
+        source: location.hostname || 'local'
+      } : {
+        _subject: 'New enquiry — ' + v.company,
+        _template: 'table',
+        _captcha: 'false',
+        Company: v.company,
+        Email: v.email,
+        Phone: v.phone,
+        'Problem they face': v.problem,
+        'What they want': v.want,
+        Sent: new Date().toLocaleString()
+      };
+
+      const res = await fetch(ENQUIRY_WEBHOOK || ENQUIRY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(payload)
+      });
       if (!res.ok) throw new Error(res.status);
     } catch (err) {
       busy = false;
