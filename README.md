@@ -441,28 +441,30 @@ separate field, versus almost no blue without it.
 No WebGL, or a lost context, falls back to the three gradient blobs in
 `#aurora.no-gl`.
 
-## The machine (About)
+## The layers (About)
 
-The three words are operable rather than illustrated. A message sits in a
-`contenteditable` box — edit it, or pick one of the three samples — and the
-columns genuinely read it:
+The three words as a system you switch on, rather than three illustrations of
+one. With nothing enabled the diagram is what a manual operation actually is:
+stations scattered, jobs wandering between them, some dropped, nothing legible.
+Each toggle changes what the picture **does** —
 
-- **Intelligence** marks the sentence in place (asset, location, when, who,
-  urgency) and lists what it pulled out, saying *not stated* where a field is
-  genuinely absent.
-- **Automation** raises a numbered work order, picks a trade from the asset
-  word, sets the deadline from the time it found, arms the reminder chain and
-  demands a photograph.
-- **Design** hands back a clean record card.
+| layer | what changes on the canvas |
+|-------|-----------------------------|
+| Automation | rails appear, jobs travel them directly and fast instead of wandering |
+| Intelligence | a decision lights at each junction; jobs stop taking the wrong branch, and stop being lost |
+| Design | the scatter eases into an ordered flow and the stations gain labels |
 
-**None of it is canned.** `mxRead()` runs real regexes over whatever text is in
-the box, and the trade is derived from the asset word — type "the lift keeps
-stopping" and it routes to a lifts vendor; type "no power in unit 4" and it
-routes to electrical. That is the whole pitch, demonstrated in ten seconds,
-which is worth more on that page than three abstract loops were.
+Three meters and a caption follow. Verified across combinations: nothing on is
+`100 / 100 / 18`, automation alone `45 / 82 / 64`, with intelligence
+`25 / 10 / 86`, all three `17 / 10 / 100` — and intelligence + design without
+automation puts effort back up to 72, because the hand-offs are manual again.
 
-If you extend it, the tables are `MX_RULES`, `MX_TRADE` and the intent chain in
-`mxRead()`.
+**The meters are relative on purpose.** They are ratios, not hours or
+percentages, because a generic figure attached to a visitor's own operation
+would be invented. The case study is where the real numbers live.
+
+It is deliberately not a text-parsing demo. The point is the system, not a
+clever reading of a sentence.
 
 ## The hero's sky
 

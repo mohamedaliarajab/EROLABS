@@ -387,13 +387,6 @@ body.ready .hud{opacity:1}
 .about-body{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*3);max-width:min(760px,70vw);margin-top:calc(var(--u)*2)}
 .about-body p{font-size:calc(var(--u)*.94);font-weight:300;line-height:1.75;color:var(--ink-2)}
 
-/* no cards — three columns divided by hairlines, nothing more */
-
-/* Intelligence: signals firing along the network. SMIL pulsing an r of 2.4
-   was technically animation and read as a still image next to the sliding
-   bars beside it — this actually moves. */to{stroke-dashoffset:22}}
-  50%    {transform:scale(1.5);opacity:1}
-}
 
 /* ── 02 projects ───────────────────────────────────────────────── */
 .proj-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--u)*3);margin-top:calc(var(--u)*2)}
@@ -655,7 +648,7 @@ body.ready .hud{opacity:1}
 @keyframes doneCount{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 
 
-.foot{display:grid;grid-template-columns:1fr 1fr 1fr;gap:calc(var(--u)*2);margin-top:calc(var(--u)*3);padding-top:calc(var(--u)*1.6);border-top:1px solid var(--line-2)}
+.foot{display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*2);margin-top:calc(var(--u)*3);padding-top:calc(var(--u)*1.6);border-top:1px solid var(--line-2)}
 .foot-k{display:block;font-size:calc(var(--u)*.62);letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);opacity:.7;margin-bottom:calc(var(--u)*.7)}
 .foot-mail{font-size:calc(var(--u)*.98);font-weight:300;border-bottom:1px solid var(--line);padding-bottom:2px;transition:border-color .4s}
 .foot-mail:hover{border-color:var(--violet)}
@@ -906,6 +899,7 @@ body.reduced .star{animation:none}
 .reader-body .cd-table th{font-size:clamp(10px,.8vw,12px)}
 .reader-body .cd-table td{padding:clamp(7px,.7vw,12px) 0}
 .reader-body .cd-note{font-size:clamp(13px,1vw,16px);line-height:1.65;margin-top:clamp(14px,1.4vw,22px);max-width:78ch}
+.reader-body .case-step,.reader-body .cd-panel,.reader-body .case-figs,.reader-body .case-brief{
   opacity:1!important;transform:none!important;
 }
 .reader-body .case-step::before,.reader-body .case-step::after{display:none}
@@ -1064,20 +1058,15 @@ body.is-touch .fb-seek{cursor:pointer}
 }
 @media (max-width:900px){.case-film-btn{width:calc(var(--u)*14)}}
 
-/* ── the helix ──────────────────────────────────────────────────────
-   Four periods are drawn and the group slides by exactly one, so the loop is
-   seamless and the strands read as rotating — no per-frame work at all. */}
-
-
 /* ── the enquiry arrow ── */
 .btn-primary svg{
   filter:drop-shadow(0 0 5px rgba(120,170,255,.85));
   animation:arrowGlow 4.5s ease-in-out infinite;
 }
 @keyframes arrowGlow{
-  0%,100%{filter:drop-shadow(0 0 5px rgba(120,170,255,.85)) drop-shadow(0 0 14px rgba(30,144,255,.45))}
-  33%    {filter:drop-shadow(0 0 7px rgba(235,245,255,.95)) drop-shadow(0 0 20px rgba(166,37,238,.6))}
-  66%    {filter:drop-shadow(0 0 6px rgba(190,140,255,.9))  drop-shadow(0 0 17px rgba(120,90,255,.55))}
+  0%,100%{color:#F2F7FF;filter:drop-shadow(0 0 6px rgba(160,200,255,.95)) drop-shadow(0 0 18px rgba(30,144,255,.65))}
+  33%    {color:#7FB4FF;filter:drop-shadow(0 0 8px rgba(120,175,255,1))   drop-shadow(0 0 24px rgba(30,144,255,.85))}
+  66%    {color:#CE8CFF;filter:drop-shadow(0 0 8px rgba(205,140,255,1))   drop-shadow(0 0 26px rgba(166,37,238,.85))}
 }
 .btn-primary:hover svg{animation-duration:2s}
 
@@ -1122,89 +1111,46 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 }
 @media (max-width:900px){.stop-num{font-size:calc(var(--u)*14);right:calc(var(--u)*-.5)}}
 
-/* ── the machine ────────────────────────────────────────────────────
-   The three words, made operable. A real message goes in — edit it, it is
-   contenteditable — and the columns actually read it, route it, and present
-   the finished record. Nothing here is canned: the fields come out of
-   whatever text is in the box. */
-.machine{margin-top:calc(var(--u)*2.2);padding-top:calc(var(--u)*1.5);border-top:1px solid var(--line-2)}
-.mx-bar{display:flex;align-items:center;gap:calc(var(--u)*1.4);flex-wrap:wrap}
-.mx-k{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
-.mx-chips{display:flex;gap:calc(var(--u)*.5)}
-.mx-chip{
-  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.62);letter-spacing:.16em;
-  text-transform:uppercase;color:var(--ink-3);padding:calc(var(--u)*.28) calc(var(--u)*.8);
-  border:1px solid var(--line-2);border-radius:100px;transition:color .3s,border-color .3s,background .3s;
+/* ── the layers ─────────────────────────────────────────────────────
+   The three words as a system you switch on. With nothing enabled the work
+   wanders between stations, some of it is dropped, and the picture is a mess.
+   Each layer changes what the diagram DOES: automation lays the rails,
+   intelligence puts a decision at every junction, design resolves the whole
+   thing into something a person can read. */
+.layers{margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*1.4);border-top:1px solid var(--line-2)}
+.ly-bar{display:flex;align-items:center;gap:calc(var(--u)*1.6);flex-wrap:wrap}
+.ly-k{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
+.ly-toggles{display:flex;gap:calc(var(--u)*.6);margin-left:auto}
+.ly-t{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  padding:calc(var(--u)*.38) calc(var(--u)*1);border:1px solid var(--line-2);border-radius:100px;
+  transition:color .35s,border-color .35s,background .35s,box-shadow .45s;
 }
-.mx-chip:hover{color:var(--ink-2);border-color:var(--line)}
-.mx-chip.on{color:var(--ink);border-color:transparent;background:rgba(166,37,238,.18)}
-.mx-run{
-  margin-left:auto;display:inline-flex;align-items:center;gap:9px;
-  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink);
-  padding:calc(var(--u)*.4) 0;border-bottom:1px solid var(--line);transition:border-color .4s;
-}
-.mx-run:hover{border-color:var(--violet)}
-.mx-run svg{width:17px;height:17px;transition:transform .4s var(--ease)}
-.mx-run:hover svg{transform:translateX(5px)}
-.mx-run.busy{opacity:.5;pointer-events:none}
+.ly-t em{font-style:normal;font-size:calc(var(--u)*.56);opacity:.6}
+.ly-t:hover{color:var(--ink-2);border-color:var(--line)}
+.ly-t[aria-pressed="true"]{color:#fff;border-color:transparent}
+.ly-t[data-k="intel"][aria-pressed="true"]{background:rgba(30,144,255,.24);box-shadow:0 0 24px rgba(30,144,255,.30)}
+.ly-t[data-k="auto"][aria-pressed="true"]{background:rgba(106,70,245,.26);box-shadow:0 0 24px rgba(106,70,245,.30)}
+.ly-t[data-k="design"][aria-pressed="true"]{background:rgba(166,37,238,.26);box-shadow:0 0 24px rgba(166,37,238,.30)}
 
-.mx-msg{
-  margin-top:calc(var(--u)*.9);padding:calc(var(--u)*.75) 0;
-  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.02);line-height:1.55;
-  color:var(--ink-2);outline:none;border-bottom:1px solid rgba(255,255,255,.10);
-  transition:border-color .35s;caret-color:var(--violet-ink);
-}
-.mx-msg:focus{border-color:var(--violet)}
-.mx-msg mark{
-  background:none;color:var(--ink);position:relative;
-  box-shadow:inset 0 -.42em 0 rgba(166,37,238,.22);border-radius:2px;
-  opacity:0;animation:mxMark .45s var(--ease) forwards;
-}
-.mx-msg mark.k-when{box-shadow:inset 0 -.42em 0 rgba(30,144,255,.26)}
-.mx-msg mark.k-who{box-shadow:inset 0 -.42em 0 rgba(120,220,190,.22)}
-.mx-msg mark.k-urgent{box-shadow:inset 0 -.42em 0 rgba(255,110,140,.26)}
-@keyframes mxMark{from{opacity:.25}to{opacity:1}}
+.ly-canvas{display:block;width:100%;height:calc(var(--u)*11);margin-top:calc(var(--u)*1)}
 
-.mx-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*1.5)}
-.mx-col{position:relative}
-.mx-n{display:block;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.3em;color:var(--ink-3)}
-.mx-col h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.35);letter-spacing:-.018em;margin:calc(var(--u)*.3) 0 calc(var(--u)*.8)}
-.mx-out{min-height:calc(var(--u)*7.4);font-size:calc(var(--u)*.8);line-height:1.5}
-
-.mx-row{display:flex;gap:calc(var(--u)*.6);align-items:baseline;padding:calc(var(--u)*.22) 0;opacity:0;transform:translateY(6px)}
-.mx-row.in{opacity:1;transform:none;transition:opacity .45s var(--ease),transform .45s var(--ease)}
-.mx-row b{flex:none;width:7.2em;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.62);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
-.mx-row span{color:var(--ink-2)}
-.mx-row.miss span{color:var(--ink-3);opacity:.55;font-style:italic}
-
-.mx-step{display:flex;gap:calc(var(--u)*.6);align-items:center;padding:calc(var(--u)*.22) 0;opacity:0;transform:translateX(-6px)}
-.mx-step.in{opacity:1;transform:none;transition:opacity .4s var(--ease),transform .4s var(--ease)}
-.mx-step i{
-  flex:none;width:calc(var(--u)*.85);height:calc(var(--u)*.85);border-radius:50%;
-  border:1px solid var(--line);position:relative;
+.ly-meters{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*.6)}
+.ly-m{display:flex;align-items:center;gap:calc(var(--u)*.7)}
+.ly-m b{
+  flex:none;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.6);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);width:8.4em;
 }
-.mx-step.in i::after{
-  content:"";position:absolute;inset:2px;border-radius:50%;background:var(--grad-v);
-  animation:mxTick .4s var(--ease) forwards;transform:scale(0);
+.ly-m i{flex:1;height:2px;background:rgba(255,255,255,.10);border-radius:2px;overflow:hidden}
+.ly-m s{display:block;height:100%;width:0;text-decoration:none;background:var(--grad);transition:width .7s var(--ease)}
+.ly-note{
+  margin-top:calc(var(--u)*.9);font-size:calc(var(--u)*.82);line-height:1.6;color:var(--ink-3);
+  max-width:74ch;min-height:calc(var(--u)*2.6);transition:color .4s;
 }
-@keyframes mxTick{to{transform:scale(1)}}
-.mx-step span{color:var(--ink-2)}
-
-.mx-card{
-  padding:calc(var(--u)*.9);border:1px solid var(--line-2);border-radius:calc(var(--u)*.5);
-  background:linear-gradient(180deg,rgba(255,255,255,.030),rgba(255,255,255,0));
-  opacity:0;transform:translateY(10px) scale(.985);
-}
-.mx-card.in{opacity:1;transform:none;transition:opacity .55s var(--ease),transform .55s var(--ease)}
-.mx-card dt{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.56);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
-.mx-card dd{color:var(--ink);margin:0 0 calc(var(--u)*.5)}
-.mx-card dd:last-child{margin-bottom:0}
-.mx-card .mx-ref{float:right;font-family:var(--f-mono);font-size:calc(var(--u)*.6);color:var(--violet-ink);letter-spacing:.1em}
-.mx-card .mx-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:calc(var(--u)*.58);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
-.mx-card .mx-live::before{content:"";width:6px;height:6px;border-radius:50%;background:#59d99a;box-shadow:0 0 0 0 rgba(89,217,154,.6);animation:pulse 2.4s infinite}
-
 @media (max-width:900px){
-  .mx-cols{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
-  .mx-run{margin-left:0}
+  .ly-toggles{margin-left:0}
+  .ly-meters{grid-template-columns:1fr;gap:calc(var(--u)*.6)}
+  .ly-canvas{height:calc(var(--u)*13)}
 }

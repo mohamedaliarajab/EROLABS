@@ -165,28 +165,26 @@
         <p data-split="word">If your business spends hours copying, pasting, forwarding, updating and chasing tasks, we can automate it.</p>
         <p data-split="word">We use intelligence, automation and design to save your team time — so they can focus on the work that drives more revenue.</p>
       </div>
-      <div class="machine" id="machine">
-        <div class="mx-bar">
-          <span class="mx-k">A message arrives</span>
-          <div class="mx-chips">
-            <button class="mx-chip on" data-i="0">Fault</button>
-            <button class="mx-chip" data-i="1">Booking</button>
-            <button class="mx-chip" data-i="2">Quote</button>
+      <div class="layers" id="layers">
+        <div class="ly-bar">
+          <span class="ly-k">Switch the layers on</span>
+          <div class="ly-toggles">
+            <button class="ly-t" data-k="intel" aria-pressed="false"><em>I</em>Intelligence</button>
+            <button class="ly-t" data-k="auto"  aria-pressed="false"><em>II</em>Automation</button>
+            <button class="ly-t" data-k="design" aria-pressed="false"><em>III</em>Design</button>
           </div>
-          <button class="mx-run" id="mxRun">
-            <span>Run it</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
         </div>
 
-        <p class="mx-msg" id="mxMsg" contenteditable="true" spellcheck="false"
-           aria-label="Edit the incoming message"></p>
+        <canvas class="ly-canvas" id="lyCanvas" aria-hidden="true"></canvas>
 
-        <div class="mx-cols">
-          <section class="mx-col" data-step="1">
-            <span class="mx-n">I</span><h3>Intelligence</h3>
-            <div class="mx-out" id="mxRead"></div>
-          </section>
+        <div class="ly-meters">
+          <div class="ly-m"><b>Manual effort</b><i><s id="lyEffort"></s></i></div>
+          <div class="ly-m"><b>Errors</b><i><s id="lyErrors"></s></i></div>
+          <div class="ly-m"><b>Throughput</b><i><s id="lyFlow"></s></i></div>
+        </div>
+        <p class="ly-note" id="lyNote">Every job is walked by hand. Nothing is connected, nothing decides, and nobody can see it.</p>
+      </div>
+    </section>
           <section class="mx-col" data-step="2">
             <span class="mx-n">II</span><h3>Automation</h3>
             <div class="mx-out" id="mxFlow"></div>

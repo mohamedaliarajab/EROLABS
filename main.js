@@ -460,168 +460,171 @@ function split(el) {
   el.textContent = ''; el.appendChild(out);
 }
 
-/* ── the machine ───────────────────────────────────────────────────
-   About's three words, made operable. A real message goes in and the columns
-   genuinely read it — the fields below come out of whatever text is in the
-   box, so editing it changes the answer. Nothing is canned. */
-const MX_SAMPLES = [
-  "hi the a/c in flat 12b has stopped working since last night, can someone come tomorrow morning? it is getting really hot — Ade",
-  "please book the meeting room on the 4th floor for friday 3pm, eight people. thanks, Tunde",
-  "how much would it cost to repaint the stairwell on floors 3 and 4? we would need a quote by monday, it is fairly urgent"
+/* ── the layers ────────────────────────────────────────────────────
+   About's three words as a working system rather than three illustrations.
+   With nothing switched on the diagram is what a manual operation actually
+   is: stations scattered, jobs wandering between them, some dropped, nothing
+   legible. Each layer changes what the picture DOES —
+
+     Automation   lays the rails: work moves on its own, and quickly
+     Intelligence puts a decision at each junction: it stops going the wrong way
+     Design       resolves the scatter into something a person can run
+
+   The meters are relative, not invented figures — effort and errors fall,
+   throughput rises, and the caption says what that combination actually is. */
+const LY_STATIONS = [
+  { mess: [.10, .70], neat: [.07, .50], label: 'In' },
+  { mess: [.30, .18], neat: [.28, .50], label: 'Read' },
+  { mess: [.44, .84], neat: [.50, .24], label: 'Route' },
+  { mess: [.64, .26], neat: [.50, .76], label: 'Do' },
+  { mess: [.80, .76], neat: [.72, .50], label: 'Check' },
+  { mess: [.93, .34], neat: [.93, .50], label: 'Done' }
 ];
+const LY_EDGES = [[0,1],[1,2],[1,3],[2,4],[3,4],[4,5]];
+const LY_NEXT  = { 0:[1], 1:[2,3], 2:[4], 3:[4], 4:[5], 5:[] };
 
-const MX_RULES = [
-  ['when',   /\b(?:today|tonight|tomorrow|this (?:morning|afternoon|evening|week)|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b|\b\d{1,2}\s?(?:am|pm)\b|\b\d{1,2}:\d{2}\b/gi],
-  ['where',  /\b(?:flat|unit|apt|apartment|suite|block|floors?|stairwell|lobby|building|car ?park|meeting room)\s?[\w\d]{0,4}\b/gi],
-  ['asset',  /\b(?:a\/c|air ?con(?:ditioning)?|aircon|heating|boiler|lift|elevator|lights?|power|socket|tap|leak|water|plumbing|door|lock|repaint|paint(?:ing)?|clean(?:ing)?|generator|pest)\b/gi],
-  ['urgent', /\b(?:urgent(?:ly)?|asap|immediately|emergency|right away)\b/gi]
-];
+const LY_NOTES = {
+  0: 'Every job is walked by hand. Nothing is connected, nothing decides, and nobody can see the state of it.',
+  1: 'It knows where each job should go — but someone still has to carry it there, one at a time.',
+  2: 'The rails are in and work moves on its own. Nothing is deciding at the junctions, so some of it goes the wrong way and some is lost.',
+  3: 'Work routes itself, and correctly. It still is not legible to anyone who has to run it.',
+  4: 'It looks organised. Underneath, every hand-off is still being done by a person.',
+  5: 'Clear and correctly sorted, and still entirely manual.',
+  6: 'Fast and legible — still guessing at every junction.',
+  7: 'A system someone can actually run: connected, decided, and visible. This is the whole of it.'
+};
 
-const MX_TRADE = [
-  [/a\/c|air ?con|aircon|heating|boiler|cool/i, 'HVAC'],
-  [/leak|tap|water|plumb/i,                     'Plumbing'],
-  [/light|power|socket|electric/i,              'Electrical'],
-  [/lift|elevator/i,                            'Lifts'],
-  [/paint|repaint/i,                            'Painting'],
-  [/clean/i,                                    'Cleaning'],
-  [/door|lock/i,                                'Carpentry'],
-  [/generator/i,                                'Generator'],
-  [/pest/i,                                     'Pest control']
-];
-
-function mxRead(text) {
-  const marks = [], taken = [];
-  const claim = (a, b) => taken.some(([x, y]) => a < y && b > x) ? false : (taken.push([a, b]), true);
-  const found = {};
-  for (const [kind, re] of MX_RULES) {
-    re.lastIndex = 0;
-    let m;
-    while ((m = re.exec(text))) {
-      if (!claim(m.index, m.index + m[0].length)) continue;
-      marks.push({ kind, a: m.index, b: m.index + m[0].length });
-      (found[kind] ||= []).push(m[0].trim());
-    }
-  }
-  // a name signed off at the end, or after "thanks,"
-  const who = text.match(/(?:[—–-]|thanks,?)\s*([A-Z][a-z]{2,})\s*$/) ||
-              text.match(/\bthanks,?\s+([A-Z][a-z]{2,})\b/);
-  if (who) {
-    const a = text.lastIndexOf(who[1]);
-    if (claim(a, a + who[1].length)) { marks.push({ kind: 'who', a, b: a + who[1].length }); found.who = [who[1]]; }
-  }
-
-  const intent = /quote|how much|cost|price/i.test(text) ? 'Quote request'
-    : /\bbook|reserve|schedule\b/i.test(text)            ? 'Booking'
-    : /stopped working|not working|broken|leak|fault|repair|fix|damaged|out of order|keeps? (?:stopping|cutting|tripping|failing|breaking)|stuck|jammed|won'?t \w+|no (?:power|water|light|signal)/i.test(text) ? 'Fault report'
-    : 'General request';
-
-  const assetTxt = (found.asset || []).join(' ');
-  const trade = (MX_TRADE.find(([re]) => re.test(assetTxt)) || [null, 'General maintenance'])[1];
-
-  marks.sort((x, y) => x.a - y.a);
-  return { marks, found, intent, trade };
-}
-
-function machine() {
-  const box = $('#machine');
+let layersUpdate = () => {};
+function layersRig() {
+  const box = $('#layers');
   if (!box) return;
-  const msg = $('#mxMsg'), run = $('#mxRun'),
-        read = $('#mxRead'), flow = $('#mxFlow'), card = $('#mxCard');
-  const chips = $$('.mx-chip', box);
-  let timers = [], sample = 0;
+  const cv = $('#lyCanvas'), note = $('#lyNote');
+  const bars = { effort: $('#lyEffort'), errors: $('#lyErrors'), flow: $('#lyFlow') };
+  const ctx = cv.getContext('2d');
+  const want = { intel: 0, auto: 0, design: 0 };
+  const L = { intel: 0, auto: 0, design: 0 };
+  let W = 0, H = 0, jobs = [];
 
-  const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-  const clearAll = () => {
-    timers.forEach(clearTimeout); timers = [];
-    read.innerHTML = ''; flow.innerHTML = ''; card.innerHTML = '';
-    run.classList.remove('busy');
-  };
-  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
-
-  const load = i => {
-    sample = i;
-    chips.forEach((c, k) => c.classList.toggle('on', k === i));
-    msg.textContent = MX_SAMPLES[i];
-    clearAll();
+  const size = () => {
+    const r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
   };
 
-  const go = () => {
-    const text = msg.textContent.trim();
-    if (!text) return;
-    clearAll();
-    run.classList.add('busy');
-    const r = mxRead(text);
+  const pos = i => {
+    const s = LY_STATIONS[i];
+    return {
+      x: (s.mess[0] + (s.neat[0] - s.mess[0]) * L.design) * W,
+      y: (s.mess[1] + (s.neat[1] - s.mess[1]) * L.design) * H
+    };
+  };
 
-    // I — it reads the sentence, in the sentence
-    let html = '', last = 0;
-    for (const m of r.marks) {
-      html += esc(text.slice(last, m.a)) + `<mark class="k-${m.kind}">` + esc(text.slice(m.a, m.b)) + '</mark>';
-      last = m.b;
+  const spawn = () => ({
+    at: 0, to: 1, k: 0, life: 1,
+    wrong: Math.random() < (1 - L.intel) * .45,     // no decision: it can go wrong
+    wob: Math.random() * 7, lane: Math.random()
+  });
+
+  const applyState = () => {
+    const effort = 1 - (want.auto * .55 + want.intel * .20 + want.design * .08);
+    const errors = 1 - (want.intel * .72 + want.auto * .18);
+    const flow   = .18 + want.auto * .46 + want.intel * .22 + want.design * .14;
+    bars.effort.style.width = (effort * 100).toFixed(1) + '%';
+    bars.errors.style.width = (errors * 100).toFixed(1) + '%';
+    bars.flow.style.width   = (flow   * 100).toFixed(1) + '%';
+    note.textContent = LY_NOTES[(want.intel ? 1 : 0) | (want.auto ? 2 : 0) | (want.design ? 4 : 0)];
+  };
+
+  $$('.ly-t', box).forEach(btn => btn.addEventListener('click', () => {
+    const k = btn.dataset.k;
+    want[k] = want[k] ? 0 : 1;
+    btn.setAttribute('aria-pressed', String(!!want[k]));
+    applyState();
+  }));
+
+  layersUpdate = (t, dt, live) => {
+    if (!W) size();
+    if (!live || !W) return;
+    for (const k in L) L[k] += (want[k] - L[k]) * (1 - Math.pow(.90, dt / 16));
+
+    if (jobs.length < 7 && Math.random() < .05 + L.auto * .06) jobs.push(spawn());
+
+    ctx.clearRect(0, 0, W, H);
+
+    // the rails, or the absence of them
+    ctx.lineWidth = 1;
+    for (const [a, b] of LY_EDGES) {
+      const p = pos(a), q = pos(b);
+      ctx.strokeStyle = `rgba(150,180,255,${(.05 + L.auto * .22).toFixed(3)})`;
+      ctx.setLineDash(L.auto > .55 ? [] : [3, 7]);
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
     }
-    msg.innerHTML = html + esc(text.slice(last));
+    ctx.setLineDash([]);
 
-    const rows = [
-      ['Intent',   r.intent],
-      ['Asset',    (r.found.asset || []).join(', ')],
-      ['Location', (r.found.where || []).join(', ')],
-      ['When',     (r.found.when  || []).join(', ')],
-      ['Raised by',(r.found.who   || []).join(', ')],
-      ['Priority', r.found.urgent ? 'Urgent' : 'Standard']
-    ];
-    rows.forEach(([k, v], i) => at(160 + i * 130, () => {
-      const el = document.createElement('div');
-      el.className = 'mx-row' + (v ? '' : ' miss');
-      el.innerHTML = `<b>${k}</b><span>${v ? esc(v) : 'not stated'}</span>`;
-      read.appendChild(el);
-      requestAnimationFrame(() => el.classList.add('in'));
-    }));
+    // the work itself
+    for (const j of jobs) {
+      const p = pos(j.at), q = pos(j.to);
+      j.k += (.004 + L.auto * .011) * (dt / 16);
+      if (j.k >= 1) {
+        j.k = 0; j.at = j.to;
+        const opts = LY_NEXT[j.at];
+        if (!opts || !opts.length) { j.life = 0; }
+        else if (opts.length > 1) {
+          const right = j.lane < .5 ? opts[0] : opts[1];
+          j.to = j.wrong && Math.random() < (1 - L.intel) ? opts[j.lane < .5 ? 1 : 0] : right;
+        } else j.to = opts[0];
+        if (Math.random() < (1 - L.intel) * .10) j.life = 0;   // dropped, unnoticed
+      }
+      if (j.life <= 0) continue;
 
-    // II — and then it does something about it
-    const ref = 'A-' + String(1000 + Math.floor(Math.random() * 8999));
-    const when = (r.found.when || [])[0];
-    const steps = [
-      `Work order ${ref} raised`,
-      `Routed to a ${r.trade.toLowerCase()} vendor`,
-      when ? `Deadline set — ${when}` : 'Deadline set from the SLA',
-      'Reminder chain armed — vendor, supervisor, head',
-      'Photograph required to close'
-    ];
-    steps.forEach((t, i) => at(1000 + i * 190, () => {
-      const el = document.createElement('div');
-      el.className = 'mx-step';
-      el.innerHTML = `<i></i><span>${esc(t)}</span>`;
-      flow.appendChild(el);
-      requestAnimationFrame(() => el.classList.add('in'));
-    }));
+      // without rails it does not travel in a straight line
+      const wob = (1 - L.auto) * 14 * Math.sin(t * .003 + j.wob);
+      const nx = -(q.y - p.y), ny = (q.x - p.x);
+      const len = Math.hypot(nx, ny) || 1;
+      const x = p.x + (q.x - p.x) * j.k + (nx / len) * wob;
+      const y = p.y + (q.y - p.y) * j.k + (ny / len) * wob;
 
-    // III — and hands back something a person can read
-    at(2050, () => {
-      card.innerHTML =
-        `<dl class="mx-card">
-           <span class="mx-ref">${ref}</span>
-           <dt>${esc(r.intent)}</dt>
-           <dd>${esc((r.found.asset || ['Unspecified'])[0])}${
-             r.found.where ? ' · ' + esc(r.found.where[0]) : ''}</dd>
-           <dt>Assigned</dt><dd>${esc(r.trade)} vendor${when ? ' · ' + esc(when) : ''}</dd>
-           <dt>Status</dt><dd><span class="mx-live">Open · evidence required</span></dd>
-         </dl>`;
-      const c = card.firstElementChild;
-      requestAnimationFrame(() => c.classList.add('in'));
-      run.classList.remove('busy');
+      const col = L.design > .5
+        ? (j.lane < .5 ? '90,160,255' : '176,90,255')
+        : '150,160,190';
+      ctx.fillStyle = `rgba(${col},${(.35 + L.design * .55).toFixed(2)})`;
+      ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill();
+      if (L.auto > .3) {                                  // a trail, once it has rails
+        const g = ctx.createLinearGradient(x - (q.x - p.x) * .06, y - (q.y - p.y) * .06, x, y);
+        g.addColorStop(0, `rgba(${col},0)`); g.addColorStop(1, `rgba(${col},${(L.auto * .5).toFixed(2)})`);
+        ctx.strokeStyle = g; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(x - (q.x - p.x) * .06, y - (q.y - p.y) * .06);
+        ctx.lineTo(x, y); ctx.stroke();
+      }
+    }
+    jobs = jobs.filter(j => j.life > 0);
+
+    // the stations
+    LY_STATIONS.forEach((st, i) => {
+      const p = pos(i);
+      const isJunction = (LY_NEXT[i] || []).length > 1;
+      ctx.strokeStyle = `rgba(200,215,255,${(.14 + L.design * .30).toFixed(2)})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 7 + L.design * 2, 0, 7); ctx.stroke();
+      if (isJunction && L.intel > .05) {                  // a decision, once there is one
+        ctx.fillStyle = `rgba(120,180,255,${(L.intel * .85).toFixed(2)})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, 7); ctx.fill();
+      }
+      if (L.design > .25) {
+        ctx.fillStyle = `rgba(200,212,235,${((L.design - .25) * .9).toFixed(2)})`;
+        ctx.font = '500 9px "IBM Plex Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(st.label.toUpperCase(), p.x, p.y + 22);
+      }
     });
   };
 
-  chips.forEach((c, i) => c.addEventListener('click', () => load(i)));
-  run.addEventListener('click', go);
-  msg.addEventListener('input', clearAll);
-  msg.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { e.preventDefault(); msg.blur(); go(); }
-  });
-  msg.addEventListener('paste', e => {
-    e.preventDefault();
-    document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text'));
-  });
-  load(0);
+  size();
+  applyState();
 }
 
 /* ── projects: work moving through the machine ─────────────────────
@@ -1796,6 +1799,7 @@ function tick(t) {
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
+  layersUpdate(t, dt, near === 1 && nearD < 1.2);
   galaxy.draw(t, heroD);
   field.draw(t);
   requestAnimationFrame(tick);
@@ -1805,7 +1809,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); machine(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); layersRig(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
