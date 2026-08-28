@@ -1131,9 +1131,28 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 .ly-t em{font-style:normal;font-size:calc(var(--u)*.56);opacity:.6}
 .ly-t:hover{color:var(--ink-2);border-color:var(--line)}
 .ly-t[aria-pressed="true"]{color:#fff;border-color:transparent}
-.ly-t[data-k="intel"][aria-pressed="true"]{background:rgba(30,144,255,.24);box-shadow:0 0 24px rgba(30,144,255,.30)}
-.ly-t[data-k="auto"][aria-pressed="true"]{background:rgba(106,70,245,.26);box-shadow:0 0 24px rgba(106,70,245,.30)}
-.ly-t[data-k="design"][aria-pressed="true"]{background:rgba(166,37,238,.26);box-shadow:0 0 24px rgba(166,37,238,.30)}
+/* An enabled layer should read as switched on, not merely tinted — a wide
+   glow that breathes, in that layer's own colour. */
+.ly-t[aria-pressed="true"]{animation:lyPulse 2.6s ease-in-out infinite}
+.ly-t[data-k="intel"][aria-pressed="true"]{
+  background:rgba(30,144,255,.26);
+  --glow-a:rgba(30,144,255,.75);--glow-b:rgba(30,144,255,.34);--glow-c:rgba(120,190,255,.9);
+}
+.ly-t[data-k="auto"][aria-pressed="true"]{
+  background:rgba(106,70,245,.28);
+  --glow-a:rgba(106,70,245,.75);--glow-b:rgba(106,70,245,.34);--glow-c:rgba(170,150,255,.9);
+}
+.ly-t[data-k="design"][aria-pressed="true"]{
+  background:rgba(166,37,238,.28);
+  --glow-a:rgba(166,37,238,.75);--glow-b:rgba(166,37,238,.34);--glow-c:rgba(220,150,255,.9);
+}
+@keyframes lyPulse{
+  0%,100%{box-shadow:0 0 18px 2px var(--glow-a),0 0 44px 10px var(--glow-b);
+          text-shadow:0 0 10px var(--glow-c)}
+  50%    {box-shadow:0 0 30px 6px var(--glow-a),0 0 76px 20px var(--glow-b);
+          text-shadow:0 0 18px var(--glow-c)}
+}
+body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px var(--glow-a)}
 
 .ly-canvas{display:block;width:100%;height:calc(var(--u)*11);margin-top:calc(var(--u)*1)}
 

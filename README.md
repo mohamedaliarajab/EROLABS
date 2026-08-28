@@ -475,10 +475,15 @@ and 2,800 stars weighted toward the band. Per frame it is one transformed
 gradient would.
 
 **It belongs to the hero alone** — `1 - heroD/.8`, so it is gone by the time
-you have left, and it returns nothing at all past that point. Kept dark on
-purpose: composited over the black ground it means a **10.6/255** average, with
-a few hundred genuinely bright star pixels doing the contrast. Most of the
-nebula sits under 5% alpha.
+you have left, and it returns nothing at all past that point.
+
+**Contrast comes from separation, not brightness.** Three star tiers with a
+widened gap between them (the faint majority near the ground, a few near
+white with their own halo), a handful of bright nebula cores rather than an
+even wash, and 58 dust lanes cut back out with `destination-out` so the darks
+go genuinely dark. Composited: median **3.7/255**, brightest **173** — a 47x
+spread. Global alpha then lifts the whole thing into view without touching
+that ratio, since it scales every value equally.
 
 ## Cursor lights
 

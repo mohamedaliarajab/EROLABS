@@ -93,6 +93,10 @@ const cam = { x: 0, y: 0, tx: 0, ty: 0 };
 let progress = 0, leg = 0, legT = 0, scrollVel = 0;
 
 function readScroll() {
+  // measure() bails on a zero-size viewport, which leaves the world
+  // unmeasured — reading a camera target from it would throw and take the
+  // rest of boot with it. A resize brings us back.
+  if (!pts.length) return;
   const max = Math.max(1, track.offsetHeight - vh);
   const prev = progress;
   progress = clamp(scrollY / max, 0, 1);
@@ -197,20 +201,26 @@ const galaxy = (() => {
       const r = 70 + Math.random() * 240;
       const k = Math.random();
       const col = k < .44 ? '52,104,255' : k < .78 ? '146,70,255' : '206,222,255';
+      /* A few bright cores against a mostly-dark band reads as contrast; the
+         same light spread evenly over every blob reads as haze. */
+      const core = Math.random() < .16
+        ? .055 + Math.random() * .075
+        : .006 + Math.random() * .016;
       const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
-      g.addColorStop(0, `rgba(${col},${(.011 + Math.random() * .026).toFixed(3)})`);
+      g.addColorStop(0, `rgba(${col},${core.toFixed(3)})`);
+      g.addColorStop(.42, `rgba(${col},${(core * .30).toFixed(3)})`);
       g.addColorStop(1, `rgba(${col},0)`);
       c.fillStyle = g;
       c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
     }
 
     c.globalCompositeOperation = 'destination-out';       // dust lanes
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 58; i++) {
       const p = along({ a: (Math.random() - .5) * w * 1.4,
                         c: (Math.random() - .5) * h * .16 });
       const r = 40 + Math.random() * 150;
       const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
-      g.addColorStop(0, `rgba(0,0,0,${(.26 + Math.random() * .38).toFixed(2)})`);
+      g.addColorStop(0, `rgba(0,0,0,${(.34 + Math.random() * .50).toFixed(2)})`);
       g.addColorStop(1, 'rgba(0,0,0,0)');
       c.fillStyle = g;
       c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
@@ -224,13 +234,24 @@ const galaxy = (() => {
                   c: (Math.random() - .5) * h * .34 * Math.random() })
         : { x: Math.random() * w, y: Math.random() * h };
       const b = Math.random();
-      const r = b > .990 ? 2.1 : b > .94 ? 1.2 : .6;
+      const r = b > .988 ? 2.4 : b > .94 ? 1.25 : .55;
       const k = Math.random();
       const col = k < .30 ? '150,190,255' : k < .52 ? '190,160,255' : '240,246,255';
-      // contrast, not haze: most stars faint, a few genuinely bright
-      const bright = b > .94 ? .55 + Math.random() * .45 : .08 + Math.random() * .30;
+      /* Three tiers rather than two, and the gap between them widened: the
+         faint majority sink toward the ground while the few bright ones go
+         almost to white. That separation is what contrast actually is. */
+      const bright = b > .988 ? .85 + Math.random() * .15
+                   : b > .94  ? .34 + Math.random() * .30
+                              : .04 + Math.random() * .13;
       c.fillStyle = `rgba(${col},${bright.toFixed(2)})`;
       c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
+      if (b > .988) {                                  // a halo on the brightest
+        const h = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 5);
+        h.addColorStop(0, `rgba(${col},.30)`);
+        h.addColorStop(1, `rgba(${col},0)`);
+        c.fillStyle = h;
+        c.beginPath(); c.arc(p.x, p.y, r * 5, 0, 7); c.fill();
+      }
     }
     tex = off;
   }
@@ -254,7 +275,10 @@ const galaxy = (() => {
     // the hero's sky, and only the hero's — gone by the time you have left it
     const near = clamp(1 - heroD / .8, 0, 1);
     if (near <= .002) return;
-    ctx.globalAlpha = near * .40;   // darker: it is a ground, not a subject
+    /* Global alpha scales everything equally, so it lifts the band into view
+       without touching the contrast ratio — the darks stay dark relative to
+       the stars. */
+    ctx.globalAlpha = near * .68;
 
     /* The drift was 8.5e-6 per ms, which after ten seconds is sin(0.00026) —
        arithmetically static. It needs to be four orders larger to read as
@@ -1888,7 +1912,7 @@ function boot() {
   // Used for preview captures and OG images.
   const forced = new URLSearchParams(location.search).get('stop')
     ?? (location.hash.match(/stop=(\d+)/)?.[1] ?? null);
-  if (forced !== null) {
+  if (forced !== null && pts.length) {
     const i = clamp(+forced | 0, 0, N - 1);
     scrollTo(0, (i / (N - 1)) * (track.offsetHeight - vh));
     readScroll();
