@@ -198,7 +198,7 @@ const galaxy = (() => {
       const k = Math.random();
       const col = k < .44 ? '52,104,255' : k < .78 ? '146,70,255' : '206,222,255';
       const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
-      g.addColorStop(0, `rgba(${col},${(.016 + Math.random() * .034).toFixed(3)})`);
+      g.addColorStop(0, `rgba(${col},${(.011 + Math.random() * .026).toFixed(3)})`);
       g.addColorStop(1, `rgba(${col},0)`);
       c.fillStyle = g;
       c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
@@ -254,15 +254,19 @@ const galaxy = (() => {
     // the hero's sky, and only the hero's — gone by the time you have left it
     const near = clamp(1 - heroD / .8, 0, 1);
     if (near <= .002) return;
-    ctx.globalAlpha = near * .62;
+    ctx.globalAlpha = near * .40;   // darker: it is a ground, not a subject
 
-    const scale = Math.max(W / tex.width, H / tex.height) * 1.22;
-    const drift = t * .0000085;
+    /* The drift was 8.5e-6 per ms, which after ten seconds is sin(0.00026) —
+       arithmetically static. It needs to be four orders larger to read as
+       movement at this scale. */
+    const scale = Math.max(W / tex.width, H / tex.height) * 1.30;
+    const d = t * .00006;
+    const breathe = 1 + Math.sin(d * .6) * .035;
     ctx.save();
     ctx.translate(W / 2 - cam.x * .05, H / 2 - cam.y * .05);
-    ctx.rotate(Math.sin(drift * 3.1) * .035);             // a slow wheel
-    ctx.scale(scale * (1 + Math.sin(drift * 5.2) * .015), scale * (1 + Math.sin(drift * 5.2) * .015));
-    ctx.translate(Math.sin(drift * 2.2) * 60, Math.cos(drift * 1.7) * 40);
+    ctx.rotate(d * .012 + Math.sin(d * .35) * .05);       // a wheel that keeps turning
+    ctx.scale(scale * breathe, scale * breathe);
+    ctx.translate(Math.sin(d * .5) * 95, Math.cos(d * .38) * 62);
     ctx.drawImage(tex, -tex.width / 2, -tex.height / 2);
     ctx.restore();
 
@@ -456,51 +460,169 @@ function split(el) {
   el.textContent = ''; el.appendChild(out);
 }
 
-/* ── pillar visuals: abstract, not illustrative ────────────────── */
-const VIS = {
-  intelligence: (() => {
-    const P = 100, N = 4, W = P * N, mid = 45, amp = 27;
-    const y1 = x => mid + Math.sin((x / P) * Math.PI * 2) * amp;
-    const y2 = x => mid - Math.sin((x / P) * Math.PI * 2) * amp;
-    const path = f => Array.from({ length: W / 4 + 1 }, (_, i) => {
-      const x = i * 4; return `${i ? 'L' : 'M'}${x} ${f(x).toFixed(1)}`;
-    }).join('');
-    let rungs = '';
-    for (let x = 0; x <= W; x += 7) {
-      const d = Math.abs(y1(x) - y2(x)) / (amp * 2);      // depth: narrow = edge-on
-      rungs += `<line x1="${x}" y1="${y1(x).toFixed(1)}" x2="${x}" y2="${y2(x).toFixed(1)}"
-        stroke="url(#gBrand)" stroke-width="${(1.1 + d * 1.5).toFixed(2)}"
-        stroke-linecap="round" opacity="${(.18 + d * .62).toFixed(2)}"/>`;
+/* ── the machine ───────────────────────────────────────────────────
+   About's three words, made operable. A real message goes in and the columns
+   genuinely read it — the fields below come out of whatever text is in the
+   box, so editing it changes the answer. Nothing is canned. */
+const MX_SAMPLES = [
+  "hi the a/c in flat 12b has stopped working since last night, can someone come tomorrow morning? it is getting really hot — Ade",
+  "please book the meeting room on the 4th floor for friday 3pm, eight people. thanks, Tunde",
+  "how much would it cost to repaint the stairwell on floors 3 and 4? we would need a quote by monday, it is fairly urgent"
+];
+
+const MX_RULES = [
+  ['when',   /\b(?:today|tonight|tomorrow|this (?:morning|afternoon|evening|week)|next week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b|\b\d{1,2}\s?(?:am|pm)\b|\b\d{1,2}:\d{2}\b/gi],
+  ['where',  /\b(?:flat|unit|apt|apartment|suite|block|floors?|stairwell|lobby|building|car ?park|meeting room)\s?[\w\d]{0,4}\b/gi],
+  ['asset',  /\b(?:a\/c|air ?con(?:ditioning)?|aircon|heating|boiler|lift|elevator|lights?|power|socket|tap|leak|water|plumbing|door|lock|repaint|paint(?:ing)?|clean(?:ing)?|generator|pest)\b/gi],
+  ['urgent', /\b(?:urgent(?:ly)?|asap|immediately|emergency|right away)\b/gi]
+];
+
+const MX_TRADE = [
+  [/a\/c|air ?con|aircon|heating|boiler|cool/i, 'HVAC'],
+  [/leak|tap|water|plumb/i,                     'Plumbing'],
+  [/light|power|socket|electric/i,              'Electrical'],
+  [/lift|elevator/i,                            'Lifts'],
+  [/paint|repaint/i,                            'Painting'],
+  [/clean/i,                                    'Cleaning'],
+  [/door|lock/i,                                'Carpentry'],
+  [/generator/i,                                'Generator'],
+  [/pest/i,                                     'Pest control']
+];
+
+function mxRead(text) {
+  const marks = [], taken = [];
+  const claim = (a, b) => taken.some(([x, y]) => a < y && b > x) ? false : (taken.push([a, b]), true);
+  const found = {};
+  for (const [kind, re] of MX_RULES) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(text))) {
+      if (!claim(m.index, m.index + m[0].length)) continue;
+      marks.push({ kind, a: m.index, b: m.index + m[0].length });
+      (found[kind] ||= []).push(m[0].trim());
     }
-    return `<svg viewBox="0 0 ${P * 2} 90" preserveAspectRatio="xMidYMid meet">
-      <g class="dna">
-        <g>
-          ${rungs}
-          <path d="${path(y1)}" fill="none" stroke="#7FB0FF" stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
-          <path d="${path(y2)}" fill="none" stroke="#B76BFF" stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
-        </g>
-      </g>
-    </svg>`;
-  })(),
-  automation: `<svg viewBox="0 0 200 90">
-    ${[22,45,68].map((y,i) => `
-      <line x1="10" y1="${y}" x2="190" y2="${y}" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
-      <rect x="0" y="${y-3}" width="16" height="6" rx="3" fill="url(#gBrand)">
-        <animate attributeName="x" from="-16" to="196" dur="${2.6+i*.7}s" repeatCount="indefinite"/>
-        <animate attributeName="opacity" values="0;1;1;0" dur="${2.6+i*.7}s" repeatCount="indefinite"/>
-      </rect>`).join('')}
-  </svg>`,
-  design: `<svg viewBox="0 0 200 90">
-    <g fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1">
-      ${Array.from({length:9},(_,i)=>`<rect x="${16+i*19}" y="24" width="13" height="42" rx="2"/>`).join('')}
-    </g>
-    <rect x="73" y="14" width="13" height="62" rx="2" fill="url(#gBrandV)" opacity=".9">
-      <animate attributeName="x" values="73;130;54;73" dur="6s" repeatCount="indefinite"/>
-    </rect>
-    <circle cx="100" cy="80" r="2.5" fill="#A625EE"/>
-  </svg>`
-};
-function paintPillars() { $$('.p-vis').forEach(el => el.innerHTML = VIS[el.dataset.vis] || ''); }
+  }
+  // a name signed off at the end, or after "thanks,"
+  const who = text.match(/(?:[—–-]|thanks,?)\s*([A-Z][a-z]{2,})\s*$/) ||
+              text.match(/\bthanks,?\s+([A-Z][a-z]{2,})\b/);
+  if (who) {
+    const a = text.lastIndexOf(who[1]);
+    if (claim(a, a + who[1].length)) { marks.push({ kind: 'who', a, b: a + who[1].length }); found.who = [who[1]]; }
+  }
+
+  const intent = /quote|how much|cost|price/i.test(text) ? 'Quote request'
+    : /\bbook|reserve|schedule\b/i.test(text)            ? 'Booking'
+    : /stopped working|not working|broken|leak|fault|repair|fix|damaged|out of order|keeps? (?:stopping|cutting|tripping|failing|breaking)|stuck|jammed|won'?t \w+|no (?:power|water|light|signal)/i.test(text) ? 'Fault report'
+    : 'General request';
+
+  const assetTxt = (found.asset || []).join(' ');
+  const trade = (MX_TRADE.find(([re]) => re.test(assetTxt)) || [null, 'General maintenance'])[1];
+
+  marks.sort((x, y) => x.a - y.a);
+  return { marks, found, intent, trade };
+}
+
+function machine() {
+  const box = $('#machine');
+  if (!box) return;
+  const msg = $('#mxMsg'), run = $('#mxRun'),
+        read = $('#mxRead'), flow = $('#mxFlow'), card = $('#mxCard');
+  const chips = $$('.mx-chip', box);
+  let timers = [], sample = 0;
+
+  const esc = t => t.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const clearAll = () => {
+    timers.forEach(clearTimeout); timers = [];
+    read.innerHTML = ''; flow.innerHTML = ''; card.innerHTML = '';
+    run.classList.remove('busy');
+  };
+  const at = (ms, fn) => timers.push(setTimeout(fn, ms));
+
+  const load = i => {
+    sample = i;
+    chips.forEach((c, k) => c.classList.toggle('on', k === i));
+    msg.textContent = MX_SAMPLES[i];
+    clearAll();
+  };
+
+  const go = () => {
+    const text = msg.textContent.trim();
+    if (!text) return;
+    clearAll();
+    run.classList.add('busy');
+    const r = mxRead(text);
+
+    // I — it reads the sentence, in the sentence
+    let html = '', last = 0;
+    for (const m of r.marks) {
+      html += esc(text.slice(last, m.a)) + `<mark class="k-${m.kind}">` + esc(text.slice(m.a, m.b)) + '</mark>';
+      last = m.b;
+    }
+    msg.innerHTML = html + esc(text.slice(last));
+
+    const rows = [
+      ['Intent',   r.intent],
+      ['Asset',    (r.found.asset || []).join(', ')],
+      ['Location', (r.found.where || []).join(', ')],
+      ['When',     (r.found.when  || []).join(', ')],
+      ['Raised by',(r.found.who   || []).join(', ')],
+      ['Priority', r.found.urgent ? 'Urgent' : 'Standard']
+    ];
+    rows.forEach(([k, v], i) => at(160 + i * 130, () => {
+      const el = document.createElement('div');
+      el.className = 'mx-row' + (v ? '' : ' miss');
+      el.innerHTML = `<b>${k}</b><span>${v ? esc(v) : 'not stated'}</span>`;
+      read.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('in'));
+    }));
+
+    // II — and then it does something about it
+    const ref = 'A-' + String(1000 + Math.floor(Math.random() * 8999));
+    const when = (r.found.when || [])[0];
+    const steps = [
+      `Work order ${ref} raised`,
+      `Routed to a ${r.trade.toLowerCase()} vendor`,
+      when ? `Deadline set — ${when}` : 'Deadline set from the SLA',
+      'Reminder chain armed — vendor, supervisor, head',
+      'Photograph required to close'
+    ];
+    steps.forEach((t, i) => at(1000 + i * 190, () => {
+      const el = document.createElement('div');
+      el.className = 'mx-step';
+      el.innerHTML = `<i></i><span>${esc(t)}</span>`;
+      flow.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('in'));
+    }));
+
+    // III — and hands back something a person can read
+    at(2050, () => {
+      card.innerHTML =
+        `<dl class="mx-card">
+           <span class="mx-ref">${ref}</span>
+           <dt>${esc(r.intent)}</dt>
+           <dd>${esc((r.found.asset || ['Unspecified'])[0])}${
+             r.found.where ? ' · ' + esc(r.found.where[0]) : ''}</dd>
+           <dt>Assigned</dt><dd>${esc(r.trade)} vendor${when ? ' · ' + esc(when) : ''}</dd>
+           <dt>Status</dt><dd><span class="mx-live">Open · evidence required</span></dd>
+         </dl>`;
+      const c = card.firstElementChild;
+      requestAnimationFrame(() => c.classList.add('in'));
+      run.classList.remove('busy');
+    });
+  };
+
+  chips.forEach((c, i) => c.addEventListener('click', () => load(i)));
+  run.addEventListener('click', go);
+  msg.addEventListener('input', clearAll);
+  msg.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); msg.blur(); go(); }
+  });
+  msg.addEventListener('paste', e => {
+    e.preventDefault();
+    document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text'));
+  });
+  load(0);
+}
 
 /* ── projects: work moving through the machine ─────────────────────
    Lanes of packets running left to right through gates, rerouting to a
@@ -1683,7 +1805,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); machine(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

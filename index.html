@@ -165,25 +165,37 @@
         <p data-split="word">If your business spends hours copying, pasting, forwarding, updating and chasing tasks, we can automate it.</p>
         <p data-split="word">We use intelligence, automation and design to save your team time — so they can focus on the work that drives more revenue.</p>
       </div>
-      <div class="pillars">
-        <article class="pillar" data-depth="1.08">
-          <span class="p-idx">I</span>
-          <h3>Intelligence</h3>
-          <div class="p-vis" data-vis="intelligence"></div>
-          <p>Systems that read context, spot the pattern, and decide — so the judgement call happens before anyone opens a tab.</p>
-        </article>
-        <article class="pillar" data-depth="1.14">
-          <span class="p-idx">II</span>
-          <h3>Automation</h3>
-          <div class="p-vis" data-vis="automation"></div>
-          <p>The invisible relay between your tools. Work moves on its own, arrives finished, and nobody had to chase it.</p>
-        </article>
-        <article class="pillar" data-depth="1.2">
-          <span class="p-idx">III</span>
-          <h3>Design</h3>
-          <div class="p-vis" data-vis="design"></div>
-          <p>Precision made visible. Interfaces so clear the machinery underneath disappears completely.</p>
-        </article>
+      <div class="machine" id="machine">
+        <div class="mx-bar">
+          <span class="mx-k">A message arrives</span>
+          <div class="mx-chips">
+            <button class="mx-chip on" data-i="0">Fault</button>
+            <button class="mx-chip" data-i="1">Booking</button>
+            <button class="mx-chip" data-i="2">Quote</button>
+          </div>
+          <button class="mx-run" id="mxRun">
+            <span>Run it</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <p class="mx-msg" id="mxMsg" contenteditable="true" spellcheck="false"
+           aria-label="Edit the incoming message"></p>
+
+        <div class="mx-cols">
+          <section class="mx-col" data-step="1">
+            <span class="mx-n">I</span><h3>Intelligence</h3>
+            <div class="mx-out" id="mxRead"></div>
+          </section>
+          <section class="mx-col" data-step="2">
+            <span class="mx-n">II</span><h3>Automation</h3>
+            <div class="mx-out" id="mxFlow"></div>
+          </section>
+          <section class="mx-col" data-step="3">
+            <span class="mx-n">III</span><h3>Design</h3>
+            <div class="mx-out" id="mxCard"></div>
+          </section>
+        </div>
       </div>
     </section>
 

@@ -388,38 +388,12 @@ body.ready .hud{opacity:1}
 .about-body p{font-size:calc(var(--u)*.94);font-weight:300;line-height:1.75;color:var(--ink-2)}
 
 /* no cards — three columns divided by hairlines, nothing more */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.4);margin-top:calc(var(--u)*3);padding-top:calc(var(--u)*1.6);border-top:1px solid var(--line-2)}
-.pillar{position:relative;transition:opacity .5s}
-.p-idx{display:block;font-size:calc(var(--u)*.66);letter-spacing:.3em;color:var(--ink-3)}
-.pillar h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.5);letter-spacing:-.015em;margin:calc(var(--u)*.45) 0 calc(var(--u)*1)}
-.p-vis{height:calc(var(--u)*3.8);margin-bottom:calc(var(--u)*1)}
-.p-vis svg{width:100%;height:100%;display:block;overflow:visible}
 
 /* Intelligence: signals firing along the network. SMIL pulsing an r of 2.4
    was technically animation and read as a still image next to the sliding
-   bars beside it — this actually moves. */
-.iq-sig{
-  stroke-dasharray:22 220;
-  filter:drop-shadow(0 0 5px rgba(130,170,255,.85));
-  animation:iqRun 3.4s linear infinite;
-}
-.iq-b{animation-delay:1.7s}
-@keyframes iqRun{from{stroke-dashoffset:242}to{stroke-dashoffset:22}}
-.iq-nodes circle{
-  fill:url(#gBrand);transform-box:fill-box;transform-origin:50% 50%;
-  animation:iqPulse 2.8s ease-in-out infinite;
-}
-.iq-nodes circle:nth-child(2){animation-delay:.3s}
-.iq-nodes circle:nth-child(3){animation-delay:.6s}
-.iq-nodes circle:nth-child(4){animation-delay:.9s}
-.iq-nodes circle:nth-child(5){animation-delay:1.2s}
-.iq-nodes circle:nth-child(6){animation-delay:.45s}
-.iq-nodes circle:nth-child(7){animation-delay:1.05s}
-@keyframes iqPulse{
-  0%,100%{transform:scale(.7);opacity:.45}
+   bars beside it — this actually moves. */to{stroke-dashoffset:22}}
   50%    {transform:scale(1.5);opacity:1}
 }
-.pillar p{font-size:calc(var(--u)*.8);font-weight:300;line-height:1.7;color:var(--ink-3)}
 
 /* ── 02 projects ───────────────────────────────────────────────── */
 .proj-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--u)*3);margin-top:calc(var(--u)*2)}
@@ -789,8 +763,6 @@ body.ready .hud{opacity:1}
   .hero-foot{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*2)}
   .hero-note{max-width:none}
   .about-body,.case-intro{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
-  .pillars{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
-  .p-vis{height:calc(var(--u)*3)}
   .cats{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .proj-intro{flex-direction:column;align-items:flex-start}
   .case-track{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
@@ -934,11 +906,9 @@ body.reduced .star{animation:none}
 .reader-body .cd-table th{font-size:clamp(10px,.8vw,12px)}
 .reader-body .cd-table td{padding:clamp(7px,.7vw,12px) 0}
 .reader-body .cd-note{font-size:clamp(13px,1vw,16px);line-height:1.65;margin-top:clamp(14px,1.4vw,22px);max-width:78ch}
-.reader-body .case-step,.reader-body .cat,.reader-body .pillar,.reader-body .cd-panel{
   opacity:1!important;transform:none!important;
 }
 .reader-body .case-step::before,.reader-body .case-step::after{display:none}
-.reader-body .p-vis{height:clamp(70px,7vw,120px);margin-bottom:clamp(12px,1.2vw,20px)}
 
 /* a dense block invites the reading view */
 .readable{cursor:none}
@@ -1096,9 +1066,7 @@ body.is-touch .fb-seek{cursor:pointer}
 
 /* ── the helix ──────────────────────────────────────────────────────
    Four periods are drawn and the group slides by exactly one, so the loop is
-   seamless and the strands read as rotating — no per-frame work at all. */
-.p-vis svg .dna{animation:dnaSpin 9s linear infinite}
-@keyframes dnaSpin{to{transform:translateX(-100px)}}
+   seamless and the strands read as rotating — no per-frame work at all. */}
 
 
 /* ── the enquiry arrow ── */
@@ -1135,8 +1103,7 @@ body.is-touch .fb-seek{cursor:pointer}
   0%,68%,100%{opacity:0;transform:translate(-3px,3px)}
   80%        {opacity:.5;transform:translate(0,0)}
 }
-body.reduced .readable::before,body.reduced .p-vis svg .dna,
-body.reduced .btn-primary svg{animation:none}
+body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 
 /* the page shows the short read; the panel shows the whole thing */
 .cs-full{display:none}
@@ -1145,8 +1112,6 @@ body.reduced .btn-primary svg{animation:none}
 
 /* the helix is drawn four periods wide so it can slide; the viewBox shows one
    window of it, and this is what stops the rest painting over the copy */
-.p-vis svg:has(.dna){overflow:hidden}
-.p-vis{overflow:hidden}
 
 /* the section's number, sitting behind its own section */
 .stop-num{
@@ -1156,3 +1121,90 @@ body.reduced .btn-primary svg{animation:none}
   pointer-events:none;user-select:none;
 }
 @media (max-width:900px){.stop-num{font-size:calc(var(--u)*14);right:calc(var(--u)*-.5)}}
+
+/* ── the machine ────────────────────────────────────────────────────
+   The three words, made operable. A real message goes in — edit it, it is
+   contenteditable — and the columns actually read it, route it, and present
+   the finished record. Nothing here is canned: the fields come out of
+   whatever text is in the box. */
+.machine{margin-top:calc(var(--u)*2.2);padding-top:calc(var(--u)*1.5);border-top:1px solid var(--line-2)}
+.mx-bar{display:flex;align-items:center;gap:calc(var(--u)*1.4);flex-wrap:wrap}
+.mx-k{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
+.mx-chips{display:flex;gap:calc(var(--u)*.5)}
+.mx-chip{
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.62);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);padding:calc(var(--u)*.28) calc(var(--u)*.8);
+  border:1px solid var(--line-2);border-radius:100px;transition:color .3s,border-color .3s,background .3s;
+}
+.mx-chip:hover{color:var(--ink-2);border-color:var(--line)}
+.mx-chip.on{color:var(--ink);border-color:transparent;background:rgba(166,37,238,.18)}
+.mx-run{
+  margin-left:auto;display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);
+  letter-spacing:.22em;text-transform:uppercase;color:var(--ink);
+  padding:calc(var(--u)*.4) 0;border-bottom:1px solid var(--line);transition:border-color .4s;
+}
+.mx-run:hover{border-color:var(--violet)}
+.mx-run svg{width:17px;height:17px;transition:transform .4s var(--ease)}
+.mx-run:hover svg{transform:translateX(5px)}
+.mx-run.busy{opacity:.5;pointer-events:none}
+
+.mx-msg{
+  margin-top:calc(var(--u)*.9);padding:calc(var(--u)*.75) 0;
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.02);line-height:1.55;
+  color:var(--ink-2);outline:none;border-bottom:1px solid rgba(255,255,255,.10);
+  transition:border-color .35s;caret-color:var(--violet-ink);
+}
+.mx-msg:focus{border-color:var(--violet)}
+.mx-msg mark{
+  background:none;color:var(--ink);position:relative;
+  box-shadow:inset 0 -.42em 0 rgba(166,37,238,.22);border-radius:2px;
+  opacity:0;animation:mxMark .45s var(--ease) forwards;
+}
+.mx-msg mark.k-when{box-shadow:inset 0 -.42em 0 rgba(30,144,255,.26)}
+.mx-msg mark.k-who{box-shadow:inset 0 -.42em 0 rgba(120,220,190,.22)}
+.mx-msg mark.k-urgent{box-shadow:inset 0 -.42em 0 rgba(255,110,140,.26)}
+@keyframes mxMark{from{opacity:.25}to{opacity:1}}
+
+.mx-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*1.5)}
+.mx-col{position:relative}
+.mx-n{display:block;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.3em;color:var(--ink-3)}
+.mx-col h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.35);letter-spacing:-.018em;margin:calc(var(--u)*.3) 0 calc(var(--u)*.8)}
+.mx-out{min-height:calc(var(--u)*7.4);font-size:calc(var(--u)*.8);line-height:1.5}
+
+.mx-row{display:flex;gap:calc(var(--u)*.6);align-items:baseline;padding:calc(var(--u)*.22) 0;opacity:0;transform:translateY(6px)}
+.mx-row.in{opacity:1;transform:none;transition:opacity .45s var(--ease),transform .45s var(--ease)}
+.mx-row b{flex:none;width:7.2em;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.62);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.mx-row span{color:var(--ink-2)}
+.mx-row.miss span{color:var(--ink-3);opacity:.55;font-style:italic}
+
+.mx-step{display:flex;gap:calc(var(--u)*.6);align-items:center;padding:calc(var(--u)*.22) 0;opacity:0;transform:translateX(-6px)}
+.mx-step.in{opacity:1;transform:none;transition:opacity .4s var(--ease),transform .4s var(--ease)}
+.mx-step i{
+  flex:none;width:calc(var(--u)*.85);height:calc(var(--u)*.85);border-radius:50%;
+  border:1px solid var(--line);position:relative;
+}
+.mx-step.in i::after{
+  content:"";position:absolute;inset:2px;border-radius:50%;background:var(--grad-v);
+  animation:mxTick .4s var(--ease) forwards;transform:scale(0);
+}
+@keyframes mxTick{to{transform:scale(1)}}
+.mx-step span{color:var(--ink-2)}
+
+.mx-card{
+  padding:calc(var(--u)*.9);border:1px solid var(--line-2);border-radius:calc(var(--u)*.5);
+  background:linear-gradient(180deg,rgba(255,255,255,.030),rgba(255,255,255,0));
+  opacity:0;transform:translateY(10px) scale(.985);
+}
+.mx-card.in{opacity:1;transform:none;transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.mx-card dt{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.56);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.mx-card dd{color:var(--ink);margin:0 0 calc(var(--u)*.5)}
+.mx-card dd:last-child{margin-bottom:0}
+.mx-card .mx-ref{float:right;font-family:var(--f-mono);font-size:calc(var(--u)*.6);color:var(--violet-ink);letter-spacing:.1em}
+.mx-card .mx-live{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:calc(var(--u)*.58);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2)}
+.mx-card .mx-live::before{content:"";width:6px;height:6px;border-radius:50%;background:#59d99a;box-shadow:0 0 0 0 rgba(89,217,154,.6);animation:pulse 2.4s infinite}
+
+@media (max-width:900px){
+  .mx-cols{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
+  .mx-run{margin-left:0}
+}

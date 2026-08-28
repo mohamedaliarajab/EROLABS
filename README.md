@@ -441,6 +441,29 @@ separate field, versus almost no blue without it.
 No WebGL, or a lost context, falls back to the three gradient blobs in
 `#aurora.no-gl`.
 
+## The machine (About)
+
+The three words are operable rather than illustrated. A message sits in a
+`contenteditable` box — edit it, or pick one of the three samples — and the
+columns genuinely read it:
+
+- **Intelligence** marks the sentence in place (asset, location, when, who,
+  urgency) and lists what it pulled out, saying *not stated* where a field is
+  genuinely absent.
+- **Automation** raises a numbered work order, picks a trade from the asset
+  word, sets the deadline from the time it found, arms the reminder chain and
+  demands a photograph.
+- **Design** hands back a clean record card.
+
+**None of it is canned.** `mxRead()` runs real regexes over whatever text is in
+the box, and the trade is derived from the asset word — type "the lift keeps
+stopping" and it routes to a lifts vendor; type "no power in unit 4" and it
+routes to electrical. That is the whole pitch, demonstrated in ten seconds,
+which is worth more on that page than three abstract loops were.
+
+If you extend it, the tables are `MX_RULES`, `MX_TRADE` and the intent chain in
+`mxRead()`.
+
 ## The hero's sky
 
 `galaxy` bakes a Milky Way once into an offscreen texture — a diagonal band of
