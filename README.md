@@ -96,6 +96,23 @@ The mast belongs to the hero and fades out as the camera travels away
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
 
+## The enquiry form
+
+Five required fields — company, email, phone, the problem, the outcome.
+Submitting shows "Problem received, we will solve it" letter by letter over a
+violet bloom, holds for five seconds against a draining bar, then hands back
+a cleared form for the next enquiry.
+
+**It only claims to have received something when it has.** Delivery is a
+Netlify Form, POSTed as AJAX so the page never navigates. If that POST fails
+— locally, or on a host that is not Netlify — the form says so and offers the
+email address instead. A confirmation for an enquiry that went nowhere is
+worse than any error message.
+
+Validation is inline and specific: empty fields and a malformed email get
+different messages, the offending field takes focus, and the error colour
+(`--warn`) is deliberately not the brand accent.
+
 ## Back to top
 
 On the hero the mast makes navigation obvious. Off it, the mast is gone and
@@ -385,7 +402,10 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
 - [ ] **Email** is `hello@erolabs.studio` in two places — `index.html` footer
       and the `mailto:` in `composer()` in `main.js`.
 - [ ] **Social links** are `href="#"`.
-- [ ] **The contact composer** builds a `mailto:`, so enquiries land in whatever
-      mail client the visitor has. If you want them captured server-side instead,
-      a Netlify Form or a Make webhook drops straight into `#sendBrief`.
+- [ ] **Enquiries go to a Netlify Form** (`name="enquiry"`, five required
+      fields). This only works once deployed to Netlify — submissions appear
+      under Forms in the site dashboard, and email notifications are set up
+      there, not in code. **Locally the POST fails and the form says so**;
+      that is correct behaviour, not a bug. To send them somewhere else
+      instead, change the one `fetch('/')` in `enquiry()` to a Make webhook.
 - [ ] **OG image** — none set. Capture `?stop=0` at 1200×630.

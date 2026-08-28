@@ -917,36 +917,92 @@ function countUp(el) {
   })(t0);
 }
 
-/* ── composer ──────────────────────────────────────────────────── */
-function composer() {
-  const box = $('#composer'); if (!box) return;
-  const hint = $('#composerHint');
-  const fills = $$('.fill', box);
-  fills.forEach(f => {
-    f.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); f.blur(); } });
-    f.addEventListener('paste', e => {                        // keep it plain text
-      e.preventDefault();
-      document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text'));
+/* ── enquiry ───────────────────────────────────────────────────────
+   Every field is required. On success the form gives way to the
+   confirmation, which holds for five seconds and then hands back a clean
+   form for the next enquiry.
+
+   Delivery is a Netlify Form (data-netlify on the markup, POSTed here as
+   AJAX so the page never navigates). If that POST fails — running locally,
+   or deployed somewhere that is not Netlify — we say so and offer the email
+   instead. Showing "Problem received" for an enquiry that went nowhere
+   would be worse than any error message.                                 */
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+function enquiry() {
+  const stage = $('.eq-stage'), form = $('#enquiry'), note = $('#eqNote'), msg = $('#eqDoneMsg');
+  if (!stage || !form) return;
+  const inputs = $$('input[required]', form);
+  let timer = null, busy = false;
+
+  // split the confirmation so it can arrive letter by letter
+  if (msg && !msg.dataset.split) {
+    msg.dataset.split = '1';
+    const text = msg.textContent;
+    msg.textContent = '';
+    [...text].forEach((c, i) => {
+      const sp = document.createElement('span');
+      sp.className = 'dchar';
+      sp.textContent = c === ' ' ? ' ' : c;
+      sp.style.setProperty('--i', i);
+      msg.appendChild(sp);
     });
-  });
-  $('#sendBrief').addEventListener('click', () => {
-    const v = {};
-    fills.forEach(f => v[f.dataset.k] = f.textContent.trim());
-    if (!v.pain && !v.want) {
-      hint.textContent = 'Fill in a blank or two first — even roughly.';
-      hint.style.color = '#A625EE';
-      fills[2].focus();
+  }
+
+  const setNote = (text, warn) => {
+    note.textContent = text;
+    note.classList.toggle('warn', !!warn);
+  };
+  inputs.forEach(f => f.addEventListener('input', () => {
+    f.closest('.eq-field').classList.remove('invalid');
+  }));
+
+  const check = () => {
+    let first = null, why = '';
+    for (const f of inputs) {
+      const v = f.value.trim();
+      const ok = v && (f.type !== 'email' || EMAIL_RE.test(v));
+      f.closest('.eq-field').classList.toggle('invalid', !ok);
+      if (!ok && !first) {
+        first = f;
+        why = !v ? 'Every field is needed — we cannot come back to you without them.'
+                 : 'That email address does not look right.';
+      }
+    }
+    if (first) { setNote(why, true); first.focus(); }
+    return !first;
+  };
+
+  const reset = () => {
+    stage.classList.remove('sent');
+    form.reset();
+    inputs.forEach(f => f.closest('.eq-field').classList.remove('invalid'));
+    setNote('Every field, so we can come back to you properly.', false);
+    busy = false;
+  };
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (busy || !check()) return;
+    busy = true;
+    setNote('Sending…', false);
+
+    try {
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(new FormData(form)).toString()
+      });
+      if (!res.ok) throw new Error(res.status);
+    } catch (err) {
+      busy = false;
+      setNote('Could not send just now — please email hello@erolabs.studio.', true);
       return;
     }
-    const body =
-`At ${v.company || '[company]'}, my team loses roughly ${v.hours || '[?]'} hours a week to ${v.pain || '[?]'}.
-What I'd really like is for ${v.want || '[?]'}.
 
-—
-Sent from erolabs.studio`;
-    location.href = `mailto:hello@erolabs.studio?subject=${encodeURIComponent('A problem worth solving — ' + (v.company || 'new enquiry'))}&body=${encodeURIComponent(body)}`;
-    hint.textContent = 'Opening your mail client…';
-    hint.style.color = '';
+    stage.classList.add('sent');
+    clearTimeout(timer);
+    timer = setTimeout(reset, 5000);      // hand back a clean form
   });
 }
 
@@ -1093,7 +1149,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); peeks(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

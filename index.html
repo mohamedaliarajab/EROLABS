@@ -280,20 +280,50 @@
       <h2 class="display xl" data-split="char">Got a Problem<br>Worth Solving?</h2>
       <p class="reach-lede" data-split="word">Tell us what's taking too much time, causing unnecessary work, or simply not working the way it should. We'll explore how intelligence, automation and design can help.</p>
 
-      <div class="composer" id="composer">
-        <p class="composer-label">Compose your brief <em>— fill in the blanks</em></p>
-        <p class="composer-line">
-          At <span class="fill" contenteditable="true" data-ph="company name" data-k="company"></span>,
-          my team loses roughly <span class="fill sm" contenteditable="true" data-ph="00" data-k="hours"></span> hours a week to
-          <span class="fill wide" contenteditable="true" data-ph="the repetitive thing" data-k="pain"></span>.
-          What I'd really like is for <span class="fill wide" contenteditable="true" data-ph="the outcome you want" data-k="want"></span>.
-        </p>
-        <div class="composer-foot">
-          <button class="btn-primary" id="sendBrief">
-            <span>Start a Conversation</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <p class="composer-hint" id="composerHint">Let's build something that works.</p>
+      <div class="eq-stage">
+        <!-- data-netlify makes this a real Netlify Form on deploy; the POST
+             below is the AJAX path so the page never navigates away. -->
+        <form class="enquiry" id="enquiry" name="enquiry" method="POST"
+              data-netlify="true" netlify-honeypot="bot-field" novalidate>
+          <input type="hidden" name="form-name" value="enquiry">
+          <p class="eq-hp"><label>Leave this empty <input name="bot-field" tabindex="-1"></label></p>
+
+          <div class="eq-grid">
+            <label class="eq-field">
+              <span class="eq-k">Company name</span>
+              <input name="company" type="text" required autocomplete="organization" placeholder="Your company">
+            </label>
+            <label class="eq-field">
+              <span class="eq-k">Email</span>
+              <input name="email" type="email" required autocomplete="email" placeholder="you@company.com">
+            </label>
+            <label class="eq-field">
+              <span class="eq-k">Phone number</span>
+              <input name="phone" type="tel" required autocomplete="tel" placeholder="+000 000 0000">
+            </label>
+          </div>
+
+          <label class="eq-field eq-wide">
+            <span class="eq-k">We are currently facing a problem of</span>
+            <input name="problem" type="text" required placeholder="the thing taking too much time">
+          </label>
+          <label class="eq-field eq-wide">
+            <span class="eq-k">What we'd really like is for</span>
+            <input name="want" type="text" required placeholder="the outcome you want">
+          </label>
+
+          <div class="eq-foot">
+            <button class="btn-primary" type="submit" id="eqSend">
+              <span>Send Enquiry</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <p class="eq-note" id="eqNote">Every field, so we can come back to you properly.</p>
+          </div>
+        </form>
+
+        <div class="eq-done" id="eqDone" role="status" aria-live="polite">
+          <p class="eq-done-msg" id="eqDoneMsg">Problem received, we will solve it</p>
+          <i class="eq-done-bar"></i>
         </div>
       </div>
 
