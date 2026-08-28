@@ -540,6 +540,14 @@ const LY_NOTES = {
   7: 'A system someone can actually run: connected, decided, and visible. This is the whole of it.'
 };
 
+/* A heartbeat is two thumps, not a sine — a strong one followed by a softer
+   one, then a rest. Two gaussians on a 1.35s cycle give that shape. */
+const heartbeat = t => {
+  const p = (t / 1.35) % 1;
+  const thump = (at, w) => Math.exp(-Math.pow((p - at) / w, 2));
+  return Math.min(1, thump(.07, .05) + thump(.28, .062) * .62);
+};
+
 let layersUpdate = () => {};
 function layersRig() {
   const box = $('#layers');
@@ -686,8 +694,22 @@ function layersRig() {
       ctx.lineWidth = 1 + on * .6;
       ctx.beginPath(); ctx.arc(p.x, p.y, 7 + L.design * 2, 0, 7); ctx.stroke();
       if (isJunction && L.intel > .05) {                  // a decision, once there is one
-        ctx.fillStyle = `rgba(120,180,255,${(L.intel * .85).toFixed(2)})`;
-        ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, 7); ctx.fill();
+        const hb = heartbeat(t * .001), a = L.intel;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        const R = (7 + hb * 12) * 3.2;                    // the glow breathes
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, R);
+        g.addColorStop(0,   `rgba(255,255,255,${(.90 * a).toFixed(3)})`);
+        g.addColorStop(.14, `rgba(246,251,255,${(.62 * a * (.45 + hb * .55)).toFixed(3)})`);
+        g.addColorStop(.38, `rgba(190,220,255,${(.30 * a * (.35 + hb * .65)).toFixed(3)})`);
+        g.addColorStop(.70, `rgba(110,170,255,${(.14 * a * (.25 + hb * .75)).toFixed(3)})`);
+        g.addColorStop(1,   'rgba(90,150,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x, p.y, R, 0, 7); ctx.fill();
+        // the white core, which is what actually reads as a beat
+        ctx.fillStyle = `rgba(255,255,255,${(.95 * a).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.4 + hb * 2.6, 0, 7); ctx.fill();
+        ctx.restore();
       }
       if (L.design > .25) {
         ctx.fillStyle = `rgba(200,212,235,${((L.design - .25) * .9).toFixed(2)})`;

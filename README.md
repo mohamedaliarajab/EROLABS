@@ -466,8 +466,12 @@ Each toggle changes what the picture **does** —
 | layer | what changes on the canvas |
 |-------|-----------------------------|
 | Automation | the six stations light left to right, 150ms apart, each rail appearing once both its ends are up — then jobs travel them directly instead of wandering |
-| Intelligence | a decision lights at each junction; jobs stop taking the wrong branch, and stop being lost |
+| Intelligence | a decision lights at each junction — a white core inside a wide additive glow, beating lub-dub on a 1.35s cycle — and jobs stop taking the wrong branch, and stop being lost |
 | Design | the scatter eases into an ordered flow and the stations gain labels |
+
+The heartbeat is two gaussians rather than a sine: a strong thump, a dip, a
+softer second, then a rest. A sine reads as a throb; only the double beat reads
+as a pulse.
 
 Three meters and a caption follow. Verified across combinations: nothing on is
 `100 / 100 / 18`, automation alone `45 / 82 / 64`, with intelligence
