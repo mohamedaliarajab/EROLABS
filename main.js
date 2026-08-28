@@ -68,34 +68,12 @@ function measure() {
     p.el.style.setProperty('--wy', p.y + 'px');
   });
   fitStops();
-  placeApStars();
   flowLayout();
   if (!reduced) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
   buildRoute();
   dress();
   field.resize();
   galaxy.size();
-}
-
-/* Park the two streaks on the baseline at the end of "Autopilot". A zero-height
-   inline anchor lands at the top of the line box, not the bottom of the glyph,
-   so the position is measured from the character and written as section-local
-   coordinates — divided back out of --fit, which is a transform the rects
-   already include. */
-function placeApStars() {
-  const stop = $('#about'), stars = $('.ap-stars');
-  if (!stop || !stars) return;
-  const chars = $$('#about h2 .char');
-  const last = chars[chars.length - 1];
-  if (!last) return;
-  const r = last.getBoundingClientRect(), sr = stop.getBoundingClientRect();
-  if (!r.width || !sr.width) return;
-  const fit = +(stop.style.getPropertyValue('--fit') || 1) || 1;
-  const size = parseFloat(getComputedStyle(last).fontSize) || 0;
-  stars.style.setProperty('--ap-x', ((r.right - sr.left) / fit).toFixed(1) + 'px');
-  // r.bottom is the line box; the baseline — the visual foot of the t — sits
-  // about 0.17em above it
-  stars.style.setProperty('--ap-y', ((r.bottom - sr.top) / fit - size * .17).toFixed(1) + 'px');
 }
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
@@ -1940,14 +1918,6 @@ function tick(t) {
 /* ── boot ──────────────────────────────────────────────────────── */
 function boot() {
   $$('[data-split]').forEach(split);
-  const apHead = $('#about h2');
-  if (apHead) {
-    const o = document.createElement('i');
-    o.className = 'ap-stars';
-    o.setAttribute('aria-hidden', 'true');
-    o.innerHTML = '<b></b><b></b>';
-    $('#about').appendChild(o);
-  }
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
   audioRig(); auroraRig(); layersRig(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();

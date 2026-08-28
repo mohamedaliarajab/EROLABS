@@ -1174,34 +1174,3 @@ body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px var(-
   .ly-canvas{height:calc(var(--u)*13)}
 }
 
-/* ── the two streaks off "Autopilot" ────────────────────────────────
-   Anchored inline at the end of the heading, so they leave the bottom edge
-   of the final t wherever it lands. They run only while About is the live
-   section, and the viewport's own overflow does the clipping — they simply
-   fade as they reach the edge. */
-.ap-stars{position:absolute;left:var(--ap-x,0);top:var(--ap-y,0);width:0;height:0;z-index:2}
-.ap-stars b{
-  position:absolute;left:0;top:-1px;
-  width:clamp(70px,11vw,190px);height:2px;border-radius:2px;
-  background:linear-gradient(90deg,transparent,rgba(127,180,255,.5) 30%,#EAF3FF 58%,#C36BFF 80%,transparent);
-  filter:blur(.5px);
-  box-shadow:0 0 16px 3px rgba(150,190,255,.8),0 0 34px 8px rgba(166,37,238,.35);
-  opacity:0;transform-origin:left center;pointer-events:none;
-}
-#about.live .ap-stars b:nth-child(1){animation:apShootA 5s cubic-bezier(.25,.6,.3,1) infinite}
-#about.live .ap-stars b:nth-child(2){animation:apShootB 5s cubic-bezier(.25,.6,.3,1) infinite .7s}
-@keyframes apShootA{
-  0%   {opacity:0;transform:rotate(-9deg) translateX(0) scaleX(.25)}
-  4%   {opacity:1;transform:rotate(-9deg) translateX(3vw) scaleX(1)}
-  38%  {opacity:.95}
-  62%  {opacity:0;transform:rotate(-9deg) translateX(74vw) scaleX(1.7)}
-  100% {opacity:0;transform:rotate(-9deg) translateX(74vw) scaleX(1.7)}
-}
-@keyframes apShootB{
-  0%   {opacity:0;transform:rotate(6deg) translateX(0) scaleX(.25)}
-  4%   {opacity:1;transform:rotate(6deg) translateX(3vw) scaleX(.85)}
-  36%  {opacity:.8}
-  58%  {opacity:0;transform:rotate(6deg) translateX(68vw) scaleX(1.5)}
-  100% {opacity:0;transform:rotate(6deg) translateX(68vw) scaleX(1.5)}
-}
-body.reduced .ap-stars{display:none}
