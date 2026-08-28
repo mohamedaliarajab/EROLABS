@@ -96,6 +96,26 @@ The mast belongs to the hero and fades out as the camera travels away
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
 
+## The case study
+
+Company A, facility management, Lagos. Four steps on a drawn spine (Problem,
+Process, Solution, Result), then a film slot beside three tabbed tables —
+Hours, Errors, Return. Only one table is in the DOM flow at a time, which is
+what keeps the section inside its frame.
+
+**The badge is not decoration.** These are modelled figures, and presenting a
+model as measured results would misrepresent the work. The label sits next to
+the client name where it cannot be missed, with the reasoning in its `title`.
+
+**On density.** This is the tightest stop on the site: `--fit` sits near 0.89
+at 1440x900. Worth understanding before editing it — `fitStops` scales the
+whole section uniformly, so **raising a font size does not make text bigger on
+screen**, it just lowers the fit by the same factor. The only way to make the
+tables more legible is to spend less height on everything around them. That is
+why the film slot is modest and the section heading runs a step smaller than
+the others. If the video needs to be larger, move the tables behind a toggle
+rather than shrinking the type.
+
 ## The enquiry form
 
 Five required fields — company, email, phone, the problem, the outcome.
@@ -415,8 +435,13 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
 - [ ] **Project names** are placeholders describing real work generically —
       Studio OS, Change Note, Signal, Release Room, Showroom. Confirm what you
       want named publicly before publishing; no client is currently identified.
-- [ ] **The case study** is one composite story with illustrative numbers
-      (94%, 9 hours). Replace with a real engagement and real figures.
+- [ ] **The case study is a MODEL, not measured results.** It carries a
+      "Modelled, not measured" badge for exactly that reason — figures are
+      built from observed volumes and rates, not from post-deployment
+      measurement. Do not quietly drop that badge; if the engagement is later
+      measured, replace the numbers and then change the label.
+- [ ] **The client is "Company A" throughout.** The real name appears nowhere
+      in the source. Keep it that way unless they consent in writing.
 - [ ] **Email** is `hello@erolabs.studio` in two places — `index.html` footer
       and the `mailto:` in `composer()` in `main.js`.
 - [ ] **Social links** are `href="#"`.

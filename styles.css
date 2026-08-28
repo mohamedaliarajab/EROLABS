@@ -462,34 +462,82 @@ body.ready .hud{opacity:1}
   margin-top:calc(var(--u)*1);
 }
 
-/* ── 03 case studies ───────────────────────────────────────────── */
-.case-intro{display:grid;grid-template-columns:.85fr 1.15fr;gap:calc(var(--u)*3);align-items:start;margin-top:calc(var(--u)*2)}
-.case-intro p{font-size:calc(var(--u)*.92);font-weight:300;line-height:1.75}
-.case-intro p:first-child{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.42);line-height:1.35;letter-spacing:-.018em;color:var(--ink)}
-.case-track{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1.4);margin-top:calc(var(--u)*3);position:relative}
-.case-track::before{content:"";position:absolute;left:0;right:0;top:calc(var(--u)*.5);height:1px;background:var(--line-2)}
+/* ── 03 case studies ─────────────────────────────────────────────
+   The densest stop on the site, so its heading runs a step smaller —
+   fitStops scales the whole section uniformly, which means the only way
+   to make the TABLES legible is to spend less height on everything else. */
+#cases .xl{font-size:calc(var(--u)*3.9)}
+
+.case{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*1);border-top:1px solid var(--line-2)}
+.case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:calc(var(--u)*2)}
+.case-who h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.7);letter-spacing:-.02em}
+.case-meta{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);letter-spacing:.1em;color:var(--ink-3);margin-top:calc(var(--u)*.3)}
+/* the honesty label — this is a model, and it says so where it cannot be missed */
+.case-badge{
+  flex:none;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--violet-ink);
+  border:1px solid rgba(166,37,238,.4);border-radius:100px;padding:calc(var(--u)*.35) calc(var(--u)*.9);
+  white-space:nowrap;cursor:help;
+}
+.case-claim{
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.1);line-height:1.45;
+  letter-spacing:-.012em;color:var(--ink-2);max-width:78ch;margin-top:calc(var(--u)*.9);
+}
+.case-claim b{font-weight:200;color:var(--violet-ink)}
+
+.case-track{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:calc(var(--u)*1.3);margin-top:calc(var(--u)*1.5);position:relative}
+.case-track::before{content:"";position:absolute;left:0;right:0;top:calc(var(--u)*.45);height:1px;background:var(--line-2)}
 .case-track::after{
-  content:"";position:absolute;left:0;top:calc(var(--u)*.5);height:1px;width:0;
+  content:"";position:absolute;left:0;top:calc(var(--u)*.45);height:1px;width:0;
   background:var(--grad);box-shadow:0 0 14px rgba(63,91,255,.6);transition:width 1.6s var(--ease) .3s;
 }
 .stop.live .case-track::after{width:100%}
-.case-step{position:relative;padding-top:calc(var(--u)*2);opacity:0;transform:translateY(20px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.case-step{position:relative;padding-top:calc(var(--u)*1.7);opacity:0;transform:translateY(18px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
 .stop.live .case-step{opacity:1;transform:none;transition-delay:calc(var(--step)*150ms + 400ms)}
-.case-step::before{
-  content:"";position:absolute;left:0;top:0;width:calc(var(--u)*1);height:calc(var(--u)*1);
-  border-radius:50%;border:1px solid var(--line);background:var(--bg);
-}
-.case-step::after{
-  content:"";position:absolute;left:calc(var(--u)*.3);top:calc(var(--u)*.3);
-  width:calc(var(--u)*.4);height:calc(var(--u)*.4);border-radius:50%;background:var(--grad-v);
-  opacity:0;transition:opacity .5s;
-}
+.case-step::before{content:"";position:absolute;left:0;top:0;width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;border:1px solid var(--line);background:var(--bg)}
+.case-step::after{content:"";position:absolute;left:calc(var(--u)*.27);top:calc(var(--u)*.27);width:calc(var(--u)*.36);height:calc(var(--u)*.36);border-radius:50%;background:var(--grad-v);opacity:0;transition:opacity .5s}
 .stop.live .case-step::after{opacity:1;transition-delay:calc(var(--step)*150ms + 700ms)}
-.cs-k{font-size:calc(var(--u)*.66);letter-spacing:.28em;text-transform:uppercase;color:var(--blue)}
-.case-step h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.3);line-height:1.25;letter-spacing:-.018em;margin:calc(var(--u)*.6) 0 calc(var(--u)*.8)}
-.case-step p{font-size:calc(var(--u)*.8);font-weight:300;line-height:1.7;color:var(--ink-3)}
-.stat{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*2.4);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
-.case-step i{font-style:normal;color:var(--ink-2);font-size:calc(var(--u)*.8)}
+.cs-k{font-size:calc(var(--u)*.68);letter-spacing:.26em;text-transform:uppercase;color:var(--blue)}
+.case-step h4{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.12);line-height:1.25;letter-spacing:-.015em;margin:calc(var(--u)*.5) 0 calc(var(--u)*.6)}
+.case-step p{font-size:calc(var(--u)*.86);font-weight:300;line-height:1.65;color:var(--ink-3)}
+
+/* ── film beside the figures ── */
+.case-lower{display:grid;grid-template-columns:.52fr 1.48fr;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.3);align-items:start}
+.case-film{--tone:var(--violet)}
+
+.case-figs{display:flex;gap:calc(var(--u)*2.4);flex-wrap:wrap}
+.fig{display:flex;align-items:baseline;gap:calc(var(--u)*.5)}
+.stat{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.75);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.fig i{font-style:normal;color:var(--ink-3);font-size:calc(var(--u)*.78);max-width:11ch;line-height:1.3}
+
+.cd-tabs{display:flex;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.1);border-bottom:1px solid var(--line-2)}
+.cd-tab{
+  position:relative;padding:calc(var(--u)*.5) 0;font-family:var(--f-mono);font-weight:300;
+  font-size:calc(var(--u)*.72);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
+  transition:color .3s;
+}
+.cd-tab::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;background:var(--grad);transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease)}
+.cd-tab:hover{color:var(--ink-2)}
+.cd-tab.on{color:var(--ink)}
+.cd-tab.on::after{transform:scaleX(1)}
+
+.cd-panel{margin-top:calc(var(--u)*1)}
+.cd-table{width:100%;border-collapse:collapse;font-size:calc(var(--u)*.82);font-weight:300}
+.cd-table th{
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);text-align:right;padding:0 0 calc(var(--u)*.5);
+}
+.cd-table th:first-child{text-align:left}
+.cd-table td{
+  padding:calc(var(--u)*.28) 0;text-align:right;color:var(--ink-2);
+  border-top:1px solid rgba(255,255,255,.045);font-variant-numeric:tabular-nums;
+}
+.cd-table td:first-child{text-align:left;color:var(--ink-3)}
+.cd-sum td{color:var(--ink);border-top-color:rgba(255,255,255,.14)}
+.cd-sum td:first-child{color:var(--ink-2)}
+.cd-sum td:last-child{color:var(--violet-ink)}
+.cd-note{font-size:calc(var(--u)*.78);line-height:1.55;color:var(--ink-3);margin-top:calc(var(--u)*.7);max-width:70ch}
+.cd-note b{color:var(--ink-2);font-weight:400}
 
 /* ── 04 reach ──────────────────────────────────────────────────── */
 .reach-lede{max-width:54ch;font-size:calc(var(--u)*.96);font-weight:300;line-height:1.75;color:var(--ink-2);margin-top:calc(var(--u)*2)}
@@ -724,7 +772,11 @@ body.ready .hud{opacity:1}
   .p-vis{height:calc(var(--u)*3)}
   .cats{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .proj-intro{flex-direction:column;align-items:flex-start}
-  .case-track{grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.8)}
+  .case-track{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
+  .case-lower{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
+  .case-head{flex-direction:column;gap:calc(var(--u)*.9)}
+  .case-figs{gap:calc(var(--u)*1.4)}
+  .cd-table{font-size:calc(var(--u)*.66)}
   .case-track::before,.case-track::after{display:none}
   .eq-grid{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
   .eq-foot{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*1.2)}

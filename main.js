@@ -857,7 +857,8 @@ function projFlow() {
 
 /* ── counters ──────────────────────────────────────────────────── */
 function countUp(el) {
-  if (el.dataset.done) return; el.dataset.done = '1';
+  if (el.dataset.done || !el.dataset.count) return;    // literal figures stay literal
+  el.dataset.done = '1';
   const to = +el.dataset.count; const dur = 1400; const t0 = performance.now();
   (function step(now) {
     const k = clamp((now - t0) / dur, 0, 1);
@@ -972,6 +973,20 @@ function enquiry() {
     clearTimeout(timer);
     timer = setTimeout(reset, 5000);      // hand back a clean form
   });
+}
+
+/* ── case study figures ────────────────────────────────────────── */
+function caseTabs() {
+  const wrap = $('.case-data'); if (!wrap) return;
+  const tabs = $$('.cd-tab', wrap), panels = $$('.cd-panel', wrap);
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => {
+      const on = x === t;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-selected', String(on));
+    });
+    panels.forEach(p => { p.hidden = p.dataset.panel !== t.dataset.tab; });
+  }));
 }
 
 /* ── cursor ────────────────────────────────────────────────────── */
@@ -1117,7 +1132,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

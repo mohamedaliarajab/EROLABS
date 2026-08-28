@@ -238,33 +238,122 @@
         <span class="stop-name">Case Studies</span>
         <span class="stop-move">← lateral</span>
       </header>
-      <h2 class="display xl" data-split="char">The Problem.<br>The Process.<br>The Result.</h2>
-      <div class="case-intro">
-        <p data-split="word">Good work is easy to show. Great work is worth explaining.</p>
-        <p class="dim">Our case studies take you behind the scenes — from the challenge we set out to solve to the thinking, technology and design that brought the solution to life. Because sometimes the best part isn't just what we built. It's what it changed.</p>
+      <h2 class="display xl" data-split="char">The Problem. The Process.<br>The Result.</h2>
+
+      <div class="case">
+        <header class="case-head">
+          <div class="case-who">
+            <h3>Company&nbsp;A</h3>
+            <p class="case-meta">Facility management · Lagos · 2026 · 38 buildings · 9 operations staff · 34 vendors · ~412 work orders a month</p>
+          </div>
+          <span class="case-badge" title="Figures are a model built from observed volumes and rates, not results measured after deployment">Modelled, not measured</span>
+        </header>
+
+        <p class="case-claim">170 staff hours returned a month, record errors from
+          <b>7.4%</b> to <b>0.3%</b>, and the system paid back in <b>seven months</b>.</p>
+
+        <ol class="case-track" id="caseTrack">
+          <li class="case-step" data-step="1">
+            <span class="cs-k">Problem</span>
+            <h4>Nobody could say how long a job had been open.</h4>
+            <p>Work orders arrived by phone and WhatsApp, went into a notebook, and were
+               chased from memory. Eight landlord reports were built by hand — two staff,
+               six days a month — landing between the 8th and the 15th, with no evidence
+               attached to anything.</p>
+          </li>
+          <li class="case-step" data-step="2">
+            <span class="cs-k">Process</span>
+            <h4>We followed one work order end to end.</h4>
+            <p>Every hand-off mapped and timed across 412 monthly jobs. Three of them were
+               the same information being retyped — notebook, spreadsheet, report. Each
+               retyping step carried its own error rate, and each one could be removed.</p>
+          </li>
+          <li class="case-step" data-step="3">
+            <span class="cs-k">Solution</span>
+            <h4>Raised once, on a phone, at the building.</h4>
+            <p>Routed to a vendor by trade and location, with a clock running. WhatsApp
+               carries the deadline; reminders escalate on their own — vendor, supervisor,
+               Head of Operations. Closing requires a photograph. On the 1st, every report
+               assembles itself, evidenced.</p>
+          </li>
+          <li class="case-step" data-step="4">
+            <span class="cs-k">Result</span>
+            <h4>Nobody opens a spreadsheet.</h4>
+            <p>Supervisors work from phones; the Head of Operations works from one
+               dashboard. Reports leave on the 1st, every month, evidenced.</p>
+          </li>
+        </ol>
+
+        <div class="case-lower">
+          <div class="cat-media case-film" data-slot="case-company-a"><span class="cat-media-k">Film</span></div>
+
+          <div class="case-data">
+            <div class="case-figs">
+              <div class="fig"><b class="stat" data-count="2040">0</b><i>hours returned a year</i></div>
+              <div class="fig"><b class="stat" data-count="7">0</b><i>months to pay back</i></div>
+              <div class="fig"><b class="stat">0.3%</b><i>error rate, from 7.4%</i></div>
+            </div>
+
+            <div class="cd-tabs" role="tablist" aria-label="Case study figures">
+              <button class="cd-tab on" role="tab" aria-selected="true"  data-tab="hours">Hours</button>
+              <button class="cd-tab"    role="tab" aria-selected="false" data-tab="errors">Errors</button>
+              <button class="cd-tab"    role="tab" aria-selected="false" data-tab="return">Return</button>
+            </div>
+
+            <div class="cd-panel" role="tabpanel" data-panel="hours">
+              <table class="cd-table">
+                <thead><tr><th>Each month</th><th>Before</th><th>After</th><th>Returned</th></tr></thead>
+                <tbody>
+                  <tr><td>Logging work orders, retyped twice</td><td>41</td><td>7</td><td>34</td></tr>
+                  <tr><td>Chasing vendors for status</td><td>25</td><td>2</td><td>23</td></tr>
+                  <tr><td>Assembling 8 landlord reports</td><td>96</td><td>4</td><td>92</td></tr>
+                  <tr><td>Answering “what's the status?”</td><td>13</td><td>3</td><td>10</td></tr>
+                  <tr><td>Reconciling vendor invoices to jobs</td><td>14</td><td>3</td><td>11</td></tr>
+                  <tr class="cd-sum"><td>Per month</td><td>189</td><td>19</td><td>170</td></tr>
+                  <tr class="cd-sum"><td>Per year</td><td>2,268</td><td>228</td><td>2,040</td></tr>
+                </tbody>
+              </table>
+              <p class="cd-note">At ₦2,160 a loaded operations hour, 2,040 hours is ₦4.41m of capacity —
+                which is not cash unless it is redeployed. Company A puts it into winning and servicing
+                more buildings.</p>
+            </div>
+
+            <div class="cd-panel" role="tabpanel" data-panel="errors" hidden>
+              <table class="cd-table">
+                <thead><tr><th>Measure</th><th>Before</th><th>After</th></tr></thead>
+                <tbody>
+                  <tr><td>Work-order records containing an error</td><td>7.4% · ~30/mo</td><td>0.3% · ~1/mo</td></tr>
+                  <tr><td>Jobs closed with no evidence attached</td><td>~100%</td><td>0% — enforced</td></tr>
+                  <tr><td>Vendor charges disputed, unrecoverable</td><td>₦95,000/mo</td><td>₦11,000/mo</td></tr>
+                  <tr><td>Landlord reports reissued after correction</td><td>3/mo</td><td>0 in 6 months</td></tr>
+                </tbody>
+              </table>
+              <p class="cd-note">Errors fall because data is entered once, at source, into validated
+                fields, and never retyped. Three retyping steps are gone and each took its own error
+                rate with it. The residual 0.3% is judgement error at entry, which no system removes.</p>
+            </div>
+
+            <div class="cd-panel" role="tabpanel" data-panel="return" hidden>
+              <table class="cd-table">
+                <thead><tr><th>Line</th><th>Year 1</th><th>Year 2</th></tr></thead>
+                <tbody>
+                  <tr><td>Capacity returned</td><td>₦4,406,400</td><td>₦4,406,400</td></tr>
+                  <tr><td>Vendor disputes now evidenced</td><td>₦1,008,000</td><td>₦1,008,000</td></tr>
+                  <tr><td>At-risk contracts retained</td><td>₦7,200,000</td><td>₦7,200,000</td></tr>
+                  <tr><td>New buildings won</td><td>₦6,300,000</td><td>₦12,600,000</td></tr>
+                  <tr class="cd-sum"><td>Total return</td><td>₦18,914,400</td><td>₦25,214,400</td></tr>
+                  <tr><td>Investment</td><td>₦13,150,000</td><td>₦5,400,000</td></tr>
+                  <tr class="cd-sum"><td>Net</td><td>₦5,764,400</td><td>₦19,814,400</td></tr>
+                </tbody>
+              </table>
+              <p class="cd-note"><b>Stress-tested.</b> Strip the three new buildings — the only line
+                that credits new business to a reporting system — and year one still returns
+                ₦12,614,400 against ₦13,150,000 of cost. Payback moves from month 7 to month 13,
+                and year two returns 2.3×. The case does not rest on its softest claim.</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <ol class="case-track" id="caseTrack">
-        <li class="case-step" data-step="1">
-          <span class="cs-k">Problem</span>
-          <h3>Nine hours a week, gone.</h3>
-          <p>Every booking was retyped three times across three tools. Errors were inevitable, and the person catching them was the one who should have been selling.</p>
-        </li>
-        <li class="case-step" data-step="2">
-          <span class="cs-k">Process</span>
-          <h3>We followed the paperwork.</h3>
-          <p>We mapped every hand-off, timed each one, and found the four moments where information actually changed shape. Only those four needed a machine.</p>
-        </li>
-        <li class="case-step" data-step="3">
-          <span class="cs-k">Solution</span>
-          <h3>One source. Everything downstream.</h3>
-          <p>A single record now triggers the calendar, the invoice, the confirmation and the staff brief — with a written note explaining exactly what changed and why.</p>
-        </li>
-        <li class="case-step" data-step="4">
-          <span class="cs-k">Result</span>
-          <h3>Nobody opens the database.</h3>
-          <p><b class="stat" data-count="94">0</b><i>% fewer manual updates</i><br><b class="stat" data-count="9">0</b><i> hours returned every week</i></p>
-        </li>
-      </ol>
     </section>
 
     <!-- 04 · REACH US ──────────────────────────────────── -->
