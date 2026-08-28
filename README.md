@@ -441,6 +441,21 @@ separate field, versus almost no blue without it.
 No WebGL, or a lost context, falls back to the three gradient blobs in
 `#aurora.no-gl`.
 
+## The streaks off "Autopilot"
+
+Two shooting stars leave the foot of the final **t** every five seconds while
+About is the live section, on a 0.7s stagger and at slightly different angles,
+fading as they reach the edge of the frame — the viewport's own `overflow`
+does the clipping.
+
+The anchor is measured, not inline. An empty zero-height inline element lands
+at the *top* of the line box rather than the bottom of the glyph, which put the
+first attempt 93px too high. `placeApStars()` reads the last `.char`'s rect,
+converts it into the section's own coordinates (dividing out `--fit`, which the
+rect already includes), and drops 0.17em from the line-box bottom to land on
+the baseline. It re-runs from `measure()`, so it survives a resize and a
+re-wrap.
+
 ## The layers (About)
 
 The three words as a system you switch on, rather than three illustrations of
