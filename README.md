@@ -142,7 +142,7 @@ around it changes.
 
 ## The idle melt
 
-Stop scrolling for fifteen seconds and the section you stopped on liquefies —
+Stop scrolling for twenty seconds and the section you stopped on liquefies —
 and keeps liquefying. `meltT` simply accumulates for as long as you leave it
 alone, and everything else is a function of it. Any scroll, click, key or
 drag brings it back in about 0.4s, at the same speed however deep the melt
@@ -192,7 +192,7 @@ Three performance decisions hold this together:
   displacement stops being written at all — nobody can see a smear that is
   off-screen. The sag keeps moving regardless, so nothing appears to stall.
 
-Tuning: `MELT_AFTER` (15000ms) and the two coefficients in `sag`. Mobile
+Tuning: `MELT_AFTER` (20000ms) and the two coefficients in `sag`. Mobile
 drops the displacement for blur alone — a filter over a full section is too
 expensive there. Reduced motion skips it entirely.
 
@@ -263,6 +263,23 @@ Both of these produced bugs that looked like "the buttons don't work":
   fades over 0.7s, and for that whole time a `visibility: visible` overlay
   keeps swallowing clicks across the entire viewport. `pointer-events: none`
   in the same rule takes effect immediately.
+
+## Aurora
+
+Five seconds after a melt begins, three blue/violet gradient blobs fade up
+behind the world and brighten on the low end of the music.
+
+It costs nothing when it is not showing: the layer is `display: none` until
+needed, and the analyser is only sampled while it is on screen. The drift is
+pure CSS on three radial gradients — **gradients, not blur filters**, since a
+gradient is already soft and there is nothing per-frame to rasterise. The
+only per-frame work is a single opacity write.
+
+Beats come from one `AnalyserNode` (`fftSize` 128) built the first time
+playback starts — it needs a gesture, and `createMediaElementSource` may only
+run once per element. The source must be connected through to
+`ac.destination` or the page goes silent. With audio off there is no
+analyser and the aurora simply drifts.
 
 ## Cursor lights
 

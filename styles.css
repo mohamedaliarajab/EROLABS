@@ -62,6 +62,33 @@ body.is-touch button,body.is-touch a{cursor:pointer}
   0%,100%{transform:translate(0,0)} 20%{transform:translate(-3%,2%)}
   40%{transform:translate(2%,-3%)}  60%{transform:translate(-2%,-2%)} 80%{transform:translate(3%,1%)}
 }
+/* ── aurora ────────────────────────────────────────────────────────
+   Fades in five seconds after a melt begins and brightens on the beat.
+   Soft radial gradients rather than blur filters: gradients are already
+   soft, so there is nothing per-frame to rasterise. Display is dropped
+   entirely when it is not showing, so normal browsing pays nothing. */
+#aurora{position:fixed;inset:-25%;z-index:1;pointer-events:none;display:none;opacity:0}
+#aurora.on{display:block}
+#aurora i{position:absolute;border-radius:50%;will-change:transform}
+#aurora i:nth-child(1){
+  left:-8%;top:-12%;width:74vw;height:74vw;
+  background:radial-gradient(circle,rgba(30,144,255,.50),rgba(30,144,255,.14) 42%,transparent 66%);
+  animation:auroraA 34s ease-in-out infinite;
+}
+#aurora i:nth-child(2){
+  right:-14%;top:2%;width:66vw;height:66vw;
+  background:radial-gradient(circle,rgba(166,37,238,.46),rgba(166,37,238,.12) 44%,transparent 68%);
+  animation:auroraB 43s ease-in-out infinite;
+}
+#aurora i:nth-child(3){
+  left:16%;bottom:-28%;width:82vw;height:64vw;
+  background:radial-gradient(ellipse,rgba(110,90,255,.40),rgba(60,120,255,.10) 46%,transparent 70%);
+  animation:auroraC 51s ease-in-out infinite;
+}
+@keyframes auroraA{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(12vw,8vh,0) scale(1.22)}}
+@keyframes auroraB{0%,100%{transform:translate3d(0,0,0) scale(1.1)}50%{transform:translate3d(-14vw,12vh,0) scale(.88)}}
+@keyframes auroraC{0%,100%{transform:translate3d(0,0,0) scale(.95)}50%{transform:translate3d(9vw,-10vh,0) scale(1.18)}}
+
 #vignette{
   position:fixed;inset:0;z-index:5;pointer-events:none;
   background:radial-gradient(140% 110% at 50% 45%,transparent 50%,rgba(0,0,0,.62) 100%);
@@ -485,7 +512,18 @@ body.ready .hud{opacity:1}
 .orbit-in em{font-style:normal;font-size:calc(var(--u)*.6);color:var(--ink-3);opacity:.7}
 .orbit:hover .orbit-in{color:var(--ink)}
 .orbit:hover .orbit-in em{color:var(--blue);opacity:1}
-.orbit-mark .orbit-in{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);color:#fff;gap:0}
+.orbit-mark .orbit-in{width:calc(var(--u)*2.6);height:calc(var(--u)*2.6);color:#fff;gap:0;
+  align-items:center;justify-content:center}
+.star{
+  display:block;width:calc(var(--u)*1.15);height:calc(var(--u)*1.15);border-radius:50%;
+  background:radial-gradient(circle at 50% 50%,#fff 0%,#EAF3FF 42%,rgba(150,190,255,.55) 70%,transparent 78%);
+  animation:starGlow 7s ease-in-out infinite;
+}
+@keyframes starGlow{
+  0%,100%{box-shadow:0 0 10px 2px rgba(255,255,255,.85),0 0 26px 7px rgba(30,144,255,.55),0 0 54px 16px rgba(166,37,238,.22);transform:scale(1)}
+  33%    {box-shadow:0 0 13px 3px rgba(235,245,255,.95),0 0 32px 10px rgba(166,37,238,.6), 0 0 64px 20px rgba(30,144,255,.26);transform:scale(1.12)}
+  66%    {box-shadow:0 0 9px 2px rgba(255,255,255,.8), 0 0 24px 8px rgba(120,90,255,.6),  0 0 58px 18px rgba(30,144,255,.24);transform:scale(1.04)}
+}
 .orbit-mark svg{width:100%;height:100%;display:block}
 .pole-hint{
   position:absolute;left:50%;bottom:calc(var(--u)*-1.4);transform:translateX(-50%);
@@ -582,3 +620,6 @@ body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
 body.reduced .stop.melting{filter:none}
 
 body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{animation:none}
+
+body.reduced #aurora{display:none}
+body.reduced .star{animation:none}

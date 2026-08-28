@@ -283,9 +283,9 @@ function dress() {
   const bg = $('#layerBg'), fg = $('#layerFg');
   bg.innerHTML = ''; fg.innerHTML = '';
   const seed = [
-    [-38, -26, 'bg', 'glyph'], [72, 34, 'bg', 'num', '01'], [18, 152, 'bg', 'frame'],
-    [104, 176, 'bg', 'glyph'], [-4, 262, 'bg', 'num', '03'], [-96, 190, 'bg', 'frame'],
-    [-70, 300, 'bg', 'glyph'], [86, 292, 'bg', 'num', '04'], [40, 62, 'bg', 'frame'],
+    [72, 34, 'bg', 'num', '01'], [18, 152, 'bg', 'frame'],
+    [-4, 262, 'bg', 'num', '03'], [-96, 190, 'bg', 'frame'],
+    [86, 292, 'bg', 'num', '04'], [40, 62, 'bg', 'frame'],
     [-24, 40, 'fg', 'rule'], [96, 130, 'fg', 'rule'], [-62, 244, 'fg', 'rule'],
     [24, 350, 'fg', 'rule'], [110, 236, 'fg', 'rule']
   ];
@@ -294,9 +294,7 @@ function dress() {
     const x = bx + rnd(-7, 7), y = by + rnd(-6, 6);
     const el = document.createElement('div');
     el.style.cssText = `position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(${(x / 100) * vw * xScale}px,${(y / 100) * vh}px);pointer-events:none`;
-    if (kind === 'glyph') {
-      el.innerHTML = `<svg width="150" height="150" viewBox="0 0 100 100" style="opacity:.055"><use href="#aperture" color="#fff"/></svg>`;
-    } else if (kind === 'num') {
+    if (kind === 'num') {
       el.innerHTML = `<span style="font-family:Poppins,sans-serif;font-weight:600;font-size:26vh;line-height:1;letter-spacing:-.05em;color:rgba(255,255,255,.028)">${txt}</span>`;
     } else if (kind === 'frame') {
       el.innerHTML = `<div style="width:46vw;height:34vh;border:1px solid rgba(255,255,255,.045);border-radius:8px"></div>`;
@@ -447,7 +445,33 @@ function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
   if (!el || !wrap) return;
 
-  let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0;
+  let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0, wired = false;
+
+  /* One AnalyserNode on the bed, built the first time playback starts (it
+     needs a gesture, and createMediaElementSource may only run once). fftSize
+     128 is 64 bins; reading the lowest twelve each frame is a rounding error
+     next to everything else on screen. */
+  const wireAnalyser = () => {
+    if (wired) return;
+    wired = true;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ac = new AC();
+      const an = ac.createAnalyser();
+      an.fftSize = 128; an.smoothingTimeConstant = .82;
+      ac.createMediaElementSource(el).connect(an);
+      an.connect(ac.destination);                      // or the page goes silent
+      const bins = new Uint8Array(an.frequencyBinCount);
+      ac.resume?.();
+      beatLevel = () => {
+        an.getByteFrequencyData(bins);
+        let sum = 0;
+        for (let i = 0; i < 12; i++) sum += bins[i];
+        return sum / (12 * 255);
+      };
+    } catch (e) { /* no analyser: the aurora simply drifts without a beat */ }
+  };
 
   const effective = () => clamp(base * boost, 0, 1);
   const apply = () => { el.volume = effective(); };
@@ -470,7 +494,7 @@ function audioRig() {
 
   audioEnable = async v => {
     on = v;
-    if (on) { try { await el.play(); } catch (e) { on = false; } }   // blocked: stay honest
+    if (on) { try { await el.play(); wireAnalyser(); } catch (e) { on = false; } }
     else el.pause();
     apply(); showLevel(); paintState();
   };
@@ -504,6 +528,32 @@ function audioRig() {
   showLevel(); paintState();
 }
 
+/* ── aurora ─────────────────────────────────────────────────────────
+   Comes up five seconds after a melt begins and brightens on the low end
+   of the music. The drift is pure CSS on three gradient blobs, so the only
+   per-frame work here is one opacity write. When it is not showing the
+   layer is display:none and costs nothing at all. */
+let auroraUpdate = () => {}, beatLevel = () => 0;
+function auroraRig() {
+  const el = $('#aurora');
+  if (!el || reduced) return;
+  let lvl = 0, shown = false;
+
+  auroraUpdate = meltMs => {
+    const s = meltMs / 1000 - 5;                       // five seconds after the melt
+    const fade = s <= 0 ? 0 : clamp(1 - Math.exp(-Math.pow(s / 4, 2)), 0, 1);
+
+    if (fade < .004) {
+      if (shown) { shown = false; el.classList.remove('on'); el.style.opacity = '0'; lvl = 0; }
+      return;
+    }
+    if (!shown) { shown = true; el.classList.add('on'); }
+    // only sample the analyser while the layer is actually on screen
+    lvl += (beatLevel() - lvl) * .2;
+    el.style.opacity = (fade * (.55 + lvl * .45)).toFixed(3);
+  };
+}
+
 /* ── idle melt ─────────────────────────────────────────────────────
    Stop scrolling and the section you stopped on liquefies — and keeps
    liquefying. There is no plateau: `meltT` simply accumulates for as long
@@ -516,7 +566,7 @@ function audioRig() {
    Plain pointer movement deliberately does NOT count as activity: the
    cursor lights mean the mouse is almost always drifting, and treating
    that as engagement would mean the melt never fires. */
-const MELT_AFTER = 15000;
+const MELT_AFTER = 20000;
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -569,6 +619,10 @@ function writeMelt(el, t, urgent) {
 
 function melt(t, dt, i) {
   if (reduced || !meltDisp) return;
+  /* rAF is suspended while the tab is hidden, so on return `t - lastActive`
+     can be minutes. Treat a long frame gap as coming back to the page and
+     restart the countdown, rather than snapping straight to a deep melt. */
+  if (dt > 500) { lastActive = t; meltT = 0; }
   const el = stops[i];
   if (meltEl && meltEl !== el) clearMelt();
 
@@ -812,7 +866,8 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
       pHead = $('#progressHead'), pPct = $('#progressPct'),
       navLinksEl = $('#navLinks'), poleEl = $('#pole'), wordmark = $('.wordmark');
-let lastSector = -1, lastNavMode = null, lastArrived = -1;
+let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1;
+const dists = [];
 
 /* Off the hero, the mast is gone and nothing says the wordmark is the way
    back. So on each new arrival a star shoots along a rail beneath it. */
@@ -837,15 +892,23 @@ function tick(t) {
     L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
 
   // proximity → reveal, and cull what's far away
-  let near = 0, nearD = Infinity, heroD = 0;
+  let heroD = 0, best = 0;
   for (let i = 0; i < N; i++) {
     const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
-    const d = Math.hypot(dx, dy);
+    const d = dists[i] = Math.hypot(dx, dy);
     if (i === 0) heroD = d;
-    if (d < nearD) { nearD = d; near = i; }
+    if (d < dists[best]) best = i;
     stops[i].classList.toggle('live', d < 1.05);
     stops[i].classList.toggle('hidden', d > 2.4);
   }
+  /* Hysteresis, and it matters more than it looks. The camera lerps toward
+     its target and never exactly arrives, so if you stop scrolling roughly
+     between two stops the nearest one can swap every single frame. melt()
+     clears itself whenever the focused stop changes, so that flip-flop reset
+     meltT to zero forever and the idle effects could never start. A stop now
+     only loses focus when another is clearly closer. */
+  if (nearIdx < 0 || (best !== nearIdx && dists[best] < dists[nearIdx] - .08)) nearIdx = best;
+  const near = nearIdx, nearD = dists[near];
   if (near !== lastSector) {
     lastSector = near;
     hudSector.textContent = SECTORS[near];
@@ -897,6 +960,7 @@ function tick(t) {
   }
 
   melt(t, dt, near);
+  auroraUpdate(meltT);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
@@ -909,7 +973,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); composer(); cursor(); nav(); peeks(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
