@@ -504,6 +504,9 @@ function layersRig() {
   const want = { intel: 0, auto: 0, design: 0 };
   const L = { intel: 0, auto: 0, design: 0 };
   let W = 0, H = 0, jobs = [];
+  // one light per station, and a clock so they come up in order
+  const lit = LY_STATIONS.map(() => 0);
+  let cascadeAt = 0;
 
   const size = () => {
     const r = cv.getBoundingClientRect();
@@ -542,6 +545,7 @@ function layersRig() {
     const k = btn.dataset.k;
     want[k] = want[k] ? 0 : 1;
     btn.setAttribute('aria-pressed', String(!!want[k]));
+    if (k === 'auto') cascadeAt = performance.now();   // the rails come up in order
     applyState();
   }));
 
@@ -558,8 +562,9 @@ function layersRig() {
     ctx.lineWidth = 1;
     for (const [a, b] of LY_EDGES) {
       const p = pos(a), q = pos(b);
-      ctx.strokeStyle = `rgba(150,180,255,${(.05 + L.auto * .22).toFixed(3)})`;
-      ctx.setLineDash(L.auto > .55 ? [] : [3, 7]);
+      const reach = Math.min(lit[a], lit[b]);           // a rail exists once both ends do
+      ctx.strokeStyle = `rgba(150,180,255,${(.05 + L.auto * .10 + reach * .26).toFixed(3)})`;
+      ctx.setLineDash(reach > .5 ? [] : [3, 7]);
       ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke();
     }
     ctx.setLineDash([]);
@@ -603,12 +608,36 @@ function layersRig() {
     }
     jobs = jobs.filter(j => j.life > 0);
 
+    /* Switching automation on runs the line: each station lights 150ms after
+       the one to its left, so you watch the rails come up rather than having
+       them simply appear. Switching off, they all fall together. */
+    const STAGGER = 150;
+    LY_STATIONS.forEach((st, i) => {
+      const target = want.auto && (t - cascadeAt) > i * STAGGER ? 1 : 0;
+      const rate = target ? .12 : .2;
+      lit[i] += (target - lit[i]) * (1 - Math.pow(1 - rate, dt / 16));
+    });
+
     // the stations
     LY_STATIONS.forEach((st, i) => {
       const p = pos(i);
       const isJunction = (LY_NEXT[i] || []).length > 1;
-      ctx.strokeStyle = `rgba(200,215,255,${(.14 + L.design * .30).toFixed(2)})`;
-      ctx.lineWidth = 1;
+      const on = lit[i];
+
+      if (on > .01) {                                   // the light itself
+        const r = 15 + on * 5 + Math.sin(t * .004 + i) * 1.5;
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        g.addColorStop(0, `rgba(130,180,255,${(.50 * on).toFixed(3)})`);
+        g.addColorStop(.55, `rgba(140,90,255,${(.20 * on).toFixed(3)})`);
+        g.addColorStop(1, 'rgba(120,80,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill();
+        ctx.fillStyle = `rgba(224,238,255,${(.92 * on).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3 + on * .8, 0, 7); ctx.fill();
+      }
+
+      ctx.strokeStyle = `rgba(200,215,255,${(.14 + L.design * .30 + on * .45).toFixed(2)})`;
+      ctx.lineWidth = 1 + on * .6;
       ctx.beginPath(); ctx.arc(p.x, p.y, 7 + L.design * 2, 0, 7); ctx.stroke();
       if (isJunction && L.intel > .05) {                  // a decision, once there is one
         ctx.fillStyle = `rgba(120,180,255,${(L.intel * .85).toFixed(2)})`;

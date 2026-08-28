@@ -450,7 +450,7 @@ Each toggle changes what the picture **does** —
 
 | layer | what changes on the canvas |
 |-------|-----------------------------|
-| Automation | rails appear, jobs travel them directly and fast instead of wandering |
+| Automation | the six stations light left to right, 150ms apart, each rail appearing once both its ends are up — then jobs travel them directly instead of wandering |
 | Intelligence | a decision lights at each junction; jobs stop taking the wrong branch, and stop being lost |
 | Design | the scatter eases into an ordered flow and the stations gain labels |
 
