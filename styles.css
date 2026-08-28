@@ -68,6 +68,12 @@ body.is-touch button,body.is-touch a{cursor:pointer}
    Soft radial gradients rather than blur filters: gradients are already
    soft, so there is nothing per-frame to rasterise. Display is dropped
    entirely when it is not showing, so normal browsing pays nothing. */
+/* the meteor crosses in front of the page and the aurora, but under anything
+   lifted above the world — a film or a reading panel is never behind it */
+#meteor{position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;display:none}
+#meteor.on{display:block}
+body.reduced #meteor{display:none!important}
+
 #aurora{position:fixed;inset:0;z-index:1;pointer-events:none;display:none;opacity:0}
 #auroraCanvas{
   position:absolute;inset:0;width:100%;height:100%;display:block;
@@ -1095,7 +1101,7 @@ body.is-touch .fb-seek{cursor:pointer}
    seamless and the strands read as rotating — no per-frame work at all. */
 .p-vis svg .dna{animation:dnaSpin 9s linear infinite}
 @keyframes dnaSpin{to{transform:translateX(-100px)}}
-.pillar .p-vis{display:grid;place-items:center}
+
 
 /* ── the enquiry arrow ── */
 .btn-primary svg{
@@ -1138,3 +1144,17 @@ body.reduced .btn-primary svg{animation:none}
 .cs-full{display:none}
 .reader-body .cs-short{display:none}
 .reader-body .cs-full{display:block!important}
+
+/* the helix is drawn four periods wide so it can slide; the viewBox shows one
+   window of it, and this is what stops the rest painting over the copy */
+.p-vis svg:has(.dna){overflow:hidden}
+.p-vis{overflow:hidden}
+
+/* the section's number, sitting behind its own section */
+.stop-num{
+  position:absolute;right:calc(var(--u)*-1.5);top:calc(var(--u)*-3.4);z-index:-1;
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*20);
+  line-height:.78;letter-spacing:-.05em;color:rgba(255,255,255,.030);
+  pointer-events:none;user-select:none;
+}
+@media (max-width:900px){.stop-num{font-size:calc(var(--u)*14);right:calc(var(--u)*-.5)}}

@@ -441,6 +441,30 @@ separate field, versus almost no blue without it.
 No WebGL, or a lost context, falls back to the three gradient blobs in
 `#aurora.no-gl`.
 
+## The meteor
+
+`media/meteor.png` (900px, 442 KB — the supplied artwork resampled from
+1.4 MB). It crosses about 2.5s after the aurora has risen, then again every
+7–12s, taking ~1.15s corner to corner.
+
+The artwork already carries its own plasma trail, so the work here is *speed*:
+
+- **Motion blur** is seven echoes drawn back along the path with rising alpha
+  under `globalCompositeOperation = 'lighter'`.
+- **A plasma bloom** trails the head on a radial gradient that breathes.
+- **Sparks** are thrown off the head against the direction of travel and drawn
+  as short lines along their own velocity, so they streak rather than dot.
+- Rotation is derived: the artwork's own head direction (`atan2(380,-720)`) is
+  subtracted from the path angle, which came out at **-2.4°** — the supplied
+  art already points along this diagonal, so it flies head-first with almost no
+  correction. Change the path and the rotation follows.
+
+**Layering is deliberate**: the canvas is `z-index: 7` — in front of the page
+and the aurora, behind the reading panel (60) and the film (70). A zoomed film
+or text panel is never behind it.
+
+Nothing renders between passes; the canvas is `display: none`.
+
 ## Cursor lights
 
 Sparks are emitted by *movement*, never by position: the pointer handler

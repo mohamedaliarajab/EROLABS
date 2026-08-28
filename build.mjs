@@ -35,6 +35,11 @@ artifact = artifact.replace(
     return `<img src="data:image/jpeg;base64,${b64}" alt="${name} film — still">`;
   });
 
+// the meteor is a real asset the canvas loads by path — inline it too
+artifact = artifact.replace(
+  "const METEOR_SRC = 'media/meteor.png'",
+  `const METEOR_SRC = 'data:image/png;base64,${readFileSync('media/meteor.png').toString('base64')}'`);
+
 writeFileSync('dist/artifact.html', artifact);
 
 const mb = n => (n / 1048576).toFixed(2) + ' MB';

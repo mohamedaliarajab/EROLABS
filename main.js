@@ -73,6 +73,7 @@ function measure() {
   buildRoute();
   dress();
   field.resize();
+  meteor.size();
 }
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
@@ -301,20 +302,16 @@ function dress() {
   const bg = $('#layerBg'), fg = $('#layerFg');
   bg.innerHTML = ''; fg.innerHTML = '';
   const seed = [
-    [72, 34, 'bg', 'num', '01'], [18, 152, 'bg', 'frame'],
-    [-4, 262, 'bg', 'num', '03'], [-96, 190, 'bg', 'frame'],
-    [86, 292, 'bg', 'num', '04'], [40, 62, 'bg', 'frame'],
+    [18, 152, 'bg', 'frame'], [-96, 190, 'bg', 'frame'], [40, 62, 'bg', 'frame'],
     [-24, 40, 'fg', 'rule'], [96, 130, 'fg', 'rule'], [-62, 244, 'fg', 'rule'],
     [24, 350, 'fg', 'rule'], [110, 236, 'fg', 'rule']
   ];
-  for (const [bx, by, where, kind, txt] of seed) {
+  for (const [bx, by, where, kind] of seed) {
     if (Math.random() < .18) continue;              // thin it out differently each load
     const x = bx + rnd(-7, 7), y = by + rnd(-6, 6);
     const el = document.createElement('div');
     el.style.cssText = `position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) translate(${(x / 100) * vw * xScale}px,${(y / 100) * vh}px);pointer-events:none`;
-    if (kind === 'num') {
-      el.innerHTML = `<span style="font-family:Poppins,sans-serif;font-weight:600;font-size:26vh;line-height:1;letter-spacing:-.05em;color:rgba(255,255,255,.028)">${txt}</span>`;
-    } else if (kind === 'frame') {
+    if (kind === 'frame') {
       el.innerHTML = `<div style="width:46vw;height:34vh;border:1px solid rgba(255,255,255,.045);border-radius:8px"></div>`;
     } else {
       el.innerHTML = `<div style="width:24vw;height:1px;background:linear-gradient(90deg,transparent,rgba(120,160,255,.28),transparent)"></div>`;
@@ -634,6 +631,142 @@ function auroraRig() {
   };
 }
 
+/* ── the meteor ────────────────────────────────────────────────────
+   Comes through a couple of seconds after the aurora has risen and crosses
+   the frame in about a second. The artwork carries its own plasma trail, so
+   the work here is speed: motion-blurred echoes along the path drawn
+   additively, a plasma streak that breathes, and sparks thrown off the head
+   that stretch along their own velocity. Nothing renders between passes. */
+const METEOR_SRC = 'media/meteor.png';
+const meteor = (() => {
+  const cv = $('#meteor');
+  if (!cv) return { update(){}, size(){}, reset(){} };
+  const ctx = cv.getContext('2d');
+  const img = new Image();
+  let ready = false;
+  img.onload = () => { ready = true; };
+  img.src = METEOR_SRC;
+
+  let W = 0, H = 0, dpr = 1;
+  let flying = false, t0 = 0, next = 0, sparks = [], px = 0, py = 0;
+  const DUR = 1150;                       // one crossing, in ms
+  const IMG_ANGLE = Math.atan2(380, -720); // the artwork's own head direction
+
+  const size = () => {
+    dpr = Math.min(devicePixelRatio || 1, 1.5);   // it is motion blurred anyway
+    W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  const reset = () => {
+    flying = false; next = 0; sparks = [];
+    if (W) ctx.clearRect(0, 0, W, H);
+    cv.classList.remove('on');
+  };
+
+  // the path: in past one corner, out through the opposite one
+  const A = () => ({ x: W * 1.22, y: -H * 0.28 });
+  const B = () => ({ x: -W * 0.42, y: H * 1.26 });
+
+  function draw(now) {
+    const k = (now - t0) / DUR;
+    if (k >= 1) {
+      if (!sparks.length) { flying = false; ctx.clearRect(0, 0, W, H); cv.classList.remove('on'); return; }
+    }
+    ctx.clearRect(0, 0, W, H);
+
+    const a = A(), b = B();
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    const rot = ang - IMG_ANGLE;
+    // ease so it arrives fast and leaves faster
+    const e = k < 1 ? (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) : 1;
+    const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
+    const w = Math.min(W, H) * .62, h = w * (img.height / img.width || .56);
+
+    const stepX = (b.x - a.x) * .012, stepY = (b.y - a.y) * .012;
+
+    if (k < 1 && ready) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      for (let i = 7; i >= 1; i--) {            // motion blur, drawn as echoes
+        ctx.globalAlpha = .05 + (7 - i) * .022;
+        ctx.save();
+        ctx.translate(x - stepX * i, y - stepY * i);
+        ctx.rotate(rot);
+        ctx.drawImage(img, -w * .18, -h * .5, w, h);
+        ctx.restore();
+      }
+      // the plasma the trail rides on, breathing as it goes
+      const gx = x - stepX * 9, gy = y - stepY * 9;
+      const puls = 1 + Math.sin(now * .03) * .12;
+      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, w * .5 * puls);
+      g.addColorStop(0, 'rgba(150,190,255,.30)');
+      g.addColorStop(.45, 'rgba(120,80,255,.14)');
+      g.addColorStop(1, 'rgba(90,40,200,0)');
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(gx, gy, w * .5 * puls, 0, 7); ctx.fill();
+      ctx.restore();
+
+      ctx.save();                               // the meteor itself, crisp
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.globalAlpha = 1;
+      ctx.drawImage(img, -w * .18, -h * .5, w, h);
+      ctx.restore();
+
+      // sparks thrown off the head, against the direction of travel
+      const speed = Math.hypot(stepX, stepY);
+      for (let i = 0; i < 5; i++) {
+        const spread = (Math.random() - .5) * .7;
+        const sa = ang + Math.PI + spread;
+        sparks.push({
+          x: x + (Math.random() - .5) * w * .12,
+          y: y + (Math.random() - .5) * h * .12,
+          vx: Math.cos(sa) * speed * (.25 + Math.random() * .55),
+          vy: Math.sin(sa) * speed * (.25 + Math.random() * .55),
+          life: 1, hue: Math.random()
+        });
+      }
+    }
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const s of sparks) {
+      s.x += s.vx; s.y += s.vy; s.vx *= .96; s.vy *= .96; s.life -= .026;
+      if (s.life <= 0) continue;
+      const c = s.hue < .45 ? '120,180,255' : s.hue < .8 ? '180,120,255' : '235,245,255';
+      ctx.strokeStyle = `rgba(${c},${s.life * .85})`;
+      ctx.lineWidth = 1 + s.life * 1.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(s.x, s.y);
+      ctx.lineTo(s.x - s.vx * 3.2, s.y - s.vy * 3.2);   // stretched by its own speed
+      ctx.stroke();
+    }
+    ctx.restore();
+    sparks = sparks.filter(s => s.life > 0);
+  }
+
+  return {
+    size, reset,
+    /* Runs on the idle clock: the aurora rises 5s in, the meteor follows a
+       couple of seconds after that, then again every nine seconds or so. */
+    update(meltMs, now) {
+      const s = meltMs / 1000;
+      if (s < 7.5 || reduced) { if (flying || sparks.length) reset(); return; }
+      if (!ready) return;
+      if (!flying) {
+        if (!next) next = now + 400;
+        if (now < next) return;
+        flying = true; t0 = now; cv.classList.add('on');
+        next = now + DUR + 7000 + Math.random() * 5000;
+      }
+      draw(now);
+    }
+  };
+})();
+
 /* ── idle melt ─────────────────────────────────────────────────────
    Stop scrolling and the section you stopped on liquefies — and keeps
    liquefying. There is no plateau: `meltT` simply accumulates for as long
@@ -643,15 +776,14 @@ function auroraRig() {
    (~14s) never actually arrives, so the smear keeps spreading and the
    section keeps sagging out of frame the longer you stay away.
 
-   Plain pointer movement deliberately does NOT count as activity: the
-   cursor lights mean the mouse is almost always drifting, and treating
-   that as engagement would mean the melt never fires. */
+   Any cursor movement counts as being here, not just scroll or click — the
+   melt is for a page that has genuinely been left alone. */
 const MELT_AFTER = 20000;
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
 const wake = () => { lastActive = performance.now(); };
-['scroll', 'wheel', 'touchmove', 'keydown', 'pointerdown']
+['scroll', 'wheel', 'touchmove', 'keydown', 'pointerdown', 'pointermove']
   .forEach(ev => addEventListener(ev, wake, { passive: true }));
 
 function clearMelt() {
@@ -981,7 +1113,7 @@ function enquiry() {
       if (!res.ok) throw new Error(res.status);
     } catch (err) {
       busy = false;
-      setNote('Could not send just now — please email ' + ENQUIRY_EMAIL + '.', true);
+      setNote('That did not send. Please try again in a moment.', true);
       return;
     }
 
@@ -1310,7 +1442,7 @@ function films() {
       card.style.setProperty('--px', 0);
       card.style.setProperty('--py', 0);
     });
-    card.addEventListener('click', () => show(card));
+    card.addEventListener('click', e => { e.stopPropagation(); show(card); });
   });
 
   frame.addEventListener('pointerenter', () => { armed = true; });
@@ -1410,8 +1542,15 @@ function reader() {
         dwell = setTimeout(() => show(el), 420);   // a dwell, not a twitch
       });
       el.addEventListener('pointerleave', () => clearTimeout(dwell));
+      // a film sitting inside a readable block owns its own hover and click
+      el.addEventListener('pointermove', e => {
+        if (e.target.closest('.cat-media')) clearTimeout(dwell);
+      }, { passive: true });
     }
-    el.addEventListener('click', () => { clearTimeout(dwell); show(el); });
+    el.addEventListener('click', e => {
+      if (e.target.closest('.cat-media')) return;
+      clearTimeout(dwell); show(el);
+    });
   });
 
   let armed = false;
@@ -1555,6 +1694,7 @@ function tick(t) {
 
   melt(t, dt, near);
   auroraUpdate(meltT, t);
+  meteor.update(meltT, t);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
