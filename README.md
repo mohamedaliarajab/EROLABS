@@ -455,35 +455,6 @@ purpose: composited over the black ground it means a **10.6/255** average, with
 a few hundred genuinely bright star pixels doing the contrast. Most of the
 nebula sits under 5% alpha.
 
-## The meteor
-
-`media/meteor.png` (900px, 442 KB — the supplied artwork resampled from
-1.4 MB). It crosses about 2.5s after the aurora has risen and **twice per idle, then
-rests** — each pass on a freshly randomised diagonal, entering off one top
-corner and leaving through the opposite bottom.
-
-The artwork already carries its own plasma trail, so the work here is *speed*:
-
-- **Motion blur** is fifteen echoes drawn back along the path on a squared
-  alpha ramp under `globalCompositeOperation = 'lighter'`, the head itself is
-  drawn soft (two passes at 55% and 82%) rather than stamped, each pass fades
-  up entering frame and away leaving it, and the whole canvas carries a 1.4px
-  blur at 90% opacity. A sharp still crossing at speed reads as a stamp; all
-  of that is what stops it.
-- **A plasma bloom** trails the head on a radial gradient that breathes.
-- **Sparks** are thrown off the head against the direction of travel and drawn
-  as short lines along their own velocity, so they streak rather than dot.
-- Rotation is derived: the artwork's own head direction (`atan2(380,-720)`) is
-  subtracted from the path angle, which came out at **-2.4°** — the supplied
-  art already points along this diagonal, so it flies head-first with almost no
-  correction. Change the path and the rotation follows.
-
-**Layering is deliberate**: the canvas is `z-index: 7` — in front of the page
-and the aurora, behind the reading panel (60) and the film (70). A zoomed film
-or text panel is never behind it.
-
-Nothing renders between passes; the canvas is `display: none`.
-
 ## Cursor lights
 
 Sparks are emitted by *movement*, never by position: the pointer handler

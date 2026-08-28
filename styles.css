@@ -69,17 +69,6 @@ body.is-touch button,body.is-touch a{cursor:pointer}
    Soft radial gradients rather than blur filters: gradients are already
    soft, so there is nothing per-frame to rasterise. Display is dropped
    entirely when it is not showing, so normal browsing pays nothing. */
-/* the meteor crosses in front of the page and the aurora, but under anything
-   lifted above the world — a film or a reading panel is never behind it */
-#meteor{
-  position:fixed;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;display:none;
-  /* a whole-canvas softening on top of the per-frame echoes — the artwork is
-     a sharp still, and a sharp still crossing at speed reads as a stamp */
-  filter:blur(1.4px);opacity:.9;
-}
-#meteor.on{display:block}
-body.reduced #meteor{display:none!important}
-
 #aurora{position:fixed;inset:0;z-index:1;pointer-events:none;display:none;opacity:0}
 #auroraCanvas{
   position:absolute;inset:0;width:100%;height:100%;display:block;

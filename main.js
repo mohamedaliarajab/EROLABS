@@ -74,7 +74,6 @@ function measure() {
   dress();
   field.resize();
   galaxy.size();
-  meteor.size();
 }
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
@@ -742,157 +741,6 @@ function auroraRig() {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   };
 }
-
-/* ── the meteor ────────────────────────────────────────────────────
-   Comes through a couple of seconds after the aurora has risen and crosses
-   the frame in about a second. The artwork carries its own plasma trail, so
-   the work here is speed: motion-blurred echoes along the path drawn
-   additively, a plasma streak that breathes, and sparks thrown off the head
-   that stretch along their own velocity. Nothing renders between passes. */
-const METEOR_SRC = 'media/meteor.png';
-const meteor = (() => {
-  const cv = $('#meteor');
-  if (!cv) return { update(){}, size(){}, reset(){} };
-  const ctx = cv.getContext('2d');
-  const img = new Image();
-  let ready = false;
-  img.onload = () => { ready = true; };
-  img.src = METEOR_SRC;
-
-  let W = 0, H = 0, dpr = 1;
-  let flying = false, t0 = 0, next = 0, sparks = [], passes = 0, path = null;
-  const DUR = 1250;                       // one crossing, in ms
-  const PASSES = 2;                       // two per idle, then it rests
-  const IMG_ANGLE = Math.atan2(380, -720); // the artwork's own head direction
-
-  const size = () => {
-    dpr = Math.min(devicePixelRatio || 1, 1.5);   // it is motion blurred anyway
-    W = innerWidth; H = innerHeight;
-    cv.width = W * dpr; cv.height = H * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  };
-  const reset = () => {
-    flying = false; next = 0; sparks = []; passes = 0; path = null;
-    if (W) ctx.clearRect(0, 0, W, H);
-    cv.classList.remove('on');
-  };
-
-  /* A fresh diagonal each pass, entering off one top corner and leaving
-     through the opposite bottom. Rotation derives from the path, so any
-     direction flies head-first. */
-  const newPath = () => Math.random() < .5
-    ? { a: { x:  W * (1.08 + Math.random() * .28), y: -H * (.12 + Math.random() * .40) },
-        b: { x: -W * (.22 + Math.random() * .34),  y:  H * (1.04 + Math.random() * .32) } }
-    : { a: { x: -W * (.08 + Math.random() * .28),  y: -H * (.12 + Math.random() * .40) },
-        b: { x:  W * (1.02 + Math.random() * .34), y:  H * (1.04 + Math.random() * .32) } };
-
-  function draw(now) {
-    const k = (now - t0) / DUR;
-    if (k >= 1) {
-      if (!sparks.length) { flying = false; ctx.clearRect(0, 0, W, H); cv.classList.remove('on'); return; }
-    }
-    ctx.clearRect(0, 0, W, H);
-
-    const a = path.a, b = path.b;
-    const ang = Math.atan2(b.y - a.y, b.x - a.x);
-    const rot = ang - IMG_ANGLE;
-    // ease so it arrives fast and leaves faster
-    const e = k < 1 ? (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) : 1;
-    const x = a.x + (b.x - a.x) * e, y = a.y + (b.y - a.y) * e;
-    const w = Math.min(W, H) * .62, h = w * (img.height / img.width || .56);
-
-    const stepX = (b.x - a.x) * .012, stepY = (b.y - a.y) * .012;
-
-    // never a hard cut: it fades up entering frame and away leaving it
-    const fade = Math.max(0, Math.min(Math.min(1, k / .16), Math.min(1, (1 - k) / .22)));
-
-    if (k < 1 && ready) {
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      const ECHOES = 15;                        // the smear that sells the speed
-      for (let i = ECHOES; i >= 1; i--) {
-        const f = 1 - i / ECHOES;
-        ctx.globalAlpha = (.012 + f * f * .085) * fade;
-        ctx.save();
-        ctx.translate(x - stepX * i * 1.15, y - stepY * i * 1.15);
-        ctx.rotate(rot);
-        ctx.drawImage(img, -w * .18, -h * .5, w * (1 + i * .006), h * (1 + i * .006));
-        ctx.restore();
-      }
-      // the plasma the trail rides on, breathing as it goes
-      const gx = x - stepX * 9, gy = y - stepY * 9;
-      const puls = 1 + Math.sin(now * .03) * .12;
-      const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, w * .5 * puls);
-      g.addColorStop(0, 'rgba(150,190,255,.30)');
-      g.addColorStop(.45, 'rgba(120,80,255,.14)');
-      g.addColorStop(1, 'rgba(90,40,200,0)');
-      ctx.globalAlpha = fade;
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(gx, gy, w * .5 * puls, 0, 7); ctx.fill();
-      ctx.restore();
-
-      ctx.save();                               // the head — soft, not stamped
-      ctx.translate(x, y);
-      ctx.rotate(rot);
-      ctx.globalAlpha = .55 * fade;
-      ctx.drawImage(img, -w * .19, -h * .52, w * 1.04, h * 1.04);
-      ctx.globalAlpha = .82 * fade;
-      ctx.drawImage(img, -w * .18, -h * .5, w, h);
-      ctx.restore();
-
-      // sparks thrown off the head, against the direction of travel
-      const speed = Math.hypot(stepX, stepY);
-      for (let i = 0; i < 5; i++) {
-        const spread = (Math.random() - .5) * .7;
-        const sa = ang + Math.PI + spread;
-        sparks.push({
-          x: x + (Math.random() - .5) * w * .12,
-          y: y + (Math.random() - .5) * h * .12,
-          vx: Math.cos(sa) * speed * (.25 + Math.random() * .55),
-          vy: Math.sin(sa) * speed * (.25 + Math.random() * .55),
-          life: 1, hue: Math.random()
-        });
-      }
-    }
-
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (const s of sparks) {
-      s.x += s.vx; s.y += s.vy; s.vx *= .96; s.vy *= .96; s.life -= .026;
-      if (s.life <= 0) continue;
-      const c = s.hue < .45 ? '120,180,255' : s.hue < .8 ? '180,120,255' : '235,245,255';
-      ctx.strokeStyle = `rgba(${c},${s.life * .85})`;
-      ctx.lineWidth = 1 + s.life * 1.6;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(s.x, s.y);
-      ctx.lineTo(s.x - s.vx * 3.2, s.y - s.vy * 3.2);   // stretched by its own speed
-      ctx.stroke();
-    }
-    ctx.restore();
-    sparks = sparks.filter(s => s.life > 0);
-  }
-
-  return {
-    size, reset,
-    /* Runs on the idle clock: the aurora rises 5s in, the meteor follows a
-       couple of seconds after that, then again every nine seconds or so. */
-    update(meltMs, now) {
-      const s = meltMs / 1000;
-      if (s < 7.5 || reduced) { if (flying || sparks.length) reset(); return; }
-      if (!ready) return;
-      if (!flying) {
-        if (passes >= PASSES) { if (sparks.length) draw(now); return; }
-        if (!next) next = now + 500;
-        if (now < next) return;
-        flying = true; t0 = now; passes++; path = newPath();
-        cv.classList.add('on');
-        next = now + DUR + 4500 + Math.random() * 3500;
-      }
-      draw(now);
-    }
-  };
-})();
 
 /* ── idle melt ─────────────────────────────────────────────────────
    Stop scrolling and the section you stopped on liquefies — and keeps
@@ -1822,7 +1670,6 @@ function tick(t) {
 
   melt(t, dt);
   auroraUpdate(meltT, t);
-  meteor.update(meltT, t);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
