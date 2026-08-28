@@ -266,20 +266,31 @@ Both of these produced bugs that looked like "the buttons don't work":
 
 ## Aurora
 
-Five seconds after a melt begins, three blue/violet gradient blobs fade up
-behind the world and brighten on the low end of the music.
+Five seconds after a melt begins, an aurora rises behind the world: curtains
+of blue and violet streaming up from below the frame, folding and drifting,
+brightening on the low end of the music.
 
-It costs nothing when it is not showing: the layer is `display: none` until
-needed, and the analyser is only sampled while it is on screen. The drift is
-pure CSS on three radial gradients — **gradients, not blur filters**, since a
-gradient is already soft and there is nothing per-frame to rasterise. The
-only per-frame work is a single opacity write.
+It is a **fragment shader**, because real curtains need noise flowing along
+the rays and there is no honest way to fake that with gradients. Layered
+value-noise FBM in fan coordinates (angle across the curtain, radius along
+it), so the folds stretch the way they should.
 
-Beats come from one `AnalyserNode` (`fftSize` 128) built the first time
-playback starts — it needs a gesture, and `createMediaElementSource` may only
-run once per element. The source must be connected through to
-`ac.destination` or the page goes silent. With audio off there is no
-analyser and the aurora simply drifts.
+Two things keep it cheap:
+
+- **It renders at 45% resolution** and CSS scales it up. An aurora is all
+  soft edges, so the upscale *is* the blur — free, where a real blur pass
+  would not be. At 1440x900 that is a 648x405 draw, too fast to time
+  reliably.
+- **It does not exist when it is not showing.** `display: none` until a melt
+  is well under way, and the analyser is only sampled while it is on screen.
+
+**Hue rides its own slow noise field**, not the curtain's brightness. Driving
+colour from the curtain value puts everything at the violet end, because that
+value is high wherever a curtain is — measured 29% blue / 25% violet with the
+separate field, versus almost no blue without it.
+
+No WebGL, or a lost context, falls back to the three gradient blobs in
+`#aurora.no-gl`.
 
 ## Cursor lights
 

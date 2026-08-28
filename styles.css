@@ -67,20 +67,30 @@ body.is-touch button,body.is-touch a{cursor:pointer}
    Soft radial gradients rather than blur filters: gradients are already
    soft, so there is nothing per-frame to rasterise. Display is dropped
    entirely when it is not showing, so normal browsing pays nothing. */
-#aurora{position:fixed;inset:-25%;z-index:1;pointer-events:none;display:none;opacity:0}
+#aurora{position:fixed;inset:0;z-index:1;pointer-events:none;display:none;opacity:0}
+#auroraCanvas{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  /* drawn at ~45% resolution and scaled up: the upscale IS the softness,
+     and it costs nothing next to a real blur pass */
+  image-rendering:auto;
+}
+/* the gradient blobs are the no-WebGL fallback only */
+#aurora i{display:none}
+#aurora.no-gl #auroraCanvas{display:none}
+#aurora.no-gl i{display:block}
 #aurora.on{display:block}
-#aurora i{position:absolute;border-radius:50%;will-change:transform}
-#aurora i:nth-child(1){
+#aurora.no-gl i{position:absolute;border-radius:50%;will-change:transform}
+#aurora.no-gl i:nth-of-type(1){
   left:-8%;top:-12%;width:74vw;height:74vw;
   background:radial-gradient(circle,rgba(30,144,255,.50),rgba(30,144,255,.14) 42%,transparent 66%);
   animation:auroraA 34s ease-in-out infinite;
 }
-#aurora i:nth-child(2){
+#aurora.no-gl i:nth-of-type(2){
   right:-14%;top:2%;width:66vw;height:66vw;
   background:radial-gradient(circle,rgba(166,37,238,.46),rgba(166,37,238,.12) 44%,transparent 68%);
   animation:auroraB 43s ease-in-out infinite;
 }
-#aurora i:nth-child(3){
+#aurora.no-gl i:nth-of-type(3){
   left:16%;bottom:-28%;width:82vw;height:64vw;
   background:radial-gradient(ellipse,rgba(110,90,255,.40),rgba(60,120,255,.10) 46%,transparent 70%);
   animation:auroraC 51s ease-in-out infinite;
