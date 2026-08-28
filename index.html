@@ -204,7 +204,12 @@
           <article class="cat" data-tone="#1E90FF">
             <span class="cat-n">01</span>
             <h3>Intelligence</h3>
-            <div class="cat-media" data-slot="intelligence"><span class="cat-media-k">Video</span></div>
+            <div class="cat-media" data-slot="intelligence">
+              <video src="media/intelligence.mp4" poster="media/poster-intelligence.jpg"
+                     muted loop playsinline preload="metadata"></video>
+              <span class="cat-play" aria-hidden="true">Expand</span>
+              <span class="cat-media-k">Video</span>
+            </div>
             <p>Systems that read the situation and decide. They separate what matters
                from what does not, send it to the person who can act, and say why — so
                your team arrives at the judgement call instead of assembling it from
@@ -213,7 +218,12 @@
           <article class="cat" data-tone="#6A46F5">
             <span class="cat-n">02</span>
             <h3>Automation</h3>
-            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
+            <div class="cat-media" data-slot="automation">
+              <video src="media/automation.mp4" poster="media/poster-automation.jpg"
+                     muted loop playsinline preload="metadata"></video>
+              <span class="cat-play" aria-hidden="true">Expand</span>
+              <span class="cat-media-k">Video</span>
+            </div>
             <p>The relay between the tools you already pay for. One record fires the
                calendar, the invoice, the confirmation and the staff brief, in order,
                without anyone opening a tab. Work that used to take a morning now
@@ -222,7 +232,12 @@
           <article class="cat" data-tone="#A625EE">
             <span class="cat-n">03</span>
             <h3>Design</h3>
-            <div class="cat-media" data-slot="design"><span class="cat-media-k">Video</span></div>
+            <div class="cat-media" data-slot="design">
+              <video src="media/design.mp4" poster="media/poster-design.jpg"
+                     muted loop playsinline preload="metadata"></video>
+              <span class="cat-play" aria-hidden="true">Expand</span>
+              <span class="cat-media-k">Video</span>
+            </div>
             <p>Every system needs a face. We build the one your team actually wants to
                open and your clients remember — clear enough that nobody has to think
                about the machinery running underneath it.</p>
@@ -442,6 +457,19 @@
 </div>
 
 <div id="track" aria-hidden="true"></div>
+<!-- the film, lifted out of its card and played large -->
+<div class="filmbox" id="filmbox" aria-hidden="true">
+  <div class="filmbox-scrim"></div>
+  <div class="filmbox-frame" role="dialog" aria-modal="true" aria-label="Film">
+    <i class="filmbox-ring" aria-hidden="true"></i>
+    <button class="filmbox-x" aria-label="Close film">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+    <div class="filmbox-slot" id="filmSlot"></div>
+    <p class="filmbox-cap" id="filmCap"></p>
+  </div>
+</div>
+
 <!-- reading view: any dense block can be lifted out and read at size -->
 <div class="reader" id="reader" aria-hidden="true">
   <div class="reader-scrim"></div>

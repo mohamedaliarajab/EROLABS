@@ -453,7 +453,29 @@ body.ready .hud{opacity:1}
   font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.6);
   letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
 }
-.cat-media video,.cat-media img{width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1}
+.cat-media video,.cat-media img{
+  width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1;
+  /* the parallax: the film shifts a little against its frame, so the card has
+     depth without the layout moving */
+  transform:translate3d(calc(var(--px,0)*8px),calc(var(--py,0)*8px),0) scale(1.07);
+  transition:transform .5s var(--ease);
+}
+.cat-media:hover video{transform:translate3d(calc(var(--px,0)*13px),calc(var(--py,0)*13px),0) scale(1.12)}
+.cat-media:has(video){cursor:none;box-shadow:0 0 0 0 rgba(0,0,0,0);transition:box-shadow .5s var(--ease),border-color .45s,transform .55s var(--ease)}
+.cat-media:has(video):hover{
+  border-color:rgba(255,255,255,.24);
+  box-shadow:0 18px 60px rgba(0,0,0,.5),0 0 34px color-mix(in srgb,var(--tone) 42%,transparent);
+}
+.cat-play{
+  position:absolute;left:50%;bottom:calc(var(--u)*.8);transform:translateX(-50%) translateY(6px);z-index:2;
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.58);
+  letter-spacing:.26em;text-transform:uppercase;color:var(--ink);
+  padding:calc(var(--u)*.3) calc(var(--u)*.8);border-radius:100px;
+  background:rgba(10,12,20,.55);border:1px solid rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  opacity:0;transition:opacity .35s,transform .35s var(--ease);pointer-events:none;
+}
+.cat-media:hover .cat-play{opacity:1;transform:translateX(-50%) translateY(0)}
 .cat-media:has(video) .cat-media-k,.cat-media:has(img) .cat-media-k,
 .cat-media:has(video)::after,.cat-media:has(img)::after{display:none}
 
@@ -938,3 +960,59 @@ body.reading .nav,body.reading .hud,body.reading .progress-rail{
   .reader-glass{width:92vw;height:82vh}
 }
 body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
+
+/* ── the film, played large ─────────────────────────────────────────
+   The frame lives at body level, outside #viewport, so the melt cannot
+   reach it — a film stays crisp and playing while the page behind it
+   liquefies. The video element is MOVED here and moved back on close, so
+   playback is never interrupted and never doubled. */
+.filmbox{position:fixed;inset:0;z-index:70;display:none}
+.filmbox.on{display:block}
+.filmbox-scrim{position:absolute;inset:0;background:rgba(2,3,9,.62);opacity:0;transition:opacity .45s var(--ease)}
+.filmbox.on .filmbox-scrim{opacity:1}
+.filmbox-frame{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.965);
+  width:min(75vw,1400px);aspect-ratio:16/9;max-height:78vh;
+  border-radius:calc(var(--u)*1);overflow:hidden;isolation:isolate;
+  background:#05060A;border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 50px 150px rgba(0,0,0,.8),0 0 90px rgba(90,120,255,.16);
+  opacity:0;transition:opacity .4s var(--ease),transform .5s var(--ease);
+}
+.filmbox.on .filmbox-frame{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.filmbox-ring{
+  position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:3;overflow:hidden;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+}
+.filmbox-ring::before{
+  content:"";position:absolute;left:50%;top:50%;width:200%;aspect-ratio:1;translate:-50% -50%;
+  background:conic-gradient(transparent 0 60%,rgba(110,165,255,.5) 72%,#EAF2FF 80%,rgba(166,37,238,.75) 89%,transparent 97%);
+  animation:ringSpin 8s linear infinite;
+}
+.filmbox-slot{position:absolute;inset:0;z-index:1}
+.filmbox-slot video{
+  width:100%;height:100%;object-fit:contain;display:block;
+  transform:none!important;background:#05060A;
+}
+.filmbox-x{
+  position:absolute;top:calc(var(--u)*.9);right:calc(var(--u)*.9);z-index:4;
+  display:grid;place-items:center;width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);
+  border-radius:50%;border:1px solid rgba(255,255,255,.2);color:var(--ink-2);
+  background:rgba(8,10,18,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  transition:color .3s,border-color .3s,background .3s,transform .3s var(--ease);
+}
+.filmbox-x svg{width:56%;height:56%}
+.filmbox-x:hover{color:#fff;border-color:var(--violet);background:rgba(166,37,238,.24);transform:rotate(90deg)}
+.filmbox-cap{
+  position:absolute;left:calc(var(--u)*1.2);bottom:calc(var(--u)*.9);z-index:4;
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);
+  letter-spacing:.24em;text-transform:uppercase;color:var(--ink-2);
+  text-shadow:0 2px 12px rgba(0,0,0,.9);
+}
+/* the page recedes behind a film exactly as it does behind a reading panel */
+body.filming #viewport,body.filming #field,body.filming #aurora,
+body.filming .nav,body.filming .hud,body.filming .progress-rail{
+  filter:blur(9px);transition:filter .45s var(--ease);
+}
+@media (max-width:900px){.filmbox-frame{width:94vw}}

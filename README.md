@@ -96,6 +96,33 @@ The mast belongs to the hero and fades out as the camera travels away
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
 
+## The films
+
+`media/intelligence.mp4`, `automation.mp4`, `design.mp4` — the three cuts from
+`../video-kit`, mapped as that kit's README specifies (`mind` → intelligence,
+`reel` → automation, `design` → design). 1920x1080, ~31s each, silent, ~13 MB
+apiece. Posters are JPEG at 1280px (~60 KB each); the PNGs they came from were
+2.2 MB and would have delayed the first frame.
+
+- **Parallax**: the pointer drifts the film inside its frame (`--px`/`--py` on
+  the card), so the card has depth without the layout moving.
+- **They only decode while Projects is on screen** — `filmsLive()` is called
+  from the frame loop when the nearest stop changes, not every frame.
+- **Clicking lifts the film to 75% of the viewport.** The `<video>` element is
+  *moved* into the lightbox and moved back on close, so playback is never
+  interrupted and a second decode is never started.
+- **The lightbox lives at body level, outside `#viewport`** — which is what
+  keeps a film crisp and playing while the page behind it melts. Verified: with
+  the Projects stop sagging 300px, the film frame's transform is unchanged.
+- Close with the X, the scrim, Escape, or moving the pointer out — armed only
+  once the pointer has been inside. Closing calls `clearMelt()` and `wake()`.
+
+**The artifact cannot carry them.** 40 MB of film against a 16 MB cap, so
+`build.mjs` swaps each `<video>` for its poster as an `<img>`. The cards look
+and parallax identically there, and no lightbox opens onto an empty frame.
+`case.mp4` (115s) and `case-reel.mp4` (32s) are still waiting in the kit for
+`data-slot="case-company-a"`.
+
 ## The reading view
 
 Dense blocks are legible at a glance but hard to actually read at the size the
@@ -142,9 +169,10 @@ Three details that matter:
   wreck the camera layout it sits in. The clone drops `.cat-media`, `canvas`
   and `video`, since a cloned video would play over the original and a cloned
   canvas is dead pixels.
-- **The melt retargets to the panel.** If the idle melt starts while a panel is
-  open, `melt()` uses `readingEl` instead of the stop — the panel is what is
-  being looked at, and the page beneath it is already blurred.
+- **The melt never touches the panel.** Only the page melts. A panel — or a
+  film — sits above the world at body level and stays crisp; it is not part of
+  what the camera is travelling through. Whatever is lifted is only affected
+  once it is back in place.
 - **Closing counts as activity.** It calls `clearMelt()` and `wake()`, so a
   melt that crept in while reading is gone the moment the panel closes, exactly
   as if you had scrolled.

@@ -634,7 +634,6 @@ function auroraRig() {
    cursor lights mean the mouse is almost always drifting, and treating
    that as engagement would mean the melt never fires. */
 const MELT_AFTER = 20000;
-let readingEl = null;      // set by the reading view; see melt() below
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -691,9 +690,10 @@ function melt(t, dt, i) {
      can be minutes. Treat a long frame gap as coming back to the page and
      restart the countdown, rather than snapping straight to a deep melt. */
   if (dt > 500) { lastActive = t; meltT = 0; }
-  /* If a panel is open it is the thing being looked at, so it is the thing
-     that melts — the page underneath is already blurred behind it. */
-  const el = readingEl || stops[i];
+  /* Only the page melts. A reading panel or a film sits above it at body
+     level and stays crisp — it is the thing being looked at, and it is not
+     part of the world the camera is travelling. */
+  const el = stops[i];
   if (meltEl && meltEl !== el) clearMelt();
 
   if (t - lastActive < MELT_AFTER) {
@@ -1168,6 +1168,85 @@ const readerVis = (() => {
   };
 })();
 
+/* ── the films ─────────────────────────────────────────────────────
+   Each card carries its film. The pointer drifts it inside its frame for a
+   little depth, and a click lifts it into a frame at 75% of the viewport.
+
+   The video element is MOVED into the lightbox and moved back on close, so
+   playback continues uninterrupted and no second decode is ever started.
+   Because the lightbox lives at body level it is outside the world, which is
+   what keeps a film crisp and running while the page behind it melts.      */
+let filmsLive = () => {};
+function films() {
+  const box = $('#filmbox');
+  if (!box) return;
+  const slot  = $('#filmSlot'), cap = $('#filmCap'),
+        frame = $('.filmbox-frame', box), x = $('.filmbox-x', box),
+        scrim = $('.filmbox-scrim', box);
+  // img covers the artifact build, where posters stand in for the films —
+  // the parallax still runs, and show() simply returns when there is no video
+  const cards = $$('.cat-media').filter(c => c.querySelector('video,img'));
+  if (!cards.length) return;
+
+  let open = false, armed = false, current = null, home = null;
+
+  const show = card => {
+    if (open) return;
+    const v = card.querySelector('video');
+    if (!v) return;
+    open = true; armed = false; current = v; home = card;
+    cap.textContent = card.closest('.cat')?.querySelector('h3')?.textContent || '';
+    v.style.removeProperty('transform');
+    slot.appendChild(v);
+    box.classList.add('on');
+    box.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('filming');
+    v.play().catch(() => {});
+    wake();
+    x.focus({ preventScroll: true });
+  };
+
+  const hide = () => {
+    if (!open) return;
+    open = false;
+    box.classList.remove('on');
+    box.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('filming');
+    if (current && home) home.insertBefore(current, home.firstChild);
+    current = null; home = null;
+    clearMelt();            // closing counts as activity, like a scroll
+    wake();
+  };
+
+  cards.forEach(card => {
+    card.addEventListener('pointermove', e => {
+      const r = card.getBoundingClientRect();
+      card.style.setProperty('--px', ((e.clientX - r.left) / r.width - .5).toFixed(3));
+      card.style.setProperty('--py', ((e.clientY - r.top) / r.height - .5).toFixed(3));
+    }, { passive: true });
+    card.addEventListener('pointerleave', () => {
+      card.style.setProperty('--px', 0);
+      card.style.setProperty('--py', 0);
+    });
+    card.addEventListener('click', () => show(card));
+  });
+
+  frame.addEventListener('pointerenter', () => { armed = true; });
+  frame.addEventListener('pointerleave', () => { if (armed) hide(); });
+  x.addEventListener('click', e => { e.stopPropagation(); hide(); });
+  scrim.addEventListener('click', hide);
+  addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+
+  // only decode while Projects is on screen
+  filmsLive = live => {
+    cards.forEach(c => {
+      const v = c.querySelector('video');
+      if (v) live ? v.play().catch(() => {}) : v.pause();
+    });
+    if (open && current) current.play().catch(() => {});
+  };
+}
+
 /* ── reading view ──────────────────────────────────────────────────
    Dwell on a dense block and it lifts out into a glass panel at 75% of the
    viewport, with everything behind it blurred. Closing counts as activity,
@@ -1202,7 +1281,6 @@ function reader() {
     shell.classList.add('on');
     shell.setAttribute('aria-hidden', 'false');
     document.body.classList.add('reading');
-    readingEl = glass;
     readerVis.start(src.dataset.vis);
     wake();
     x.focus({ preventScroll: true });
@@ -1214,7 +1292,6 @@ function reader() {
     shell.classList.remove('on');
     shell.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('reading');
-    readingEl = null;
     readerVis.stop();
     glass.classList.remove('melting');
     ['--melt', '--blur', '--sag', '--sagY'].forEach(v => glass.style.removeProperty(v));
@@ -1281,7 +1358,7 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
       pHead = $('#progressHead'), pPct = $('#progressPct'),
       navLinksEl = $('#navLinks'), poleEl = $('#pole'), wordmark = $('.wordmark');
-let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1;
+let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1, filmLive = null;
 const dists = [];
 
 /* Off the hero, the mast is gone and nothing says the wordmark is the way
@@ -1379,7 +1456,9 @@ function tick(t) {
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
-  flowUpdate(t, dt, near === 2 && nearD < 1.2);
+  const onProjects = near === 2 && nearD < 1.2;
+  flowUpdate(t, dt, onProjects);
+  if (filmLive !== onProjects) { filmLive = onProjects; filmsLive(onProjects); }
   field.draw(t);
   requestAnimationFrame(tick);
 }
@@ -1388,7 +1467,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); reader(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
