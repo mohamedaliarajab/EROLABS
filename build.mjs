@@ -12,6 +12,26 @@ const css  = readFileSync('styles.css', 'utf8');
 const js   = readFileSync('main.js', 'utf8');
 const mp3  = readFileSync('audio/ambient.mp3');
 
+/* Structural guard. A mis-sliced edit once closed a <section> early and left
+   three stops parented to <body> instead of the parallax layer — they stopped
+   moving with the camera and the site looked like the scroll engine had
+   broken. Cheap to check, expensive to miss. */
+{
+  const count = (re) => (html.match(re) || []).length;
+  const open = count(/<section\b/g), close = count(/<\/section>/g);
+  const stops = count(/<section class="stop"/g);
+  const divO = count(/<div\b/g), divC = count(/<\/div>/g);
+  const problems = [];
+  if (open !== close) problems.push(`<section> ${open} vs </section> ${close}`);
+  if (divO !== divC) problems.push(`<div> ${divO} vs </div> ${divC}`);
+  if (stops !== 5) problems.push(`expected 5 .stop sections, found ${stops}`);
+  if (open !== stops) problems.push(`${open - stops} <section> that is not a stop`);
+  if (problems.length) {
+    console.error('index.html structure is wrong:\n  - ' + problems.join('\n  - '));
+    process.exit(1);
+  }
+}
+
 const inlined = html
   .replace('<link rel="stylesheet" href="styles.css">', `<style>\n${css}\n</style>`)
   .replace('<script src="main.js"></script>', `<script>\n${js}\n</script>`);

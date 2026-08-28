@@ -589,7 +589,23 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
       endpoint after activation if you would rather it were not.
 - [ ] **OG image** — none set. Capture `?stop=0` at 1200×630.
 
-## A warning, learned the hard way
+## Two warnings, learned the hard way
+
+**Never slice HTML on a loosely-indented tag.** Replacing the About block used
+`indexOf('    </section>')` — four spaces — which matched *inside* a
+ten-space-indented `          </section>` belonging to a nested element. That
+closed `#about` early, orphaned two `<section>` fragments and left a stray
+closer, which reparented `projects`, `cases` and `reach` onto `<body>`. Out of
+`.layer-mid` they no longer moved with the camera at all, so sections sat in
+fixed wrong places and the site looked as though the scroll engine had failed.
+It had not: the markup had.
+
+`build.mjs` now refuses to build if `<section>`/`</section>` or `<div>`/`</div>`
+are unbalanced, if there are not exactly five `.stop` sections, or if any
+`<section>` is not a stop. Verified: removing one `</section>` fails the build
+with exit 1.
+
+
 
 **Never delete CSS rules with a line-based regex.** Removing the pillars this
 way ate three selector lines and left their declaration bodies behind, which
