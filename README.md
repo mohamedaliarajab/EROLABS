@@ -187,9 +187,22 @@ Process, Solution, Result), then a film slot beside three tabbed tables —
 Hours, Errors, Return. Only one table is in the DOM flow at a time, which is
 what keeps the section inside its frame.
 
-**The badge is not decoration.** These are modelled figures, and presenting a
-model as measured results would misrepresent the work. The label sits next to
-the client name where it cannot be missed, with the reasoning in its `title`.
+**The figures are a model, not measured results.** The on-page badge saying so
+was removed on request — so nothing on the page now states it. If these are ever
+shown to a client as measured outcomes, that is a claim the page no longer
+qualifies.
+
+**The film sits in the head row**, in the space the badge left, as a small
+looping thumbnail rather than a block in the layout — the densest stop on the
+site gains a film without gaining a pixel of height. It is `preload="none"` and
+plays only on hover, so its 14 MB is fetched only when someone looks at it.
+`case-reel.mp4` (32s, web weight) is the cut in use; the kit's `case.mp4` is the
+115s cut at 33 MB if you would rather have it.
+
+**Short on the page, whole in the panel.** Each step carries a two-line
+`.cs-short` and the full `.cs-full` hidden beside it; the reading view swaps
+them. That took the track from 305px to 162px and the section's `--fit` from
+0.74 to 0.86 — table text from 8.7px to 10.1px — without losing a word.
 
 **On density.** This is the tightest stop on the site: `--fit` sits near 0.80
 at 1440x900, which is why the reading view exists — any block can be opened at

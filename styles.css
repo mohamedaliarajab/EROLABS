@@ -496,12 +496,6 @@ body.ready .hud{opacity:1}
 .case-who h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.7);letter-spacing:-.02em}
 .case-meta{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);letter-spacing:.1em;color:var(--ink-3);margin-top:calc(var(--u)*.3)}
 /* the honesty label — this is a model, and it says so where it cannot be missed */
-.case-badge{
-  flex:none;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);
-  letter-spacing:.18em;text-transform:uppercase;color:var(--violet-ink);
-  border:1px solid rgba(166,37,238,.4);border-radius:100px;padding:calc(var(--u)*.35) calc(var(--u)*.9);
-  white-space:nowrap;cursor:help;
-}
 .case-claim{
   font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.1);line-height:1.45;
   letter-spacing:-.012em;color:var(--ink-2);max-width:78ch;margin-top:calc(var(--u)*.9);
@@ -525,15 +519,15 @@ body.ready .hud{opacity:1}
 .case-step p{font-size:calc(var(--u)*.86);font-weight:300;line-height:1.65;color:var(--ink-3)}
 
 /* ── film beside the figures ── */
-.case-lower{display:grid;grid-template-columns:.52fr 1.48fr;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.3);align-items:start}
-.case-film{--tone:var(--violet)}
+.case-lower{display:block;margin-top:calc(var(--u)*1.3)}
 
-.case-figs{position:relative;display:flex;gap:calc(var(--u)*2.4);flex-wrap:wrap}
+.case-figs{position:relative;display:flex;gap:calc(var(--u)*2);flex-wrap:wrap}
 .fig{display:flex;align-items:baseline;gap:calc(var(--u)*.5)}
 .stat{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.75);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
 .fig i{font-style:normal;color:var(--ink-3);font-size:calc(var(--u)*.78);max-width:11ch;line-height:1.3}
 
-.cd-tabs{display:flex;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.1);border-bottom:1px solid var(--line-2)}
+.cd-bar{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*2);flex-wrap:wrap}
+.cd-tabs{display:flex;gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*.9);border-bottom:1px solid var(--line-2)}
 .cd-tab{
   position:relative;padding:calc(var(--u)*.5) 0;font-family:var(--f-mono);font-weight:300;
   font-size:calc(var(--u)*.72);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
@@ -796,7 +790,6 @@ body.ready .hud{opacity:1}
   .cats{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .proj-intro{flex-direction:column;align-items:flex-start}
   .case-track{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
-  .case-lower{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .case-head{flex-direction:column;gap:calc(var(--u)*.9)}
   .case-figs{gap:calc(var(--u)*1.4)}
   .cd-table{font-size:calc(var(--u)*.66)}
@@ -1016,3 +1009,132 @@ body.filming .nav,body.filming .hud,body.filming .progress-rail{
   filter:blur(9px);transition:filter .45s var(--ease);
 }
 @media (max-width:900px){.filmbox-frame{width:94vw}}
+
+/* ── film controls ──────────────────────────────────────────────── */
+.filmbox-ctrl{
+  position:absolute;left:0;right:0;bottom:0;z-index:4;
+  display:flex;align-items:center;gap:calc(var(--u)*1.1);
+  padding:calc(var(--u)*2.4) calc(var(--u)*1.4) calc(var(--u)*1);
+  background:linear-gradient(180deg,transparent,rgba(3,4,10,.82));
+  opacity:0;transform:translateY(8px);transition:opacity .35s var(--ease),transform .35s var(--ease);
+}
+.filmbox.on .filmbox-frame:hover .filmbox-ctrl,
+.filmbox.on .filmbox-ctrl:focus-within{opacity:1;transform:none}
+.fb-play{
+  flex:none;display:grid;place-items:center;width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);
+  border-radius:50%;border:1px solid rgba(255,255,255,.2);color:var(--ink);
+  background:rgba(10,12,20,.5);transition:border-color .3s,background .3s;
+}
+.fb-play:hover{border-color:var(--violet);background:rgba(166,37,238,.2)}
+.fb-play svg{width:58%;height:58%;grid-area:1/1}
+.fb-play .fb-i-play{display:none}
+.fb-play.paused .fb-i-play{display:block}
+.fb-play.paused .fb-i-pause{display:none}
+.fb-seek{
+  -webkit-appearance:none;appearance:none;flex:1;height:16px;background:none;cursor:none;--v:0;
+}
+body.is-touch .fb-seek{cursor:pointer}
+.fb-seek::-webkit-slider-runnable-track{
+  height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*.1%),var(--violet) 0 calc(var(--v)*.1%),rgba(255,255,255,.18) 0);
+}
+.fb-seek::-webkit-slider-thumb{
+  -webkit-appearance:none;width:10px;height:10px;margin-top:-4px;border-radius:50%;
+  background:#fff;box-shadow:0 0 10px 2px rgba(160,190,255,.7);transition:transform .25s;
+}
+.fb-seek:hover::-webkit-slider-thumb{transform:scale(1.3)}
+.fb-seek::-moz-range-track{height:2px;border-radius:2px;background:rgba(255,255,255,.18)}
+.fb-seek::-moz-range-thumb{width:10px;height:10px;border:0;border-radius:50%;background:#fff}
+.fb-time{
+  flex:none;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);
+  letter-spacing:.12em;color:var(--ink-2);font-variant-numeric:tabular-nums;
+}
+/* while shrinking back to its card, nothing should intercept the pointer */
+.filmbox.closing,.reader.closing{pointer-events:none}
+.filmbox.closing .filmbox-scrim,.reader.closing .reader-scrim{opacity:0}
+
+/* ── the case film, sitting in the row the badge left ─────────────
+   A small looping frame rather than a block in the layout, so the densest
+   stop on the site gains a film without gaining a pixel of height. It obeys
+   the same rules as the three project films — parallax, click to 75%,
+   controls, and it shrinks back here on close. */
+.case-film-btn{
+  position:relative;flex:none;width:calc(var(--u)*11);aspect-ratio:16/9;
+  border-radius:calc(var(--u)*.4);overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);background:#06070C;
+  transition:border-color .4s,box-shadow .5s var(--ease),transform .5s var(--ease);
+}
+.case-film-btn:hover{
+  border-color:rgba(255,255,255,.28);transform:translateY(-2px);
+  box-shadow:0 14px 40px rgba(0,0,0,.5),0 0 30px rgba(166,37,238,.35);
+}
+.case-film-btn video{
+  width:100%;height:100%;object-fit:cover;display:block;
+  transform:translate3d(calc(var(--px,0)*7px),calc(var(--py,0)*7px),0) scale(1.08);
+  transition:transform .5s var(--ease);
+}
+.cfb-glyph{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;
+  display:grid;place-items:center;width:calc(var(--u)*1.7);height:calc(var(--u)*1.7);
+  border-radius:50%;background:rgba(8,10,18,.55);border:1px solid rgba(255,255,255,.25);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#fff;
+  transition:transform .4s var(--ease),background .4s;
+}
+.cfb-glyph svg{width:56%;height:56%}
+.case-film-btn:hover .cfb-glyph{transform:translate(-50%,-50%) scale(1.14);background:rgba(166,37,238,.4)}
+.cfb-k{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;padding:calc(var(--u)*.9) calc(var(--u)*.45) calc(var(--u)*.3);
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.52);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);text-align:center;
+  background:linear-gradient(180deg,transparent,rgba(3,4,10,.85));
+}
+@media (max-width:900px){.case-film-btn{width:calc(var(--u)*14)}}
+
+/* ── the helix ──────────────────────────────────────────────────────
+   Four periods are drawn and the group slides by exactly one, so the loop is
+   seamless and the strands read as rotating — no per-frame work at all. */
+.p-vis svg .dna{animation:dnaSpin 9s linear infinite}
+@keyframes dnaSpin{to{transform:translateX(-100px)}}
+.pillar .p-vis{display:grid;place-items:center}
+
+/* ── the enquiry arrow ── */
+.btn-primary svg{
+  filter:drop-shadow(0 0 5px rgba(120,170,255,.85));
+  animation:arrowGlow 4.5s ease-in-out infinite;
+}
+@keyframes arrowGlow{
+  0%,100%{filter:drop-shadow(0 0 5px rgba(120,170,255,.85)) drop-shadow(0 0 14px rgba(30,144,255,.45))}
+  33%    {filter:drop-shadow(0 0 7px rgba(235,245,255,.95)) drop-shadow(0 0 20px rgba(166,37,238,.6))}
+  66%    {filter:drop-shadow(0 0 6px rgba(190,140,255,.9))  drop-shadow(0 0 17px rgba(120,90,255,.55))}
+}
+.btn-primary:hover svg{animation-duration:2s}
+
+/* ── "this opens" ───────────────────────────────────────────────────
+   A corner bracket that breathes once every few seconds, staggered so the
+   blocks never blink together. No words, and it gets out of the way the
+   moment the pointer arrives. */
+.readable::before{
+  content:"";position:absolute;top:calc(var(--u)*-.45);right:calc(var(--u)*-.45);
+  width:calc(var(--u)*.85);height:calc(var(--u)*.85);
+  border-top:1px solid var(--violet-ink);border-right:1px solid var(--violet-ink);
+  border-top-right-radius:4px;pointer-events:none;opacity:0;
+  animation:hintBreathe 7s ease-in-out infinite;
+}
+.readable:nth-of-type(2)::before{animation-delay:1.1s}
+.readable:nth-of-type(3)::before{animation-delay:2.2s}
+.readable:nth-of-type(4)::before{animation-delay:3.3s}
+.case-figs.readable::before{animation-delay:2.8s}
+.cd-panel.readable::before{animation-delay:4.4s}
+.case-brief.readable::before{animation-delay:.4s}
+.readable:hover::before{opacity:0;animation:none}
+@keyframes hintBreathe{
+  0%,68%,100%{opacity:0;transform:translate(-3px,3px)}
+  80%        {opacity:.5;transform:translate(0,0)}
+}
+body.reduced .readable::before,body.reduced .p-vis svg .dna,
+body.reduced .btn-primary svg{animation:none}
+
+/* the page shows the short read; the panel shows the whole thing */
+.cs-full{display:none}
+.reader-body .cs-short{display:none}
+.reader-body .cs-full{display:block!important}

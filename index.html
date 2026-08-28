@@ -262,7 +262,13 @@
             <h3>Company&nbsp;A</h3>
             <p class="case-meta">Facility management · Lagos · 2026 · 38 buildings · 9 operations staff · 34 vendors · ~412 work orders a month</p>
           </div>
-          <span class="case-badge" title="Figures are a model built from observed volumes and rates, not results measured after deployment">Modelled, not measured</span>
+          <button class="case-film-btn cat-media" data-slot="case-company-a" data-hover-only aria-label="Play the Company A film">
+            <video src="media/case.mp4" poster="media/poster-case.jpg" muted loop playsinline preload="none"></video>
+            <span class="cfb-glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 6.5l9 5.5-9 5.5z" fill="currentColor"/></svg>
+            </span>
+            <span class="cfb-k">Company A · the film</span>
+          </button>
         </header>
 
         <p class="case-claim">About <b>39 staff hours</b> back every week, record errors down to
@@ -274,7 +280,8 @@
           <li class="case-step" data-step="1" data-vis="scatter">
             <span class="cs-k">Problem</span>
             <h4>Nobody could say how long a job had been open.</h4>
-            <p>Work orders arrived by phone and email, went into a notebook, and were
+            <p class="cs-short">Work orders arrived by phone and email, went into a notebook, and were chased from memory.</p>
+            <p class="cs-full" hidden>Work orders arrived by phone and email, went into a notebook, and were
                chased from memory. Eight landlord reports were built by hand — two staff,
                six days a month — landing between the 8th and the 15th, with no evidence
                attached to anything.</p>
@@ -282,14 +289,16 @@
           <li class="case-step" data-step="2" data-vis="measure">
             <span class="cs-k">Process</span>
             <h4>We followed one work order end to end.</h4>
-            <p>Every hand-off mapped and timed across 412 monthly jobs. Three of them were
+            <p class="cs-short">Every hand-off mapped and timed across 412 monthly jobs. Three were the same information retyped.</p>
+            <p class="cs-full" hidden>Every hand-off mapped and timed across 412 monthly jobs. Three of them were
                the same information being retyped — notebook, spreadsheet, report. Each
                retyping step carried its own error rate, and each one could be removed.</p>
           </li>
           <li class="case-step" data-step="3" data-vis="route">
             <span class="cs-k">Solution</span>
             <h4>Raised once, by an incoming email.</h4>
-            <p>The incoming email raises the work order itself — nobody reads it and retypes
+            <p class="cs-short">The incoming email raises the work order itself. It routes by trade and location, and a clock starts.</p>
+            <p class="cs-full" hidden>The incoming email raises the work order itself — nobody reads it and retypes
                it. It routes to a vendor by trade and location and a clock starts, the job and
                its deadline going back out by email. Reminders escalate on their own — vendor,
                supervisor, Head of Operations. Closing requires a photograph. On the 1st, every
@@ -298,22 +307,23 @@
           <li class="case-step" data-step="4" data-vis="steady">
             <span class="cs-k">Result</span>
             <h4>Nobody opens a spreadsheet.</h4>
-            <p>Thirty-nine hours a week come back to the operation, and roughly one record
+            <p class="cs-short">Thirty-nine hours a week come back to the operation, and roughly one record a month carries an error.</p>
+            <p class="cs-full" hidden>Thirty-nine hours a week come back to the operation, and roughly one record
                a month carries an error. Supervisors work from phones; the Head of Operations
                works from one dashboard. Reports leave on the 1st, evidenced.</p>
           </li>
         </ol>
 
         <div class="case-lower">
-          <div class="cat-media case-film" data-slot="case-company-a"><span class="cat-media-k">Film</span></div>
-
           <div class="case-data">
+            <div class="cd-bar">
             <div class="case-figs" data-vis="climb">
               <div class="fig"><b class="stat" data-count="39">0</b><i>staff hours back every week</i></div>
               <div class="fig"><b class="stat" data-count="7">0</b><i>months to pay back</i></div>
               <div class="fig"><b class="stat">0.3%</b><i>errors — effectively none, from 7.4%</i></div>
             </div>
 
+            </div>
             <div class="cd-tabs" role="tablist" aria-label="Case study figures">
               <button class="cd-tab on" role="tab" aria-selected="true"  data-tab="hours">Hours</button>
               <button class="cd-tab"    role="tab" aria-selected="false" data-tab="errors">Errors</button>
@@ -467,6 +477,14 @@
     </button>
     <div class="filmbox-slot" id="filmSlot"></div>
     <p class="filmbox-cap" id="filmCap"></p>
+    <div class="filmbox-ctrl" id="filmCtrl">
+      <button class="fb-play" id="fbPlay" aria-label="Pause">
+        <svg class="fb-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg class="fb-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5l11 6.5-11 6.5z" fill="currentColor"/></svg>
+      </button>
+      <input class="fb-seek" id="fbSeek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+      <span class="fb-time" id="fbTime">0:00 / 0:00</span>
+    </div>
   </div>
 </div>
 

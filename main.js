@@ -350,17 +350,30 @@ function split(el) {
 
 /* ── pillar visuals: abstract, not illustrative ────────────────── */
 const VIS = {
-  intelligence: `<svg viewBox="0 0 200 90">
-    <g stroke="rgba(140,175,255,.26)" fill="none" stroke-width="1">
-      <path d="M20 62 L58 26 L100 50 L142 20 L180 44"/><path d="M20 62 L62 70 L100 50 L146 66 L180 44"/>
-    </g>
-    <path class="iq-sig iq-a" d="M20 62 L58 26 L100 50 L142 20 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
-    <path class="iq-sig iq-b" d="M20 62 L62 70 L100 50 L146 66 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
-    <g class="iq-nodes">
-      ${[[20,62],[58,26],[100,50],[142,20],[180,44],[62,70],[146,66]]
-        .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join('')}
-    </g>
-  </svg>`,
+  intelligence: (() => {
+    const P = 100, N = 4, W = P * N, mid = 45, amp = 27;
+    const y1 = x => mid + Math.sin((x / P) * Math.PI * 2) * amp;
+    const y2 = x => mid - Math.sin((x / P) * Math.PI * 2) * amp;
+    const path = f => Array.from({ length: W / 4 + 1 }, (_, i) => {
+      const x = i * 4; return `${i ? 'L' : 'M'}${x} ${f(x).toFixed(1)}`;
+    }).join('');
+    let rungs = '';
+    for (let x = 0; x <= W; x += 7) {
+      const d = Math.abs(y1(x) - y2(x)) / (amp * 2);      // depth: narrow = edge-on
+      rungs += `<line x1="${x}" y1="${y1(x).toFixed(1)}" x2="${x}" y2="${y2(x).toFixed(1)}"
+        stroke="url(#gBrand)" stroke-width="${(1.1 + d * 1.5).toFixed(2)}"
+        stroke-linecap="round" opacity="${(.18 + d * .62).toFixed(2)}"/>`;
+    }
+    return `<svg viewBox="0 0 ${P * 2} 90" preserveAspectRatio="xMidYMid meet">
+      <g class="dna">
+        <g>
+          ${rungs}
+          <path d="${path(y1)}" fill="none" stroke="#7FB0FF" stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
+          <path d="${path(y2)}" fill="none" stroke="#B76BFF" stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
+        </g>
+      </g>
+    </svg>`;
+  })(),
   automation: `<svg viewBox="0 0 200 90">
     ${[22,45,68].map((y,i) => `
       <line x1="10" y1="${y}" x2="190" y2="${y}" stroke="rgba(255,255,255,.09)" stroke-width="1"/>
@@ -1168,6 +1181,26 @@ const readerVis = (() => {
   };
 })();
 
+/* Shrink an overlay back onto the element it was lifted from — measured at
+   the moment of closing, so if the page has melted and drifted it returns to
+   where the block actually is now. */
+function minimizeTo(el, src, done) {
+  const a = el.getBoundingClientRect(), b = src && src.getBoundingClientRect();
+  if (!b || !b.width || !a.width || reduced) { done(); return; }
+  const sx = Math.max(.04, b.width / a.width), sy = Math.max(.04, b.height / a.height);
+  const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
+  const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+  el.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1),opacity .45s ease';
+  el.style.transformOrigin = '50% 50%';
+  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${sx},${sy})`;
+  el.style.opacity = '0';
+  setTimeout(() => {
+    el.style.transition = ''; el.style.transform = '';
+    el.style.opacity = ''; el.style.transformOrigin = '';
+    done();
+  }, 520);
+}
+
 /* ── the films ─────────────────────────────────────────────────────
    Each card carries its film. The pointer drifts it inside its frame for a
    little depth, and a click lifts it into a frame at 75% of the viewport.
@@ -1188,7 +1221,26 @@ function films() {
   const cards = $$('.cat-media').filter(c => c.querySelector('video,img'));
   if (!cards.length) return;
 
-  let open = false, armed = false, current = null, home = null;
+  const play = $('#fbPlay'), seek = $('#fbSeek'), time = $('#fbTime');
+  let open = false, armed = false, current = null, home = null, tick = null;
+
+  const clock = n => {
+    if (!isFinite(n)) n = 0;
+    const m = Math.floor(n / 60), sec = Math.floor(n % 60);
+    return m + ':' + String(sec).padStart(2, '0');
+  };
+  const paint = () => {
+    if (!current) return;
+    const d = current.duration || 0;
+    if (!seeking) {
+      const k = d ? (current.currentTime / d) * 1000 : 0;
+      seek.value = k;
+      seek.style.setProperty('--v', k / 10);
+    }
+    time.textContent = clock(current.currentTime) + ' / ' + clock(d);
+    play.classList.toggle('paused', current.paused);
+    tick = requestAnimationFrame(paint);
+  };
 
   const show = card => {
     if (open) return;
@@ -1201,7 +1253,9 @@ function films() {
     box.classList.add('on');
     box.setAttribute('aria-hidden', 'false');
     document.body.classList.add('filming');
+    v.currentTime = 0;                    // expanded, it starts from the top
     v.play().catch(() => {});
+    if (!tick) tick = requestAnimationFrame(paint);
     wake();
     x.focus({ preventScroll: true });
   };
@@ -1209,14 +1263,42 @@ function films() {
   const hide = () => {
     if (!open) return;
     open = false;
-    box.classList.remove('on');
     box.setAttribute('aria-hidden', 'true');
+    box.classList.add('closing');
     document.body.classList.remove('filming');
-    if (current && home) home.insertBefore(current, home.firstChild);
-    current = null; home = null;
-    clearMelt();            // closing counts as activity, like a scroll
+    clearMelt();                          // closing counts as activity
     wake();
+    const v = current, card = home;
+    current = null; home = null;
+    if (tick) { cancelAnimationFrame(tick); tick = null; }
+    // shrink the frame back onto its card, then hand the film back
+    minimizeTo(frame, card, () => {
+      box.classList.remove('on', 'closing');
+      if (v && card) {
+        card.insertBefore(v, card.firstChild);
+        v.currentTime = 0;
+        if (card.closest('.stop')?.classList.contains('live') &&
+            card.dataset.hoverOnly === undefined) v.play().catch(() => {});
+      }
+    });
   };
+
+  let seeking = false;
+  play.addEventListener('click', e => {
+    e.stopPropagation();
+    if (!current) return;
+    current.paused ? current.play().catch(() => {}) : current.pause();
+    play.classList.toggle('paused', current.paused);
+  });
+  ['pointerdown', 'keydown'].forEach(ev => seek.addEventListener(ev, () => { seeking = true; }));
+  ['pointerup', 'pointercancel', 'keyup', 'change'].forEach(ev =>
+    seek.addEventListener(ev, () => { seeking = false; }));
+  seek.addEventListener('input', e => {
+    e.stopPropagation();
+    if (!current || !current.duration) return;
+    current.currentTime = (+seek.value / 1000) * current.duration;
+    seek.style.setProperty('--v', +seek.value / 10);
+  });
 
   cards.forEach(card => {
     card.addEventListener('pointermove', e => {
@@ -1237,11 +1319,25 @@ function films() {
   scrim.addEventListener('click', hide);
   addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
 
-  // only decode while Projects is on screen
-  filmsLive = live => {
-    cards.forEach(c => {
+  cards.filter(c => c.dataset.hoverOnly !== undefined).forEach(c => {
+    c.addEventListener('pointerenter', () => {
       const v = c.querySelector('video');
-      if (v) live ? v.play().catch(() => {}) : v.pause();
+      if (v) v.play().catch(() => {});
+    });
+    c.addEventListener('pointerleave', () => {
+      const v = c.querySelector('video');
+      if (v) { v.pause(); v.currentTime = 0; }
+    });
+  });
+
+  // decode only where the camera actually is
+  filmsLive = () => {
+    cards.forEach(c => {
+      if (c.dataset.hoverOnly !== undefined) return;      // hover decides that one
+      const v = c.querySelector('video');
+      if (!v) return;
+      c.closest('.stop')?.classList.contains('live')
+        ? v.play().catch(() => {}) : v.pause();
     });
     if (open && current) current.play().catch(() => {});
   };
@@ -1261,11 +1357,11 @@ function reader() {
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
   const BLOCKS = '.case-step, .cd-panel, .case-figs, .case-brief';
-  let dwell = null, open = false;
+  let dwell = null, open = false, srcEl = null;
 
   const show = src => {
     if (open) return;
-    open = true;
+    open = true; srcEl = src;
     const clone = src.cloneNode(true);
     clone.removeAttribute('id');
     clone.hidden = false;
@@ -1274,6 +1370,7 @@ function reader() {
     // strip anything that would run twice: a cloned video would play over
     // the original, and a cloned canvas is dead pixels
     clone.querySelectorAll('.cat-media, canvas, video').forEach(n => n.remove());
+    clone.querySelectorAll('.cs-full[hidden]').forEach(n => n.removeAttribute('hidden'));
     body.innerHTML = '';
     body.appendChild(clone);
 
@@ -1289,15 +1386,19 @@ function reader() {
   const hide = () => {
     if (!open) return;
     open = false;
-    shell.classList.remove('on');
     shell.setAttribute('aria-hidden', 'true');
+    shell.classList.add('closing');
     document.body.classList.remove('reading');
     readerVis.stop();
-    glass.classList.remove('melting');
-    ['--melt', '--blur', '--sag', '--sagY'].forEach(v => glass.style.removeProperty(v));
     clearMelt();          // closing counts as activity, exactly like a scroll
     wake();
-    setTimeout(() => { if (!open) body.innerHTML = ''; }, 450);
+    // shrink back onto the block it came from, measured now — if the page has
+    // melted and drifted, it returns to where that block actually is
+    minimizeTo(glass, srcEl, () => {
+      shell.classList.remove('on', 'closing');
+      srcEl = null;
+      if (!open) body.innerHTML = '';
+    });
   };
 
   $$(BLOCKS).forEach(el => {
@@ -1358,7 +1459,7 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
       pHead = $('#progressHead'), pPct = $('#progressPct'),
       navLinksEl = $('#navLinks'), poleEl = $('#pole'), wordmark = $('.wordmark');
-let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1, filmLive = null;
+let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1;
 const dists = [];
 
 /* Off the hero, the mast is gone and nothing says the wordmark is the way
@@ -1404,6 +1505,7 @@ function tick(t) {
   if (near !== lastSector) {
     lastSector = near;
     hudSector.textContent = SECTORS[near];
+    filmsLive();                       // films follow the camera, not the frame
     navLinks.forEach((a, k) => a.classList.toggle('on', k + 1 === near));
     if (near === 3) $$('.stat').forEach(countUp);
   }
@@ -1456,9 +1558,7 @@ function tick(t) {
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
   poleUpdate(t, dt, heroD);
-  const onProjects = near === 2 && nearD < 1.2;
-  flowUpdate(t, dt, onProjects);
-  if (filmLive !== onProjects) { filmLive = onProjects; filmsLive(onProjects); }
+  flowUpdate(t, dt, near === 2 && nearD < 1.2);
   field.draw(t);
   requestAnimationFrame(tick);
 }
