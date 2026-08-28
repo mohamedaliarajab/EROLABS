@@ -353,7 +353,7 @@ body.ready .hud{opacity:1}
   transition-delay:calc(var(--i,0)*20ms + var(--base,0ms));
 }
 
-.mono,.eyebrow,.kicker,.stop-head,.triad,.pmeta,.cs-k,.p-idx,.pn,.eq-k,.foot-k,.hero-note,.cue-txt em{
+.mono,.eyebrow,.kicker,.stop-head,.triad,.cs-k,.p-idx,.pn,.eq-k,.foot-k,.hero-note,.cue-txt em{
   font-family:var(--f-mono);font-weight:300;
 }
 
@@ -405,6 +405,31 @@ body.ready .hud{opacity:1}
 .pillar h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.5);letter-spacing:-.015em;margin:calc(var(--u)*.45) 0 calc(var(--u)*1)}
 .p-vis{height:calc(var(--u)*3.8);margin-bottom:calc(var(--u)*1)}
 .p-vis svg{width:100%;height:100%;display:block;overflow:visible}
+
+/* Intelligence: signals firing along the network. SMIL pulsing an r of 2.4
+   was technically animation and read as a still image next to the sliding
+   bars beside it — this actually moves. */
+.iq-sig{
+  stroke-dasharray:22 220;
+  filter:drop-shadow(0 0 5px rgba(130,170,255,.85));
+  animation:iqRun 3.4s linear infinite;
+}
+.iq-b{animation-delay:1.7s}
+@keyframes iqRun{from{stroke-dashoffset:242}to{stroke-dashoffset:22}}
+.iq-nodes circle{
+  fill:url(#gBrand);transform-box:fill-box;transform-origin:50% 50%;
+  animation:iqPulse 2.8s ease-in-out infinite;
+}
+.iq-nodes circle:nth-child(2){animation-delay:.3s}
+.iq-nodes circle:nth-child(3){animation-delay:.6s}
+.iq-nodes circle:nth-child(4){animation-delay:.9s}
+.iq-nodes circle:nth-child(5){animation-delay:1.2s}
+.iq-nodes circle:nth-child(6){animation-delay:.45s}
+.iq-nodes circle:nth-child(7){animation-delay:1.05s}
+@keyframes iqPulse{
+  0%,100%{transform:scale(.7);opacity:.45}
+  50%    {transform:scale(1.5);opacity:1}
+}
 .pillar p{font-size:calc(var(--u)*.8);font-weight:300;line-height:1.7;color:var(--ink-3)}
 
 /* ── 02 projects ───────────────────────────────────────────────── */
@@ -412,34 +437,44 @@ body.ready .hud{opacity:1}
 .proj-intro p{max-width:50ch;font-size:calc(var(--u)*.92);font-weight:300;line-height:1.75;color:var(--ink-2)}
 .proj-stage{position:relative;margin-top:calc(var(--u)*2.2)}
 .proj-flow{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.85}
-.proj-list{position:relative;z-index:1;list-style:none;border-top:1px solid var(--line-2)}
-.proj{
-  position:relative;display:grid;grid-template-columns:auto 1fr 1.1fr;align-items:center;
-  gap:calc(var(--u)*1.6);padding:calc(var(--u)*1) calc(var(--u)*.4);
-  border-bottom:1px solid var(--line-2);transition:padding .5s var(--ease);
+.cats{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2.2)}
+.cat{position:relative;--tone:var(--blue)}
+.cat-n{
+  display:block;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);
+  letter-spacing:.24em;color:var(--tone);opacity:.9;
 }
-.proj::before{content:"";position:absolute;left:0;top:0;bottom:0;width:0;background:var(--tone,var(--blue));opacity:.05;transition:width .6s var(--ease)}
-.proj:hover{padding-left:calc(var(--u)*1.4)}
-.proj:hover::before{width:100%}
-.pn{font-size:calc(var(--u)*.68);letter-spacing:.22em;color:var(--ink-3);transition:color .4s}
-.proj:hover .pn{color:var(--tone,var(--blue))}
-.proj h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*2);letter-spacing:-.022em;transition:transform .55s var(--ease)}
-.proj:hover h3{transform:translateX(calc(var(--u)*.5))}
-.pmeta{font-size:calc(var(--u)*.64);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-top:calc(var(--u)*.3);opacity:.75}
-.pdesc{font-size:calc(var(--u)*.86);font-weight:300;color:var(--ink-2);opacity:.4;transition:opacity .5s}
-.proj:hover .pdesc{opacity:1}
+.cat h3{
+  font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*2);
+  letter-spacing:-.022em;margin:calc(var(--u)*.35) 0 calc(var(--u)*1);
+}
 
-.proj-peek{
-  position:fixed;top:0;left:0;z-index:4;width:clamp(200px,17vw,270px);aspect-ratio:4/3;
-  overflow:hidden;pointer-events:none;
-  opacity:0;transform:translate(-50%,-50%) scale(.92);transition:opacity .45s var(--ease),transform .45s var(--ease);
-  border:1px solid var(--line-2);background:var(--bg-2);
+/* the slot a video drops into — a <video> child simply takes it over */
+.cat-media{
+  position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:calc(var(--u)*.35);
+  border:1px solid var(--line-2);background:rgba(255,255,255,.014);
+  transition:border-color .45s,transform .55s var(--ease);
 }
-.proj-peek.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.proj-peek canvas{width:100%;height:100%;display:block}
-.peek-tag{
-  position:absolute;left:12px;bottom:10px;font-family:var(--f-mono);font-weight:300;font-size:8.5px;
-  letter-spacing:.24em;text-transform:uppercase;color:var(--ink-2);
+.cat:hover .cat-media{border-color:rgba(255,255,255,.16);transform:translateY(-3px)}
+.cat-media::after{                       /* a slow sweep so an empty slot still breathes */
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 35%,color-mix(in srgb,var(--tone) 22%,transparent) 50%,transparent 65%);
+  transform:translateX(-120%);animation:slotSweep 7s ease-in-out infinite;
+}
+.cat:nth-child(2) .cat-media::after{animation-delay:-2.3s}
+.cat:nth-child(3) .cat-media::after{animation-delay:-4.6s}
+@keyframes slotSweep{0%,100%{transform:translateX(-120%)}55%{transform:translateX(120%)}}
+.cat-media-k{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.6);
+  letter-spacing:.3em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
+}
+.cat-media video,.cat-media img{width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1}
+.cat-media:has(video) .cat-media-k,.cat-media:has(img) .cat-media-k,
+.cat-media:has(video)::after,.cat-media:has(img)::after{display:none}
+
+.cat p{
+  font-size:calc(var(--u)*.84);font-weight:300;line-height:1.72;color:var(--ink-3);
+  margin-top:calc(var(--u)*1);
 }
 
 /* ── 03 case studies ───────────────────────────────────────────── */
@@ -481,27 +516,49 @@ body.ready .hud{opacity:1}
 .eq-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 .eq-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6)}
-.eq-field{display:block;margin-top:calc(var(--u)*1.5)}
+.eq-field{position:relative;display:block;margin-top:calc(var(--u)*1.5);padding-bottom:2px}
 .eq-grid .eq-field{margin-top:0}
 .eq-k{
-  display:block;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.64);
-  letter-spacing:.26em;text-transform:uppercase;color:var(--ink-3);margin-bottom:calc(var(--u)*.55);
+  display:block;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.84);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin-bottom:calc(var(--u)*.6);
   transition:color .3s;
 }
 .eq-field input{
-  display:block;width:100%;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.18);
+  display:block;width:100%;background:none;border:0;
   padding:calc(var(--u)*.42) 0;outline:none;
   font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.18);letter-spacing:-.012em;
   color:var(--violet-ink);caret-color:var(--violet-ink);
-  transition:border-color .35s,background .35s;
 }
-.eq-field input::placeholder{color:var(--ink-3);opacity:.45;font-weight:200}
-.eq-field input:focus{border-color:var(--violet);background:rgba(166,37,238,.07)}
-.eq-field input:focus + .eq-k,.eq-field:focus-within .eq-k{color:var(--ink-2)}
-.eq-wide .eq-k{font-size:calc(var(--u)*.68)}
+/* the field never gets a filled background — the light does the work.
+   ::before is the resting hairline, ::after the glow travelling beneath it. */
+.eq-field::before{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:rgba(255,255,255,.13);transition:background .35s;
+}
+.eq-field::after{
+  content:"";position:absolute;left:0;bottom:-1px;width:36%;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#6FA5FF 32%,var(--violet-ink) 66%,transparent);
+  filter:blur(1px);box-shadow:0 0 12px 2px rgba(166,37,238,.5);
+  opacity:.34;transition:opacity .4s;
+  animation:eqGlow 5.2s ease-in-out infinite;
+}
+.eq-field:nth-of-type(2)::after{animation-delay:-1.3s}
+.eq-field:nth-of-type(3)::after{animation-delay:-2.6s}
+.eq-wide:nth-of-type(1)::after{animation-delay:-.7s}
+.eq-wide:nth-of-type(2)::after{animation-delay:-3.4s}
+.eq-field:focus-within::after{opacity:1;animation-duration:2.6s}
+.eq-field:focus-within::before{background:rgba(255,255,255,.22)}
+@keyframes eqGlow{
+  0%,100%{transform:translateX(-6%)}
+  50%    {transform:translateX(184%)}
+}
+.eq-field input::placeholder{color:var(--ink-3);opacity:.6;font-weight:200}
+.eq-field:focus-within .eq-k{color:var(--blue)}
+.eq-wide .eq-k{font-size:calc(var(--u)*.9);letter-spacing:.16em}
 
 /* an error says what is wrong, in a colour that is not the accent */
-.eq-field.invalid input{border-color:var(--warn)}
+.eq-field.invalid::before{background:var(--warn)}
+.eq-field.invalid::after{opacity:0}
 .eq-field.invalid .eq-k{color:var(--warn)}
 
 .eq-foot{display:flex;align-items:center;gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2)}
@@ -586,7 +643,18 @@ body.ready .hud{opacity:1}
 .orbit-in{
   display:flex;align-items:center;gap:10px;
   font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.82);
-  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);transition:color .35s;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);
+  /* the mast writes translate3d on the button every frame, so the hover
+     lift lives on the inner span where nothing else is touching transform */
+  transform:scale(1);transform-origin:50% 50%;
+  transition:color .35s,transform .45s var(--ease),text-shadow .45s ease;
+}
+.orbit:hover .orbit-in,.orbit:focus-visible .orbit-in{
+  transform:scale(1.18);color:#fff;
+  text-shadow:0 0 14px rgba(160,195,255,.9),0 0 34px rgba(166,37,238,.6);
+}
+.orbit-mark:hover .orbit-in,.orbit-mark:focus-visible .orbit-in{
+  filter:drop-shadow(0 0 12px rgba(180,210,255,.9)) drop-shadow(0 0 26px rgba(166,37,238,.6));
 }
 .orbit-in em{font-style:normal;font-size:calc(var(--u)*.6);color:var(--ink-3);opacity:.7}
 .orbit:hover .orbit-in{color:var(--ink)}
@@ -651,8 +719,7 @@ body.ready .hud{opacity:1}
   .about-body,.case-intro{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
   .pillars{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
   .p-vis{height:calc(var(--u)*3)}
-  .proj{grid-template-columns:auto 1fr;gap:calc(var(--u)*1)}
-  .pdesc{display:none}
+  .cats{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .proj-intro{flex-direction:column;align-items:flex-start}
   .case-track{grid-template-columns:1fr 1fr;gap:calc(var(--u)*1.8)}
   .case-track::before,.case-track::after{display:none}
@@ -661,7 +728,6 @@ body.ready .hud{opacity:1}
   .eq-done-msg{font-size:calc(var(--u)*2)}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
-  .proj-peek{display:none}
   .stop.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
@@ -886,43 +952,43 @@ body.reduced .star{animation:none}
       </header>
       <h2 class="display xl" data-split="char">Things We've<br>Brought to Life.</h2>
       <div class="proj-intro">
-        <p data-split="word">A collection of ideas, systems, automations and digital experiences we've designed and built. Every project starts with a problem — and ends with something that actually works.</p>
-        <p class="triad sm"><span>Automation</span><i>•</i><span>Intelligence</span><i>•</i><span>Design</span></p>
+        <p data-split="word">Three ways we make work do itself. Most projects are one of them. The best ones are all three at once.</p>
       </div>
+
       <div class="proj-stage">
         <canvas class="proj-flow" id="projFlow" aria-hidden="true"></canvas>
-        <ul class="proj-list" id="projList">
-        <li class="proj" data-tone="#1E90FF" data-glyph="ops">
-          <span class="pn">01</span>
-          <h3>Studio OS</h3>
-          <p class="pmeta">Operations dashboard · Creative studio</p>
-          <p class="pdesc">One screen that replaced a database nobody wanted to open.</p>
-        </li>
-        <li class="proj" data-tone="#3F5BFF" data-glyph="relay">
-          <span class="pn">02</span>
-          <h3>Change Note</h3>
-          <p class="pmeta">Notification engine · Multi-table sync</p>
-          <p class="pdesc">Staff stopped asking what changed. The system tells them.</p>
-        </li>
-        <li class="proj" data-tone="#6A46F5" data-glyph="signal">
-          <span class="pn">03</span>
-          <h3>Signal</h3>
-          <p class="pmeta">Lead engine · Built environment</p>
-          <p class="pdesc">A prospect list that qualifies and routes itself.</p>
-        </li>
-        <li class="proj" data-tone="#8E33F0" data-glyph="stage">
-          <span class="pn">04</span>
-          <h3>Release Room</h3>
-          <p class="pmeta">Artist site · Motion &amp; identity</p>
-          <p class="pdesc">A record launch you scroll through instead of read.</p>
-        </li>
-        <li class="proj" data-tone="#A625EE" data-glyph="grid">
-          <span class="pn">05</span>
-          <h3>Showroom</h3>
-          <p class="pmeta">Site rebuild · Catalogue at scale</p>
-          <p class="pdesc">Thousands of products, one coherent experience.</p>
-        </li>
-        </ul>
+        <div class="cats">
+
+          <article class="cat" data-tone="#1E90FF">
+            <span class="cat-n">01</span>
+            <h3>Automation</h3>
+            <div class="cat-media" data-slot="automation"><span class="cat-media-k">Video</span></div>
+            <p>The relay between the tools you already pay for. One record fires the
+               calendar, the invoice, the confirmation and the staff brief, in order,
+               without anyone opening a tab. Work that used to take a morning now
+               takes nobody.</p>
+          </article>
+
+          <article class="cat" data-tone="#6A46F5">
+            <span class="cat-n">02</span>
+            <h3>Intelligence</h3>
+            <div class="cat-media" data-slot="intelligence"><span class="cat-media-k">Video</span></div>
+            <p>Systems that read the situation and decide. They separate what matters
+               from what does not, send it to the person who can act, and say why — so
+               your team arrives at the judgement call instead of assembling it from
+               six tabs.</p>
+          </article>
+
+          <article class="cat" data-tone="#A625EE">
+            <span class="cat-n">03</span>
+            <h3>Design</h3>
+            <div class="cat-media" data-slot="design"><span class="cat-media-k">Video</span></div>
+            <p>Every system needs a face. We build the one your team actually wants to
+               open and your clients remember — clear enough that nobody has to think
+               about the machinery running underneath it.</p>
+          </article>
+
+        </div>
       </div>
     </section>
 
@@ -1022,7 +1088,7 @@ body.reduced .star{animation:none}
       <footer class="foot">
         <div class="foot-col">
           <span class="foot-k">Direct</span>
-          <a class="foot-mail" href="mailto:hello@erolabs.studio">hello@erolabs.studio</a>
+          <a class="foot-mail" href="mailto:mohamedali.a.rajab@gmail.com">mohamedali.a.rajab@gmail.com</a>
         </div>
         <div class="foot-col">
           <span class="foot-k">Elsewhere</span>
@@ -1041,7 +1107,6 @@ body.reduced .star{animation:none}
   <div class="layer layer-fg" id="layerFg"></div>
 </div>
 
-<div class="proj-peek" id="projPeek" aria-hidden="true"><canvas id="peekCanvas"></canvas><span class="peek-tag"></span></div>
 <div id="track" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
 
@@ -1055,6 +1120,23 @@ body.reduced .star{animation:none}
    ══════════════════════════════════════════════════════════════════ */
 (() => {
 'use strict';
+
+/* ═══ WHERE ENQUIRIES GO ═══════════════════════════════════════════
+   A static page cannot send email by itself — something has to receive
+   the POST. Two ways, pick one:
+
+   1. Leave ENQUIRY_WEBHOOK empty. The form posts to the Netlify Form
+      already declared in the markup. Submissions land under Forms in the
+      Netlify dashboard; set the notification address there once and they
+      arrive by email from then on. Nothing else to do.
+
+   2. Paste a Make webhook URL below. Enquiries are posted straight to the
+      scenario as JSON and it emails them on — one op per enquiry, which is
+      nothing against the 10k ceiling, and it arrives in seconds.
+
+   ENQUIRY_EMAIL is only the address shown to a visitor if delivery fails.  */
+const ENQUIRY_WEBHOOK = '';
+const ENQUIRY_EMAIL   = 'mohamedali.a.rajab@gmail.com';
 
 const $  = (s, r = document) => r.querySelector(s);
 const $ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1381,11 +1463,15 @@ function split(el) {
 /* ── pillar visuals: abstract, not illustrative ────────────────── */
 const VIS = {
   intelligence: `<svg viewBox="0 0 200 90">
-    <g stroke="rgba(140,175,255,.35)" fill="none" stroke-width="1">
+    <g stroke="rgba(140,175,255,.26)" fill="none" stroke-width="1">
       <path d="M20 62 L58 26 L100 50 L142 20 L180 44"/><path d="M20 62 L62 70 L100 50 L146 66 L180 44"/>
     </g>
-    ${[[20,62,0],[58,26,.3],[100,50,.6],[142,20,.9],[180,44,1.2],[62,70,.45],[146,66,1.05]]
-      .map(([x,y,d]) => `<circle cx="${x}" cy="${y}" r="3" fill="url(#gBrand)"><animate attributeName="r" values="2.4;5;2.4" dur="2.8s" begin="${d}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;1;.45" dur="2.8s" begin="${d}s" repeatCount="indefinite"/></circle>`).join('')}
+    <path class="iq-sig iq-a" d="M20 62 L58 26 L100 50 L142 20 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
+    <path class="iq-sig iq-b" d="M20 62 L62 70 L100 50 L146 66 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
+    <g class="iq-nodes">
+      ${[[20,62],[58,26],[100,50],[142,20],[180,44],[62,70],[146,66]]
+        .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join('')}
+    </g>
   </svg>`,
   automation: `<svg viewBox="0 0 200 90">
     ${[22,45,68].map((y,i) => `
@@ -1407,87 +1493,12 @@ const VIS = {
 };
 function paintPillars() { $('.p-vis').forEach(el => el.innerHTML = VIS[el.dataset.vis] || ''); }
 
-/* ── project hover peek ────────────────────────────────────────── */
-function peeks() {
-  const peek = $('#projPeek'), cv = $('#peekCanvas'), tag = $('.peek-tag', peek);
-  if (!cv || touch) return;
-  const ctx = cv.getContext('2d');
-  let raf = null, tone = '#1E90FF', kind = 'ops', t0 = 0;
-
-  const sizeIt = () => { const r = peek.getBoundingClientRect(); const d = Math.min(devicePixelRatio || 1, 2);
-    cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); return r; };
-
-  function frame(ts) {
-    const r = peek.getBoundingClientRect(), w = r.width, h = r.height;
-    if (!t0) t0 = ts; const t = (ts - t0) * .001;
-    ctx.fillStyle = '#0A0C13'; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = tone; ctx.fillStyle = tone;
-
-    if (kind === 'ops') {                        // stacked bars settling
-      for (let i = 0; i < 7; i++) {
-        const a = .18 + .1 * Math.sin(t * 1.6 + i);
-        ctx.globalAlpha = a;
-        ctx.fillRect(w * .12, h * .18 + i * (h * .095), w * (.2 + .55 * Math.abs(Math.sin(t * .8 + i * .6))), h * .05);
-      }
-    } else if (kind === 'relay') {               // hand-offs firing down a chain
-      ctx.globalAlpha = .3; ctx.lineWidth = 1;
-      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
-        ctx.beginPath(); ctx.moveTo(w * .12, y); ctx.lineTo(w * .88, y); ctx.stroke(); }
-      ctx.globalAlpha = 1;
-      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
-        const k = ((t * .35 + i * .25) % 1); const x = w * (.12 + .76 * k);
-        ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 7); ctx.fill(); }
-    } else if (kind === 'signal') {              // scatter resolving into a wedge
-      for (let i = 0; i < 46; i++) {
-        const a = i * 2.399 + t * .3, rr = (i / 46) * Math.min(w, h) * .42;
-        ctx.globalAlpha = .16 + .5 * (i / 46);
-        ctx.beginPath(); ctx.arc(w / 2 + Math.cos(a) * rr, h / 2 + Math.sin(a) * rr, 1.9, 0, 7); ctx.fill();
-      }
-    } else if (kind === 'stage') {               // waveform
-      ctx.globalAlpha = .9; ctx.lineWidth = 1.6; ctx.beginPath();
-      for (let x = 0; x <= w; x += 4) {
-        const y = h / 2 + Math.sin(x * .045 + t * 2.2) * h * .18 * Math.sin(x * .008 + t);
-        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      } ctx.stroke();
-    } else {                                     // grid coming into order
-      ctx.globalAlpha = .5;
-      for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
-        const p = Math.sin(t * 1.4 + i * .5 + j * .3) * .5 + .5;
-        ctx.globalAlpha = .12 + p * .5;
-        ctx.fillRect(w * (.14 + i * .16), h * (.18 + j * .19), w * .1 * (.5 + p * .6), h * .1);
-      }
-    }
-    ctx.globalAlpha = 1;
-    raf = requestAnimationFrame(frame);
-  }
-
-  $('.proj').forEach(li => {
-    li.addEventListener('pointerenter', () => {
-      tone = li.dataset.tone; kind = li.dataset.glyph; t0 = 0;
-      li.style.setProperty('--tone', tone);
-      tag.textContent = $('h3', li).textContent;
-      peek.classList.add('on'); sizeIt();
-      if (!raf) raf = requestAnimationFrame(frame);
-    });
-    li.addEventListener('pointerleave', () => {
-      peek.classList.remove('on');
-      if (raf) { cancelAnimationFrame(raf); raf = null; }
-    });
-    li.style.setProperty('--tone', li.dataset.tone);
-  });
-
-  addEventListener('pointermove', e => {
-    if (!peek.classList.contains('on')) return;
-    peek.style.left = e.clientX + 'px';
-    peek.style.top  = e.clientY + 'px';
-  }, { passive: true });
-}
-
-/* ── audio ─────────────────────────────────────────────────────────
-   Ambient bed. Browsers will not start audio without a user gesture, so
-   the loader asks before it lets anyone in — that click is the gesture.
-   `boost` is driven by the melt: the longer a section is left to drip, the
-   louder the room gets. */
+/* ── projects: work moving through the machine ─────────────────────
+   Lanes of packets running left to right through gates, rerouting to a
+   neighbouring lane as they pass. The diagonal is the point: this is work
+   being handed off, not a decorative loop. Lanes are evenly spaced rather
+   than pinned to DOM rows, so the substrate keeps running whatever the
+   section above it is made of. Only animates while Projects is on screen. */
 let audioEnable = () => {}, audioRamp = () => {};
 function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
@@ -1885,12 +1896,14 @@ function poleRig() {
    gates. A packet reaching a gate sometimes reroutes to a neighbouring
    lane — the diagonal is the point: this is work being handed off, not a
    decorative loop. */
+
 let flowUpdate = () => {}, flowLayout = () => {};
 function projFlow() {
   const stage = $('.proj-stage'), cv = $('#projFlow');
   if (!stage || !cv) return;
   const ctx = cv.getContext('2d');
-  const rows = $('.proj', stage), list = $('.proj-list', stage);
+  const TONES = ['#1E90FF', '#3F5BFF', '#6A46F5', '#8E33F0', '#A625EE'];
+  const LANES = 7;
   let W = 0, H = 0, lanes = [], gates = [], packets = [];
 
   flowLayout = () => {
@@ -1900,10 +1913,12 @@ function projFlow() {
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
 
-    // offsetTop, not getBoundingClientRect — the stop carries a scale()
-    lanes = rows.map(r => ({ y: list.offsetTop + r.offsetTop + r.offsetHeight / 2, tone: r.dataset.tone }));
+    lanes = Array.from({ length: LANES }, (_, i) => ({
+      y: H * (i + .5) / LANES,
+      tone: TONES[i % TONES.length]
+    }));
     gates = [];
-    lanes.forEach((ln, i) => [.26, .48, .70, .88].forEach(f =>
+    lanes.forEach((ln, i) => [.22, .44, .66, .86].forEach(f =>
       gates.push({ x: W * f, y: ln.y, lane: i, flash: 0 })));
     packets = [];
     for (let i = 0; i < lanes.length; i++)
@@ -1918,8 +1933,7 @@ function projFlow() {
 
     for (const g of gates) {
       g.flash *= Math.pow(.90, dt / 16);
-      const a = .10 + g.flash * .8;
-      ctx.fillStyle = `rgba(190,210,255,${a})`;
+      ctx.fillStyle = `rgba(190,210,255,${.08 + g.flash * .75})`;
       ctx.fillRect(g.x - .5, g.y - 5, 1, 10);
     }
 
@@ -1932,9 +1946,8 @@ function projFlow() {
         if (g.lane !== p.lane || gi === p.seen) continue;
         if (Math.abs(p.x - g.x) < 6) {
           g.flash = 1; p.seen = gi;
-          if (Math.random() < .3) {                       // hand off to a neighbour
-            const dir = Math.random() < .5 ? -1 : 1;
-            const next = p.lane + dir;
+          if (Math.random() < .3) {                     // hand off to a neighbour
+            const next = p.lane + (Math.random() < .5 ? -1 : 1);
             if (next >= 0 && next < lanes.length) p.lane = next;
           }
         }
@@ -2036,15 +2049,29 @@ function enquiry() {
     setNote('Sending…', false);
 
     try {
-      const res = await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(form)).toString()
-      });
+      const fd = new FormData(form);
+      let res;
+      if (ENQUIRY_WEBHOOK) {
+        const data = {};
+        fd.forEach((v, k) => { if (k !== 'bot-field' && k !== 'form-name') data[k] = v; });
+        data.sentAt = new Date().toISOString();
+        data.source = location.hostname || 'local';
+        res = await fetch(ENQUIRY_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } else {
+        res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(fd).toString()
+        });
+      }
       if (!res.ok) throw new Error(res.status);
     } catch (err) {
       busy = false;
-      setNote('Could not send just now — please email hello@erolabs.studio.', true);
+      setNote('Could not send just now — please email ' + ENQUIRY_EMAIL + '.', true);
       return;
     }
 
@@ -2197,7 +2224,7 @@ function tick(t) {
 function boot() {
   $('[data-split]').forEach(split);
   $('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

@@ -8,6 +8,23 @@
 (() => {
 'use strict';
 
+/* ═══ WHERE ENQUIRIES GO ═══════════════════════════════════════════
+   A static page cannot send email by itself — something has to receive
+   the POST. Two ways, pick one:
+
+   1. Leave ENQUIRY_WEBHOOK empty. The form posts to the Netlify Form
+      already declared in the markup. Submissions land under Forms in the
+      Netlify dashboard; set the notification address there once and they
+      arrive by email from then on. Nothing else to do.
+
+   2. Paste a Make webhook URL below. Enquiries are posted straight to the
+      scenario as JSON and it emails them on — one op per enquiry, which is
+      nothing against the 10k ceiling, and it arrives in seconds.
+
+   ENQUIRY_EMAIL is only the address shown to a visitor if delivery fails.  */
+const ENQUIRY_WEBHOOK = '';
+const ENQUIRY_EMAIL   = 'mohamedali.a.rajab@gmail.com';
+
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -333,11 +350,15 @@ function split(el) {
 /* ── pillar visuals: abstract, not illustrative ────────────────── */
 const VIS = {
   intelligence: `<svg viewBox="0 0 200 90">
-    <g stroke="rgba(140,175,255,.35)" fill="none" stroke-width="1">
+    <g stroke="rgba(140,175,255,.26)" fill="none" stroke-width="1">
       <path d="M20 62 L58 26 L100 50 L142 20 L180 44"/><path d="M20 62 L62 70 L100 50 L146 66 L180 44"/>
     </g>
-    ${[[20,62,0],[58,26,.3],[100,50,.6],[142,20,.9],[180,44,1.2],[62,70,.45],[146,66,1.05]]
-      .map(([x,y,d]) => `<circle cx="${x}" cy="${y}" r="3" fill="url(#gBrand)"><animate attributeName="r" values="2.4;5;2.4" dur="2.8s" begin="${d}s" repeatCount="indefinite"/><animate attributeName="opacity" values=".45;1;.45" dur="2.8s" begin="${d}s" repeatCount="indefinite"/></circle>`).join('')}
+    <path class="iq-sig iq-a" d="M20 62 L58 26 L100 50 L142 20 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
+    <path class="iq-sig iq-b" d="M20 62 L62 70 L100 50 L146 66 L180 44" fill="none" stroke="url(#gBrand)" stroke-width="2.2" stroke-linecap="round"/>
+    <g class="iq-nodes">
+      ${[[20,62],[58,26],[100,50],[142,20],[180,44],[62,70],[146,66]]
+        .map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join('')}
+    </g>
   </svg>`,
   automation: `<svg viewBox="0 0 200 90">
     ${[22,45,68].map((y,i) => `
@@ -359,87 +380,12 @@ const VIS = {
 };
 function paintPillars() { $$('.p-vis').forEach(el => el.innerHTML = VIS[el.dataset.vis] || ''); }
 
-/* ── project hover peek ────────────────────────────────────────── */
-function peeks() {
-  const peek = $('#projPeek'), cv = $('#peekCanvas'), tag = $('.peek-tag', peek);
-  if (!cv || touch) return;
-  const ctx = cv.getContext('2d');
-  let raf = null, tone = '#1E90FF', kind = 'ops', t0 = 0;
-
-  const sizeIt = () => { const r = peek.getBoundingClientRect(); const d = Math.min(devicePixelRatio || 1, 2);
-    cv.width = r.width * d; cv.height = r.height * d; ctx.setTransform(d, 0, 0, d, 0, 0); return r; };
-
-  function frame(ts) {
-    const r = peek.getBoundingClientRect(), w = r.width, h = r.height;
-    if (!t0) t0 = ts; const t = (ts - t0) * .001;
-    ctx.fillStyle = '#0A0C13'; ctx.fillRect(0, 0, w, h);
-    ctx.strokeStyle = tone; ctx.fillStyle = tone;
-
-    if (kind === 'ops') {                        // stacked bars settling
-      for (let i = 0; i < 7; i++) {
-        const a = .18 + .1 * Math.sin(t * 1.6 + i);
-        ctx.globalAlpha = a;
-        ctx.fillRect(w * .12, h * .18 + i * (h * .095), w * (.2 + .55 * Math.abs(Math.sin(t * .8 + i * .6))), h * .05);
-      }
-    } else if (kind === 'relay') {               // hand-offs firing down a chain
-      ctx.globalAlpha = .3; ctx.lineWidth = 1;
-      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
-        ctx.beginPath(); ctx.moveTo(w * .12, y); ctx.lineTo(w * .88, y); ctx.stroke(); }
-      ctx.globalAlpha = 1;
-      for (let i = 0; i < 4; i++) { const y = h * (.24 + i * .18);
-        const k = ((t * .35 + i * .25) % 1); const x = w * (.12 + .76 * k);
-        ctx.beginPath(); ctx.arc(x, y, 3.4, 0, 7); ctx.fill(); }
-    } else if (kind === 'signal') {              // scatter resolving into a wedge
-      for (let i = 0; i < 46; i++) {
-        const a = i * 2.399 + t * .3, rr = (i / 46) * Math.min(w, h) * .42;
-        ctx.globalAlpha = .16 + .5 * (i / 46);
-        ctx.beginPath(); ctx.arc(w / 2 + Math.cos(a) * rr, h / 2 + Math.sin(a) * rr, 1.9, 0, 7); ctx.fill();
-      }
-    } else if (kind === 'stage') {               // waveform
-      ctx.globalAlpha = .9; ctx.lineWidth = 1.6; ctx.beginPath();
-      for (let x = 0; x <= w; x += 4) {
-        const y = h / 2 + Math.sin(x * .045 + t * 2.2) * h * .18 * Math.sin(x * .008 + t);
-        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
-      } ctx.stroke();
-    } else {                                     // grid coming into order
-      ctx.globalAlpha = .5;
-      for (let i = 0; i < 5; i++) for (let j = 0; j < 4; j++) {
-        const p = Math.sin(t * 1.4 + i * .5 + j * .3) * .5 + .5;
-        ctx.globalAlpha = .12 + p * .5;
-        ctx.fillRect(w * (.14 + i * .16), h * (.18 + j * .19), w * .1 * (.5 + p * .6), h * .1);
-      }
-    }
-    ctx.globalAlpha = 1;
-    raf = requestAnimationFrame(frame);
-  }
-
-  $$('.proj').forEach(li => {
-    li.addEventListener('pointerenter', () => {
-      tone = li.dataset.tone; kind = li.dataset.glyph; t0 = 0;
-      li.style.setProperty('--tone', tone);
-      tag.textContent = $('h3', li).textContent;
-      peek.classList.add('on'); sizeIt();
-      if (!raf) raf = requestAnimationFrame(frame);
-    });
-    li.addEventListener('pointerleave', () => {
-      peek.classList.remove('on');
-      if (raf) { cancelAnimationFrame(raf); raf = null; }
-    });
-    li.style.setProperty('--tone', li.dataset.tone);
-  });
-
-  addEventListener('pointermove', e => {
-    if (!peek.classList.contains('on')) return;
-    peek.style.left = e.clientX + 'px';
-    peek.style.top  = e.clientY + 'px';
-  }, { passive: true });
-}
-
-/* ── audio ─────────────────────────────────────────────────────────
-   Ambient bed. Browsers will not start audio without a user gesture, so
-   the loader asks before it lets anyone in — that click is the gesture.
-   `boost` is driven by the melt: the longer a section is left to drip, the
-   louder the room gets. */
+/* ── projects: work moving through the machine ─────────────────────
+   Lanes of packets running left to right through gates, rerouting to a
+   neighbouring lane as they pass. The diagonal is the point: this is work
+   being handed off, not a decorative loop. Lanes are evenly spaced rather
+   than pinned to DOM rows, so the substrate keeps running whatever the
+   section above it is made of. Only animates while Projects is on screen. */
 let audioEnable = () => {}, audioRamp = () => {};
 function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
@@ -837,12 +783,14 @@ function poleRig() {
    gates. A packet reaching a gate sometimes reroutes to a neighbouring
    lane — the diagonal is the point: this is work being handed off, not a
    decorative loop. */
+
 let flowUpdate = () => {}, flowLayout = () => {};
 function projFlow() {
   const stage = $('.proj-stage'), cv = $('#projFlow');
   if (!stage || !cv) return;
   const ctx = cv.getContext('2d');
-  const rows = $$('.proj', stage), list = $('.proj-list', stage);
+  const TONES = ['#1E90FF', '#3F5BFF', '#6A46F5', '#8E33F0', '#A625EE'];
+  const LANES = 7;
   let W = 0, H = 0, lanes = [], gates = [], packets = [];
 
   flowLayout = () => {
@@ -852,10 +800,12 @@ function projFlow() {
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
 
-    // offsetTop, not getBoundingClientRect — the stop carries a scale()
-    lanes = rows.map(r => ({ y: list.offsetTop + r.offsetTop + r.offsetHeight / 2, tone: r.dataset.tone }));
+    lanes = Array.from({ length: LANES }, (_, i) => ({
+      y: H * (i + .5) / LANES,
+      tone: TONES[i % TONES.length]
+    }));
     gates = [];
-    lanes.forEach((ln, i) => [.26, .48, .70, .88].forEach(f =>
+    lanes.forEach((ln, i) => [.22, .44, .66, .86].forEach(f =>
       gates.push({ x: W * f, y: ln.y, lane: i, flash: 0 })));
     packets = [];
     for (let i = 0; i < lanes.length; i++)
@@ -870,8 +820,7 @@ function projFlow() {
 
     for (const g of gates) {
       g.flash *= Math.pow(.90, dt / 16);
-      const a = .10 + g.flash * .8;
-      ctx.fillStyle = `rgba(190,210,255,${a})`;
+      ctx.fillStyle = `rgba(190,210,255,${.08 + g.flash * .75})`;
       ctx.fillRect(g.x - .5, g.y - 5, 1, 10);
     }
 
@@ -884,9 +833,8 @@ function projFlow() {
         if (g.lane !== p.lane || gi === p.seen) continue;
         if (Math.abs(p.x - g.x) < 6) {
           g.flash = 1; p.seen = gi;
-          if (Math.random() < .3) {                       // hand off to a neighbour
-            const dir = Math.random() < .5 ? -1 : 1;
-            const next = p.lane + dir;
+          if (Math.random() < .3) {                     // hand off to a neighbour
+            const next = p.lane + (Math.random() < .5 ? -1 : 1);
             if (next >= 0 && next < lanes.length) p.lane = next;
           }
         }
@@ -988,15 +936,29 @@ function enquiry() {
     setNote('Sending…', false);
 
     try {
-      const res = await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(new FormData(form)).toString()
-      });
+      const fd = new FormData(form);
+      let res;
+      if (ENQUIRY_WEBHOOK) {
+        const data = {};
+        fd.forEach((v, k) => { if (k !== 'bot-field' && k !== 'form-name') data[k] = v; });
+        data.sentAt = new Date().toISOString();
+        data.source = location.hostname || 'local';
+        res = await fetch(ENQUIRY_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+      } else {
+        res = await fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(fd).toString()
+        });
+      }
       if (!res.ok) throw new Error(res.status);
     } catch (err) {
       busy = false;
-      setNote('Could not send just now — please email hello@erolabs.studio.', true);
+      setNote('Could not send just now — please email ' + ENQUIRY_EMAIL + '.', true);
       return;
     }
 
@@ -1149,7 +1111,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); peeks(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

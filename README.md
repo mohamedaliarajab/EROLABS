@@ -360,14 +360,18 @@ disagree — that produced a hard elbow through the middle of Projects.
 parked at a stop, up to 1.0 mid-transit. It marks the journey, so it has no
 business competing with a section you are actually reading.
 
-**The Projects flow** (`projFlow()`) is five lanes, one per project, with
-packets running left to right through gates. A packet reaching a gate has a
-30% chance of rerouting to a neighbouring lane, and the diagonal it takes is
-the whole point — that is work being handed off between systems, not a
-decorative loop. Lanes are measured with `offsetTop` rather than
-`getBoundingClientRect`, because the stop carries a `scale()` and rects come
-back in scaled pixels while the canvas is sized in layout pixels. It only
-animates while Projects is on screen.
+**The Projects flow** (`projFlow()`) is seven lanes of packets running left to
+right through gates. A packet reaching a gate has a 30% chance of rerouting to
+a neighbouring lane, and the diagonal it takes is the whole point — that is
+work being handed off between systems, not a decorative loop. Lanes are evenly
+spaced rather than pinned to DOM rows, so the substrate keeps running whatever
+the section above it is made of. It only animates while Projects is on screen.
+
+**Projects itself is three categories** — Automation, Intelligence, Design —
+each with a 16:9 slot waiting for a video. Drop a `<video>` (or `<img>`) into
+`.cat-media` and the placeholder label and sweep hide themselves via `:has()`;
+nothing else needs changing. Use `muted playsinline loop autoplay` if it should
+play on its own — browsers refuse unmuted autoplay.
 
 **The route line is the automation metaphor.** It's generated in `buildRoute()`
 from the same coordinates the camera uses, and the glowing trail draws itself
