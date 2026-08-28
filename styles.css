@@ -227,11 +227,13 @@ body.nav-bar .nav-links{opacity:1;pointer-events:auto;transform:none}
 .vol-slider{
   -webkit-appearance:none;appearance:none;width:62px;height:14px;
   background:none;cursor:none;--v:35;
+  --thumb:7px;--fill:calc(var(--v) * 1% + (.5 - var(--v) / 100) * var(--thumb));
 }
 body.is-touch .vol-slider{cursor:pointer}
 .vol-slider::-webkit-slider-runnable-track{
   height:1px;
-  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*1%),rgba(255,255,255,.13) 0);
+  background:linear-gradient(90deg,var(--blue),var(--violet)) 0 0 / var(--fill) 100% no-repeat,
+             rgba(255,255,255,.13);
 }
 .vol-slider::-webkit-slider-thumb{
   -webkit-appearance:none;width:7px;height:7px;margin-top:-3px;border-radius:50%;
@@ -240,7 +242,8 @@ body.is-touch .vol-slider{cursor:pointer}
 .vol-slider:hover::-webkit-slider-thumb{background:#fff;transform:scale(1.3)}
 .vol-slider::-moz-range-track{
   height:1px;
-  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*1%),rgba(255,255,255,.13) 0);
+  background:linear-gradient(90deg,var(--blue),var(--violet)) 0 0 / var(--fill) 100% no-repeat,
+             rgba(255,255,255,.13);
 }
 .vol-slider::-moz-range-thumb{width:7px;height:7px;border:0;border-radius:50%;background:var(--ink-2)}
 .vol-slider:focus-visible{outline:1px solid var(--blue);outline-offset:4px}
@@ -1002,16 +1005,26 @@ body.filming .nav,body.filming .hud,body.filming .progress-rail{
   -webkit-appearance:none;appearance:none;flex:1;height:16px;background:none;cursor:none;--v:0;
 }
 body.is-touch .fb-seek{cursor:pointer}
+/* --v is 0-100, so the fill is v% — it was v * 0.1%, which meant the bar
+   reached a tenth of the way when the thumb reached the end. The thumb's
+   centre also travels from half a thumb in to half a thumb short, so the fill
+   carries the same offset or it drifts by up to half a thumb width. */
+.fb-seek{--thumb:10px;--fill:calc(var(--v) * 1% + (.5 - var(--v) / 100) * var(--thumb))}
 .fb-seek::-webkit-slider-runnable-track{
   height:2px;border-radius:2px;
-  background:linear-gradient(90deg,var(--blue) 0 calc(var(--v)*.1%),var(--violet) 0 calc(var(--v)*.1%),rgba(255,255,255,.18) 0);
+  background:linear-gradient(90deg,var(--blue),var(--violet)) 0 0 / var(--fill) 100% no-repeat,
+             rgba(255,255,255,.18);
 }
 .fb-seek::-webkit-slider-thumb{
   -webkit-appearance:none;width:10px;height:10px;margin-top:-4px;border-radius:50%;
   background:#fff;box-shadow:0 0 10px 2px rgba(160,190,255,.7);transition:transform .25s;
 }
 .fb-seek:hover::-webkit-slider-thumb{transform:scale(1.3)}
-.fb-seek::-moz-range-track{height:2px;border-radius:2px;background:rgba(255,255,255,.18)}
+.fb-seek::-moz-range-track{
+  height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--blue),var(--violet)) 0 0 / var(--fill) 100% no-repeat,
+             rgba(255,255,255,.18);
+}
 .fb-seek::-moz-range-thumb{width:10px;height:10px;border:0;border-radius:50%;background:#fff}
 .fb-time{
   flex:none;font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);

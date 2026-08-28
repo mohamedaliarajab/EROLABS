@@ -622,6 +622,21 @@ Verified: re-opening inside the window keeps the new panel up; closing clears
 the blur; six rapid open/close cycles leave all four films back in their cards
 with nothing stranded in the slot.
 
+## Slider fills
+
+Both sliders draw their own fill, and there are two ways to get it wrong:
+
+- **Units.** `--v` is set to 0–100 by the engine, so the fill is `v * 1%`. The
+  seek bar had `v * 0.1%`, which meant it reached a tenth of the way along when
+  the thumb reached the end — a 450px lag at the midpoint of a 999px track.
+- **The half-thumb.** A native range thumb's centre travels from half a thumb
+  in to half a thumb short of the end, never 0→100% of the track. A plain `v%`
+  fill therefore drifts by up to half a thumb width even with the units right.
+  Both fills carry `+ (.5 - v/100) * --thumb` to match, which measures exact to
+  within 0.01px across the range.
+
+One control serves all four films, so this is fixed everywhere at once.
+
 ## Two warnings, learned the hard way
 
 **Never slice HTML on a loosely-indented tag.** Replacing the About block used
