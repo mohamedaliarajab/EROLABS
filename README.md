@@ -589,6 +589,30 @@ legible on a narrow screen, and the hover-preview panel is disabled on touch.
       endpoint after activation if you would rather it were not.
 - [ ] **OG image** — none set. Capture `?stop=0` at 1200×630.
 
+## The stuck-blur race
+
+Worth understanding before touching either overlay.
+
+`hide()` shrinks the panel back onto its block over 520ms and finishes in a
+`setTimeout`. Re-open something inside that window and the *old* animation's
+callback used to strip `.on` from the **new** panel — the body kept its blur
+class while the shell went `display: none`, so the page sat blurred with
+nothing on it and no X to click. It needed a few attempts to hit, because you
+have to re-open inside the 520ms.
+
+Two things fix it, and both are needed:
+
+- **`cancelMinimize()`** on open: kills the pending timer and wipes the inline
+  transform/opacity it left behind.
+- **An explicit handover for the film.** Cancelling the close also cancels the
+  callback that returned the video to its card, so a card came back empty. The
+  film in flight is held in `pending` and `sendHome()` is called by whichever
+  happens first — the animation finishing, or the next open.
+
+Verified: re-opening inside the window keeps the new panel up; closing clears
+the blur; six rapid open/close cycles leave all four films back in their cards
+with nothing stranded in the slot.
+
 ## Two warnings, learned the hard way
 
 **Never slice HTML on a loosely-indented tag.** Replacing the About block used

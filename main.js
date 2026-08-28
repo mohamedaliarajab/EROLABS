@@ -1456,11 +1456,24 @@ function minimizeTo(el, src, done) {
   el.style.transformOrigin = '50% 50%';
   el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${sx},${sy})`;
   el.style.opacity = '0';
-  setTimeout(() => {
+  return setTimeout(() => {
     el.style.transition = ''; el.style.transform = '';
     el.style.opacity = ''; el.style.transformOrigin = '';
     done();
   }, 520);
+}
+
+/* Re-opening while a previous panel is still shrinking used to let the old
+   animation's callback strip .on from the NEW panel: the body kept its blur
+   class and the shell went display:none, leaving the page blurred with
+   nothing on it and no way out. Cancel the pending close and wipe whatever
+   inline state it left behind. */
+function cancelMinimize(timer, el, shell) {
+  if (timer) clearTimeout(timer);
+  shell.classList.remove('closing');
+  el.style.transition = ''; el.style.transform = '';
+  el.style.opacity = ''; el.style.transformOrigin = '';
+  return null;
 }
 
 /* ── the films ─────────────────────────────────────────────────────
@@ -1484,7 +1497,20 @@ function films() {
   if (!cards.length) return;
 
   const play = $('#fbPlay'), seek = $('#fbSeek'), time = $('#fbTime');
-  let open = false, armed = false, current = null, home = null, tick = null;
+  let open = false, armed = false, current = null, home = null, tick = null, minTimer = null;
+  /* A film that has been lifted out but not yet put back. Cancelling a close
+     also cancels the callback that would have returned it, so the handover has
+     to be explicit or a card comes back empty. */
+  let pending = null;
+  const sendHome = () => {
+    if (!pending) return;
+    const { v, card } = pending;
+    pending = null;
+    if (!card.contains(v)) card.insertBefore(v, card.firstChild);
+    v.currentTime = 0;
+    if (card.dataset.hoverOnly === undefined &&
+        card.closest('.stop')?.classList.contains('live')) v.play().catch(() => {});
+  };
 
   const clock = n => {
     if (!isFinite(n)) n = 0;
@@ -1508,6 +1534,8 @@ function films() {
     if (open) return;
     const v = card.querySelector('video');
     if (!v) return;
+    sendHome();                          // whatever was mid-close goes back first
+    minTimer = cancelMinimize(minTimer, frame, box);
     open = true; armed = false; current = v; home = card;
     cap.textContent = card.closest('.cat')?.querySelector('h3')?.textContent || '';
     v.style.removeProperty('transform');
@@ -1533,15 +1561,13 @@ function films() {
     const v = current, card = home;
     current = null; home = null;
     if (tick) { cancelAnimationFrame(tick); tick = null; }
+    pending = (v && card) ? { v, card } : null;
     // shrink the frame back onto its card, then hand the film back
-    minimizeTo(frame, card, () => {
+    minTimer = minimizeTo(frame, card, () => {
+      minTimer = null;
+      sendHome();
+      if (open) return;                    // a newer film is already playing
       box.classList.remove('on', 'closing');
-      if (v && card) {
-        card.insertBefore(v, card.firstChild);
-        v.currentTime = 0;
-        if (card.closest('.stop')?.classList.contains('live') &&
-            card.dataset.hoverOnly === undefined) v.play().catch(() => {});
-      }
     });
   };
 
@@ -1619,10 +1645,11 @@ function reader() {
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
   const BLOCKS = '.case-step, .cd-panel, .case-figs, .case-brief';
-  let dwell = null, open = false, srcEl = null;
+  let dwell = null, open = false, srcEl = null, minTimer = null;
 
   const show = src => {
     if (open) return;
+    minTimer = cancelMinimize(minTimer, glass, shell);
     open = true; srcEl = src;
     const clone = src.cloneNode(true);
     clone.removeAttribute('id');
@@ -1656,10 +1683,12 @@ function reader() {
     wake();
     // shrink back onto the block it came from, measured now — if the page has
     // melted and drifted, it returns to where that block actually is
-    minimizeTo(glass, srcEl, () => {
+    minTimer = minimizeTo(glass, srcEl, () => {
+      minTimer = null;
+      if (open) return;                    // something newer opened; leave it
       shell.classList.remove('on', 'closing');
       srcEl = null;
-      if (!open) body.innerHTML = '';
+      body.innerHTML = '';
     });
   };
 
