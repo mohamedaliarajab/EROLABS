@@ -241,6 +241,7 @@
       <h2 class="display xl" data-split="char">The Problem. The Process.<br>The Result.</h2>
 
       <div class="case">
+        <div class="case-brief" data-vis="climb">
         <header class="case-head">
           <div class="case-who">
             <h3>Company&nbsp;A</h3>
@@ -249,11 +250,13 @@
           <span class="case-badge" title="Figures are a model built from observed volumes and rates, not results measured after deployment">Modelled, not measured</span>
         </header>
 
-        <p class="case-claim">170 staff hours returned a month, record errors from
-          <b>7.4%</b> to <b>0.3%</b>, and the system paid back in <b>seven months</b>.</p>
+        <p class="case-claim">About <b>39 staff hours</b> back every week, record errors down to
+          <b>effectively none</b> — 0.3%, roughly one record a month — and the system paid back in
+          <b>seven months</b>.</p>
+        </div>
 
         <ol class="case-track" id="caseTrack">
-          <li class="case-step" data-step="1">
+          <li class="case-step" data-step="1" data-vis="scatter">
             <span class="cs-k">Problem</span>
             <h4>Nobody could say how long a job had been open.</h4>
             <p>Work orders arrived by phone and email, went into a notebook, and were
@@ -261,14 +264,14 @@
                six days a month — landing between the 8th and the 15th, with no evidence
                attached to anything.</p>
           </li>
-          <li class="case-step" data-step="2">
+          <li class="case-step" data-step="2" data-vis="measure">
             <span class="cs-k">Process</span>
             <h4>We followed one work order end to end.</h4>
             <p>Every hand-off mapped and timed across 412 monthly jobs. Three of them were
                the same information being retyped — notebook, spreadsheet, report. Each
                retyping step carried its own error rate, and each one could be removed.</p>
           </li>
-          <li class="case-step" data-step="3">
+          <li class="case-step" data-step="3" data-vis="route">
             <span class="cs-k">Solution</span>
             <h4>Raised once, on a phone, at the building.</h4>
             <p>Routed to a vendor by trade and location, with a clock running. An email
@@ -276,11 +279,12 @@
                supervisor, Head of Operations. Closing requires a photograph. On the 1st,
                every report assembles itself, evidenced.</p>
           </li>
-          <li class="case-step" data-step="4">
+          <li class="case-step" data-step="4" data-vis="steady">
             <span class="cs-k">Result</span>
             <h4>Nobody opens a spreadsheet.</h4>
-            <p>Supervisors work from phones; the Head of Operations works from one
-               dashboard. Reports leave on the 1st, every month, evidenced.</p>
+            <p>Thirty-nine hours a week come back to the operation, and roughly one record
+               a month carries an error. Supervisors work from phones; the Head of Operations
+               works from one dashboard. Reports leave on the 1st, evidenced.</p>
           </li>
         </ol>
 
@@ -288,10 +292,10 @@
           <div class="cat-media case-film" data-slot="case-company-a"><span class="cat-media-k">Film</span></div>
 
           <div class="case-data">
-            <div class="case-figs">
-              <div class="fig"><b class="stat" data-count="2040">0</b><i>hours returned a year</i></div>
+            <div class="case-figs" data-vis="climb">
+              <div class="fig"><b class="stat" data-count="39">0</b><i>staff hours back every week</i></div>
               <div class="fig"><b class="stat" data-count="7">0</b><i>months to pay back</i></div>
-              <div class="fig"><b class="stat">0.3%</b><i>error rate, from 7.4%</i></div>
+              <div class="fig"><b class="stat">0.3%</b><i>errors — effectively none, from 7.4%</i></div>
             </div>
 
             <div class="cd-tabs" role="tablist" aria-label="Case study figures">
@@ -300,7 +304,7 @@
               <button class="cd-tab"    role="tab" aria-selected="false" data-tab="return">Return</button>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="hours">
+            <div class="cd-panel" role="tabpanel" data-panel="hours" data-vis="climb">
               <table class="cd-table">
                 <thead><tr><th>Each month</th><th>Before</th><th>After</th><th>Returned</th></tr></thead>
                 <tbody>
@@ -309,16 +313,18 @@
                   <tr><td>Assembling 8 landlord reports</td><td>96</td><td>4</td><td>92</td></tr>
                   <tr><td>Answering “what's the status?”</td><td>13</td><td>3</td><td>10</td></tr>
                   <tr><td>Reconciling vendor invoices to jobs</td><td>14</td><td>3</td><td>11</td></tr>
+                  <tr class="cd-sum"><td>Per week</td><td>43.6</td><td>4.4</td><td>39.2</td></tr>
                   <tr class="cd-sum"><td>Per month</td><td>189</td><td>19</td><td>170</td></tr>
                   <tr class="cd-sum"><td>Per year</td><td>2,268</td><td>228</td><td>2,040</td></tr>
                 </tbody>
               </table>
-              <p class="cd-note">At ₦2,160 a loaded operations hour, 2,040 hours is ₦4.41m of capacity —
-                which is not cash unless it is redeployed. Company A puts it into winning and servicing
-                more buildings.</p>
+              <p class="cd-note">39 hours a week is the whole nine-person operation, not one person —
+                about 4.4 hours each. At ₦2,160 a loaded operations hour, the 2,040 hours a year is
+                ₦4.41m of capacity, which is not cash unless it is redeployed. Company A puts it into
+                winning and servicing more buildings.</p>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="errors" hidden>
+            <div class="cd-panel" role="tabpanel" data-panel="errors" data-vis="climb" hidden>
               <table class="cd-table">
                 <thead><tr><th>Measure</th><th>Before</th><th>After</th></tr></thead>
                 <tbody>
@@ -328,12 +334,13 @@
                   <tr><td>Landlord reports reissued after correction</td><td>3/mo</td><td>0 in 6 months</td></tr>
                 </tbody>
               </table>
-              <p class="cd-note">Errors fall because data is entered once, at source, into validated
-                fields, and never retyped. Three retyping steps are gone and each took its own error
-                rate with it. The residual 0.3% is judgement error at entry, which no system removes.</p>
+              <p class="cd-note">0.3% of ~412 work orders is roughly one record a month — effectively
+                none. Errors fall because data is entered once, at source, into validated fields, and
+                never retyped: three retyping steps are gone and each took its own error rate with it.
+                The residual is judgement error at entry, which no system removes.</p>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="return" hidden>
+            <div class="cd-panel" role="tabpanel" data-panel="return" data-vis="climb" hidden>
               <table class="cd-table">
                 <thead><tr><th>Line</th><th>Year 1</th><th>Year 2</th></tr></thead>
                 <tbody>
@@ -438,7 +445,10 @@
 <div class="reader" id="reader" aria-hidden="true">
   <div class="reader-scrim"></div>
   <div class="reader-glass" role="dialog" aria-modal="true" aria-label="Reading view">
+    <i class="reader-ring" aria-hidden="true"></i>
+    <i class="reader-sheen" aria-hidden="true"></i>
     <div class="reader-head">
+      <canvas class="reader-vis" id="readerVis" aria-hidden="true"></canvas>
       <button class="reader-x" aria-label="Close reading view">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>

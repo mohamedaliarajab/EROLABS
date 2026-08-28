@@ -104,9 +104,26 @@ panel at 75% x 75% of the viewport — headings go from ~11px to ~39px, body fro
 ~11px to ~18px — and blurs everything behind it. Close with the X, the scrim,
 or Escape.
 
-Applied to the case study only — `.case-step` and `.cd-panel`, 7 blocks.
-**About and Projects are deliberately excluded**; those sections have their own
-plans for these blocks. Don't add them back without being asked.
+Applied to the case study only — the brief, the four steps, the figures strip
+and the three tables, 9 blocks. **About and Projects are deliberately
+excluded**; those sections have their own plans. Don't add them back unasked.
+
+**The glass** is a heavy backdrop blur with saturation pushed past 1, a
+specular sheen drifting across the top, and light/dark inset lines for
+thickness. A conic sweep clipped to the border ring runs the outline — spun
+with `rotate()` rather than an animated `@property` angle, so it works
+everywhere.
+
+**Closing**: the X, the scrim, Escape, or moving the pointer out of the panel.
+That last one only arms once the pointer has actually been *inside* — opening
+from a block near the screen edge leaves the cursor outside the panel, and
+without the guard the same motion that opened it would close it.
+
+**The strip at the top animates to match the block.** Each declares `data-vis`:
+`scatter` for the problem (drifting points, nothing tracked), `measure` for the
+process (a caliper sweeping a ruler), `route` for the solution (a packet
+through gates), `steady` for the result (a calm pulse), `climb` for figures and
+tables (bars rising).
 
 Three details that matter:
 
@@ -135,8 +152,9 @@ what keeps the section inside its frame.
 model as measured results would misrepresent the work. The label sits next to
 the client name where it cannot be missed, with the reasoning in its `title`.
 
-**On density.** This is the tightest stop on the site: `--fit` sits near 0.89
-at 1440x900. Worth understanding before editing it — `fitStops` scales the
+**On density.** This is the tightest stop on the site: `--fit` sits near 0.80
+at 1440x900, which is why the reading view exists — any block can be opened at
+a comfortable size. Worth understanding before editing it — `fitStops` scales the
 whole section uniformly, so **raising a font size does not make text bigger on
 screen**, it just lowers the fit by the same factor. The only way to make the
 tables more legible is to spend less height on everything around them. That is

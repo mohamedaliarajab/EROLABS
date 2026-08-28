@@ -992,6 +992,112 @@ function caseTabs() {
   }));
 }
 
+/* ── the strip that animates to match what is being read ───────────
+   Each block declares data-vis, and the panel draws to suit: chaos for the
+   problem, a caliper for the mapping, a routed packet for the solution, a
+   calm pulse for the result, bars for the figures. */
+const readerVis = (() => {
+  const cv = $('#readerVis');
+  if (!cv) return { start(){}, stop(){}, size(){} };
+  const ctx = cv.getContext('2d');
+  let raf = null, mode = 'steady', t0 = 0, W = 0, H = 0, pts = [];
+
+  const size = () => {
+    const r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  };
+
+  function draw(ts) {
+    if (!t0) t0 = ts;
+    const t = (ts - t0) / 1000, mid = H / 2;
+    ctx.clearRect(0, 0, W, H);
+
+    if (mode === 'scatter') {                       // nothing is tracked
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 3 || p.x > W - 3) p.vx *= -1;
+        if (p.y < 4 || p.y > H - 4) p.vy *= -1;
+        const fl = Math.max(0, Math.sin(t * 1.8 + p.ph));
+        ctx.fillStyle = `rgba(255,120,150,${.22 + fl * .55})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.5 + fl * 1.7, 0, 7); ctx.fill();
+      }
+    } else if (mode === 'measure') {                // every hand-off, timed
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
+      for (let i = 0; i <= 20; i++) {
+        const x = W * i / 20, big = i % 5 === 0;
+        ctx.strokeStyle = `rgba(200,215,255,${big ? .42 : .16})`;
+        ctx.beginPath(); ctx.moveTo(x, mid); ctx.lineTo(x, mid - (big ? 11 : 5)); ctx.stroke();
+      }
+      const x = W * ((t * .26) % 1);
+      ctx.strokeStyle = '#8FB6FF'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x, mid - 15); ctx.lineTo(x, mid + 9); ctx.stroke();
+      ctx.fillStyle = 'rgba(143,182,255,.95)';
+      ctx.beginPath(); ctx.arc(x, mid, 3, 0, 7); ctx.fill();
+    } else if (mode === 'route') {                  // raised once, routed, closed
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
+      const gates = [.22, .46, .70, .92], k = (t * .22) % 1, px = W * k;
+      gates.forEach(g => {
+        const gx = W * g, near = Math.max(0, 1 - Math.abs(px - gx) / 26);
+        ctx.fillStyle = `rgba(190,210,255,${.14 + near * .8})`;
+        ctx.fillRect(gx - .75, mid - 8, 1.5, 16);
+      });
+      const grd = ctx.createLinearGradient(px - 34, 0, px + 4, 0);
+      grd.addColorStop(0, 'rgba(120,170,255,0)'); grd.addColorStop(1, '#A66BFF');
+      ctx.strokeStyle = grd; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(px - 34, mid); ctx.lineTo(px, mid); ctx.stroke();
+      ctx.fillStyle = '#C36BFF'; ctx.beginPath(); ctx.arc(px, mid, 2.6, 0, 7); ctx.fill();
+    } else if (mode === 'steady') {                 // it simply runs
+      ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      const g = ctx.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, 'rgba(30,144,255,.15)'); g.addColorStop(.5, '#6FA5FF');
+      g.addColorStop(1, 'rgba(166,37,238,.15)');
+      ctx.strokeStyle = g; ctx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        const y = mid + Math.sin(x * .035 - t * 2.4) * (H * .2) * (.4 + .6 * Math.sin(x * .006 + t * .5));
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    } else {                                        // climb: the figures
+      const n = 22, bw = W / n;
+      for (let i = 0; i < n; i++) {
+        const p = Math.min(1, Math.max(0, t * .7 - i * .045));
+        const e = 1 - Math.pow(1 - p, 3);
+        const h = (H - 8) * e * (.35 + .65 * (i / n));
+        const g = ctx.createLinearGradient(0, H, 0, H - h);
+        g.addColorStop(0, 'rgba(30,144,255,.25)'); g.addColorStop(1, '#A66BFF');
+        ctx.fillStyle = g;
+        ctx.fillRect(i * bw + bw * .22, H - 4 - h, bw * .5, h);
+      }
+    }
+  }
+  const frame = ts => { draw(ts); raf = requestAnimationFrame(frame); };
+
+  return {
+    size,
+    start(m) {
+      mode = m || 'steady'; t0 = 0;
+      /* the panel is already displayed when this runs, so measure now rather
+         than waiting a frame — and paint once immediately, so the strip is
+         never blank on the way in */
+      size();
+      pts = Array.from({ length: 24 }, () => ({
+        x: Math.random() * W, y: 4 + Math.random() * (H - 8),
+        vx: (Math.random() - .5) * .9, vy: (Math.random() - .5) * .7,
+        ph: Math.random() * 7
+      }));
+      draw(performance.now());
+      if (!raf) raf = requestAnimationFrame(frame);
+    },
+    stop() { if (raf) cancelAnimationFrame(raf); raf = null; ctx.clearRect(0, 0, W, H); }
+  };
+})();
+
 /* ── reading view ──────────────────────────────────────────────────
    Dwell on a dense block and it lifts out into a glass panel at 75% of the
    viewport, with everything behind it blurred. Closing counts as activity,
@@ -1005,7 +1111,7 @@ function reader() {
         scrim = $('.reader-scrim', shell);
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
-  const BLOCKS = '.case-step, .cd-panel';
+  const BLOCKS = '.case-step, .cd-panel, .case-figs, .case-brief';
   let dwell = null, open = false;
 
   const show = src => {
@@ -1022,10 +1128,12 @@ function reader() {
     body.innerHTML = '';
     body.appendChild(clone);
 
+    armed = false;                      // not until the pointer has been inside
     shell.classList.add('on');
     shell.setAttribute('aria-hidden', 'false');
     document.body.classList.add('reading');
     readingEl = glass;
+    readerVis.start(src.dataset.vis);
     wake();
     x.focus({ preventScroll: true });
   };
@@ -1037,6 +1145,7 @@ function reader() {
     shell.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('reading');
     readingEl = null;
+    readerVis.stop();
     glass.classList.remove('melting');
     ['--melt', '--blur', '--sag', '--sagY'].forEach(v => glass.style.removeProperty(v));
     clearMelt();          // closing counts as activity, exactly like a scroll
@@ -1056,6 +1165,10 @@ function reader() {
     }
     el.addEventListener('click', () => { clearTimeout(dwell); show(el); });
   });
+
+  let armed = false;
+  glass.addEventListener('pointerenter', () => { armed = true; });
+  glass.addEventListener('pointerleave', () => { if (armed) hide(); });
 
   x.addEventListener('click', hide);
   scrim.addEventListener('click', hide);

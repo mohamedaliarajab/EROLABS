@@ -479,6 +479,7 @@ body.ready .hud{opacity:1}
 #cases .xl{font-size:calc(var(--u)*3.9)}
 
 .case{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*1);border-top:1px solid var(--line-2)}
+.case-brief{position:relative}
 .case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:calc(var(--u)*2)}
 .case-who h3{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.7);letter-spacing:-.02em}
 .case-meta{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.68);letter-spacing:.1em;color:var(--ink-3);margin-top:calc(var(--u)*.3)}
@@ -515,7 +516,7 @@ body.ready .hud{opacity:1}
 .case-lower{display:grid;grid-template-columns:.52fr 1.48fr;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.3);align-items:start}
 .case-film{--tone:var(--violet)}
 
-.case-figs{display:flex;gap:calc(var(--u)*2.4);flex-wrap:wrap}
+.case-figs{position:relative;display:flex;gap:calc(var(--u)*2.4);flex-wrap:wrap}
 .fig{display:flex;align-items:baseline;gap:calc(var(--u)*.5)}
 .stat{font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*1.75);letter-spacing:-.03em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
 .fig i{font-style:normal;color:var(--ink-3);font-size:calc(var(--u)*.78);max-width:11ch;line-height:1.3}
@@ -843,28 +844,60 @@ body.reduced .star{animation:none}
    because the panel is what is being looked at. */
 .reader{position:fixed;inset:0;z-index:60;display:none}
 .reader.on{display:block}
-.reader-scrim{position:absolute;inset:0;background:rgba(2,3,9,.5);opacity:0;transition:opacity .45s var(--ease)}
+.reader-scrim{position:absolute;inset:0;background:rgba(2,3,9,.42);opacity:0;transition:opacity .45s var(--ease)}
 .reader.on .reader-scrim{opacity:1}
 
+/* Glass, properly: heavy blur so the page reads as a soft wash behind it,
+   saturation pushed so the colour that survives is the brand's, a specular
+   sheen down the top edge, and light and dark inset lines for thickness. */
 .reader-glass{
   position:absolute;left:50%;top:50%;
   display:flex;flex-direction:column;
   width:min(75vw,1180px);height:min(75vh,900px);
-  border-radius:calc(var(--u)*1.1);overflow:hidden;
-  background:linear-gradient(158deg,rgba(44,48,70,.52),rgba(12,14,24,.66));
-  -webkit-backdrop-filter:blur(26px) saturate(1.4);
-  backdrop-filter:blur(26px) saturate(1.4);
-  border:1px solid rgba(255,255,255,.16);
-  box-shadow:0 40px 120px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.18);
+  border-radius:calc(var(--u)*1.4);overflow:hidden;isolation:isolate;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.11),rgba(255,255,255,.03) 26%,rgba(255,255,255,0) 58%),
+    linear-gradient(158deg,rgba(58,64,92,.58),rgba(11,13,22,.74));
+  -webkit-backdrop-filter:blur(34px) saturate(1.9) brightness(1.06);
+  backdrop-filter:blur(34px) saturate(1.9) brightness(1.06);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:
+    0 46px 140px rgba(0,0,0,.72),
+    0 0 60px rgba(90,120,255,.10),
+    inset 0 1px 0 rgba(255,255,255,.30),
+    inset 0 -1px 0 rgba(0,0,0,.42);
   /* --sag / --sagY are written by the melt, so no transform transition here */
   transform:translate(-50%,-50%) translateY(var(--sag,0px)) scaleY(var(--sagY,1));
   opacity:0;transition:opacity .4s var(--ease);
 }
+/* a light running the outline — a conic sweep clipped to the border ring, spun
+   by rotate() so it works without @property support */
+.reader-ring{
+  position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;overflow:hidden;
+}
+.reader-ring::before{
+  content:"";position:absolute;left:50%;top:50%;width:190%;aspect-ratio:1;translate:-50% -50%;
+  background:conic-gradient(transparent 0 58%,rgba(110,165,255,.5) 70%,#EAF2FF 79%,rgba(166,37,238,.75) 88%,transparent 97%);
+  filter:blur(.4px);animation:ringSpin 7s linear infinite;
+}
+@keyframes ringSpin{to{rotate:360deg}}
+/* the highlight that sells it as a curved surface */
+.reader-sheen{
+  position:absolute;left:-20%;top:-45%;width:140%;height:70%;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.13),transparent 62%);
+  animation:sheenDrift 11s ease-in-out infinite;
+}
+@keyframes sheenDrift{0%,100%{transform:translateX(-4%)}50%{transform:translateX(6%)}}
 .reader.on .reader-glass{opacity:1}
 .reader.on .reader-body{animation:readerRise .55s var(--ease)}
 @keyframes readerRise{from{opacity:0;transform:translateY(16px)}}
 
-.reader-head{display:flex;justify-content:flex-end;padding:calc(var(--u)*1.1) calc(var(--u)*1.1) 0}
+.reader-head{position:relative;z-index:3;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:calc(var(--u)*1.1) calc(var(--u)*1.1) 0}
+/* a strip that animates to match whatever is being read */
+.reader-vis{flex:1;height:clamp(38px,4.4vh,60px);display:block;opacity:.9}
 .reader-x{
   display:grid;place-items:center;width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);
   border-radius:50%;border:1px solid rgba(255,255,255,.16);color:var(--ink-2);
@@ -873,7 +906,7 @@ body.reduced .star{animation:none}
 .reader-x svg{width:58%;height:58%}
 .reader-x:hover{color:#fff;border-color:var(--violet);background:rgba(166,37,238,.16);transform:rotate(90deg)}
 .reader-body{
-  flex:1;overflow-y:auto;overscroll-behavior:contain;
+  position:relative;z-index:3;flex:1;overflow-y:auto;overscroll-behavior:contain;
   padding:calc(var(--u)*.6) clamp(24px,3.4vw,60px) clamp(28px,3.4vw,56px);
 }
 
@@ -1142,6 +1175,7 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
       <h2 class="display xl" data-split="char">The Problem. The Process.<br>The Result.</h2>
 
       <div class="case">
+        <div class="case-brief" data-vis="climb">
         <header class="case-head">
           <div class="case-who">
             <h3>Company&nbsp;A</h3>
@@ -1150,11 +1184,13 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
           <span class="case-badge" title="Figures are a model built from observed volumes and rates, not results measured after deployment">Modelled, not measured</span>
         </header>
 
-        <p class="case-claim">170 staff hours returned a month, record errors from
-          <b>7.4%</b> to <b>0.3%</b>, and the system paid back in <b>seven months</b>.</p>
+        <p class="case-claim">About <b>39 staff hours</b> back every week, record errors down to
+          <b>effectively none</b> — 0.3%, roughly one record a month — and the system paid back in
+          <b>seven months</b>.</p>
+        </div>
 
         <ol class="case-track" id="caseTrack">
-          <li class="case-step" data-step="1">
+          <li class="case-step" data-step="1" data-vis="scatter">
             <span class="cs-k">Problem</span>
             <h4>Nobody could say how long a job had been open.</h4>
             <p>Work orders arrived by phone and email, went into a notebook, and were
@@ -1162,14 +1198,14 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
                six days a month — landing between the 8th and the 15th, with no evidence
                attached to anything.</p>
           </li>
-          <li class="case-step" data-step="2">
+          <li class="case-step" data-step="2" data-vis="measure">
             <span class="cs-k">Process</span>
             <h4>We followed one work order end to end.</h4>
             <p>Every hand-off mapped and timed across 412 monthly jobs. Three of them were
                the same information being retyped — notebook, spreadsheet, report. Each
                retyping step carried its own error rate, and each one could be removed.</p>
           </li>
-          <li class="case-step" data-step="3">
+          <li class="case-step" data-step="3" data-vis="route">
             <span class="cs-k">Solution</span>
             <h4>Raised once, on a phone, at the building.</h4>
             <p>Routed to a vendor by trade and location, with a clock running. An email
@@ -1177,11 +1213,12 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
                supervisor, Head of Operations. Closing requires a photograph. On the 1st,
                every report assembles itself, evidenced.</p>
           </li>
-          <li class="case-step" data-step="4">
+          <li class="case-step" data-step="4" data-vis="steady">
             <span class="cs-k">Result</span>
             <h4>Nobody opens a spreadsheet.</h4>
-            <p>Supervisors work from phones; the Head of Operations works from one
-               dashboard. Reports leave on the 1st, every month, evidenced.</p>
+            <p>Thirty-nine hours a week come back to the operation, and roughly one record
+               a month carries an error. Supervisors work from phones; the Head of Operations
+               works from one dashboard. Reports leave on the 1st, evidenced.</p>
           </li>
         </ol>
 
@@ -1189,10 +1226,10 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
           <div class="cat-media case-film" data-slot="case-company-a"><span class="cat-media-k">Film</span></div>
 
           <div class="case-data">
-            <div class="case-figs">
-              <div class="fig"><b class="stat" data-count="2040">0</b><i>hours returned a year</i></div>
+            <div class="case-figs" data-vis="climb">
+              <div class="fig"><b class="stat" data-count="39">0</b><i>staff hours back every week</i></div>
               <div class="fig"><b class="stat" data-count="7">0</b><i>months to pay back</i></div>
-              <div class="fig"><b class="stat">0.3%</b><i>error rate, from 7.4%</i></div>
+              <div class="fig"><b class="stat">0.3%</b><i>errors — effectively none, from 7.4%</i></div>
             </div>
 
             <div class="cd-tabs" role="tablist" aria-label="Case study figures">
@@ -1201,7 +1238,7 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
               <button class="cd-tab"    role="tab" aria-selected="false" data-tab="return">Return</button>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="hours">
+            <div class="cd-panel" role="tabpanel" data-panel="hours" data-vis="climb">
               <table class="cd-table">
                 <thead><tr><th>Each month</th><th>Before</th><th>After</th><th>Returned</th></tr></thead>
                 <tbody>
@@ -1210,16 +1247,18 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
                   <tr><td>Assembling 8 landlord reports</td><td>96</td><td>4</td><td>92</td></tr>
                   <tr><td>Answering “what's the status?”</td><td>13</td><td>3</td><td>10</td></tr>
                   <tr><td>Reconciling vendor invoices to jobs</td><td>14</td><td>3</td><td>11</td></tr>
+                  <tr class="cd-sum"><td>Per week</td><td>43.6</td><td>4.4</td><td>39.2</td></tr>
                   <tr class="cd-sum"><td>Per month</td><td>189</td><td>19</td><td>170</td></tr>
                   <tr class="cd-sum"><td>Per year</td><td>2,268</td><td>228</td><td>2,040</td></tr>
                 </tbody>
               </table>
-              <p class="cd-note">At ₦2,160 a loaded operations hour, 2,040 hours is ₦4.41m of capacity —
-                which is not cash unless it is redeployed. Company A puts it into winning and servicing
-                more buildings.</p>
+              <p class="cd-note">39 hours a week is the whole nine-person operation, not one person —
+                about 4.4 hours each. At ₦2,160 a loaded operations hour, the 2,040 hours a year is
+                ₦4.41m of capacity, which is not cash unless it is redeployed. Company A puts it into
+                winning and servicing more buildings.</p>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="errors" hidden>
+            <div class="cd-panel" role="tabpanel" data-panel="errors" data-vis="climb" hidden>
               <table class="cd-table">
                 <thead><tr><th>Measure</th><th>Before</th><th>After</th></tr></thead>
                 <tbody>
@@ -1229,12 +1268,13 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
                   <tr><td>Landlord reports reissued after correction</td><td>3/mo</td><td>0 in 6 months</td></tr>
                 </tbody>
               </table>
-              <p class="cd-note">Errors fall because data is entered once, at source, into validated
-                fields, and never retyped. Three retyping steps are gone and each took its own error
-                rate with it. The residual 0.3% is judgement error at entry, which no system removes.</p>
+              <p class="cd-note">0.3% of ~412 work orders is roughly one record a month — effectively
+                none. Errors fall because data is entered once, at source, into validated fields, and
+                never retyped: three retyping steps are gone and each took its own error rate with it.
+                The residual is judgement error at entry, which no system removes.</p>
             </div>
 
-            <div class="cd-panel" role="tabpanel" data-panel="return" hidden>
+            <div class="cd-panel" role="tabpanel" data-panel="return" data-vis="climb" hidden>
               <table class="cd-table">
                 <thead><tr><th>Line</th><th>Year 1</th><th>Year 2</th></tr></thead>
                 <tbody>
@@ -1339,7 +1379,10 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
 <div class="reader" id="reader" aria-hidden="true">
   <div class="reader-scrim"></div>
   <div class="reader-glass" role="dialog" aria-modal="true" aria-label="Reading view">
+    <i class="reader-ring" aria-hidden="true"></i>
+    <i class="reader-sheen" aria-hidden="true"></i>
     <div class="reader-head">
+      <canvas class="reader-vis" id="readerVis" aria-hidden="true"></canvas>
       <button class="reader-x" aria-label="Close reading view">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
@@ -2345,6 +2388,112 @@ function caseTabs() {
   }));
 }
 
+/* ── the strip that animates to match what is being read ───────────
+   Each block declares data-vis, and the panel draws to suit: chaos for the
+   problem, a caliper for the mapping, a routed packet for the solution, a
+   calm pulse for the result, bars for the figures. */
+const readerVis = (() => {
+  const cv = $('#readerVis');
+  if (!cv) return { start(){}, stop(){}, size(){} };
+  const ctx = cv.getContext('2d');
+  let raf = null, mode = 'steady', t0 = 0, W = 0, H = 0, pts = [];
+
+  const size = () => {
+    const r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+  };
+
+  function draw(ts) {
+    if (!t0) t0 = ts;
+    const t = (ts - t0) / 1000, mid = H / 2;
+    ctx.clearRect(0, 0, W, H);
+
+    if (mode === 'scatter') {                       // nothing is tracked
+      for (const p of pts) {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 3 || p.x > W - 3) p.vx *= -1;
+        if (p.y < 4 || p.y > H - 4) p.vy *= -1;
+        const fl = Math.max(0, Math.sin(t * 1.8 + p.ph));
+        ctx.fillStyle = `rgba(255,120,150,${.22 + fl * .55})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.5 + fl * 1.7, 0, 7); ctx.fill();
+      }
+    } else if (mode === 'measure') {                // every hand-off, timed
+      ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
+      for (let i = 0; i <= 20; i++) {
+        const x = W * i / 20, big = i % 5 === 0;
+        ctx.strokeStyle = `rgba(200,215,255,${big ? .42 : .16})`;
+        ctx.beginPath(); ctx.moveTo(x, mid); ctx.lineTo(x, mid - (big ? 11 : 5)); ctx.stroke();
+      }
+      const x = W * ((t * .26) % 1);
+      ctx.strokeStyle = '#8FB6FF'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.moveTo(x, mid - 15); ctx.lineTo(x, mid + 9); ctx.stroke();
+      ctx.fillStyle = 'rgba(143,182,255,.95)';
+      ctx.beginPath(); ctx.arc(x, mid, 3, 0, 7); ctx.fill();
+    } else if (mode === 'route') {                  // raised once, routed, closed
+      ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, mid); ctx.lineTo(W, mid); ctx.stroke();
+      const gates = [.22, .46, .70, .92], k = (t * .22) % 1, px = W * k;
+      gates.forEach(g => {
+        const gx = W * g, near = Math.max(0, 1 - Math.abs(px - gx) / 26);
+        ctx.fillStyle = `rgba(190,210,255,${.14 + near * .8})`;
+        ctx.fillRect(gx - .75, mid - 8, 1.5, 16);
+      });
+      const grd = ctx.createLinearGradient(px - 34, 0, px + 4, 0);
+      grd.addColorStop(0, 'rgba(120,170,255,0)'); grd.addColorStop(1, '#A66BFF');
+      ctx.strokeStyle = grd; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(px - 34, mid); ctx.lineTo(px, mid); ctx.stroke();
+      ctx.fillStyle = '#C36BFF'; ctx.beginPath(); ctx.arc(px, mid, 2.6, 0, 7); ctx.fill();
+    } else if (mode === 'steady') {                 // it simply runs
+      ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+      const g = ctx.createLinearGradient(0, 0, W, 0);
+      g.addColorStop(0, 'rgba(30,144,255,.15)'); g.addColorStop(.5, '#6FA5FF');
+      g.addColorStop(1, 'rgba(166,37,238,.15)');
+      ctx.strokeStyle = g; ctx.beginPath();
+      for (let x = 0; x <= W; x += 3) {
+        const y = mid + Math.sin(x * .035 - t * 2.4) * (H * .2) * (.4 + .6 * Math.sin(x * .006 + t * .5));
+        x ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    } else {                                        // climb: the figures
+      const n = 22, bw = W / n;
+      for (let i = 0; i < n; i++) {
+        const p = Math.min(1, Math.max(0, t * .7 - i * .045));
+        const e = 1 - Math.pow(1 - p, 3);
+        const h = (H - 8) * e * (.35 + .65 * (i / n));
+        const g = ctx.createLinearGradient(0, H, 0, H - h);
+        g.addColorStop(0, 'rgba(30,144,255,.25)'); g.addColorStop(1, '#A66BFF');
+        ctx.fillStyle = g;
+        ctx.fillRect(i * bw + bw * .22, H - 4 - h, bw * .5, h);
+      }
+    }
+  }
+  const frame = ts => { draw(ts); raf = requestAnimationFrame(frame); };
+
+  return {
+    size,
+    start(m) {
+      mode = m || 'steady'; t0 = 0;
+      /* the panel is already displayed when this runs, so measure now rather
+         than waiting a frame — and paint once immediately, so the strip is
+         never blank on the way in */
+      size();
+      pts = Array.from({ length: 24 }, () => ({
+        x: Math.random() * W, y: 4 + Math.random() * (H - 8),
+        vx: (Math.random() - .5) * .9, vy: (Math.random() - .5) * .7,
+        ph: Math.random() * 7
+      }));
+      draw(performance.now());
+      if (!raf) raf = requestAnimationFrame(frame);
+    },
+    stop() { if (raf) cancelAnimationFrame(raf); raf = null; ctx.clearRect(0, 0, W, H); }
+  };
+})();
+
 /* ── reading view ──────────────────────────────────────────────────
    Dwell on a dense block and it lifts out into a glass panel at 75% of the
    viewport, with everything behind it blurred. Closing counts as activity,
@@ -2358,7 +2507,7 @@ function reader() {
         scrim = $('.reader-scrim', shell);
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
-  const BLOCKS = '.case-step, .cd-panel';
+  const BLOCKS = '.case-step, .cd-panel, .case-figs, .case-brief';
   let dwell = null, open = false;
 
   const show = src => {
@@ -2375,10 +2524,12 @@ function reader() {
     body.innerHTML = '';
     body.appendChild(clone);
 
+    armed = false;                      // not until the pointer has been inside
     shell.classList.add('on');
     shell.setAttribute('aria-hidden', 'false');
     document.body.classList.add('reading');
     readingEl = glass;
+    readerVis.start(src.dataset.vis);
     wake();
     x.focus({ preventScroll: true });
   };
@@ -2390,6 +2541,7 @@ function reader() {
     shell.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('reading');
     readingEl = null;
+    readerVis.stop();
     glass.classList.remove('melting');
     ['--melt', '--blur', '--sag', '--sagY'].forEach(v => glass.style.removeProperty(v));
     clearMelt();          // closing counts as activity, exactly like a scroll
@@ -2409,6 +2561,10 @@ function reader() {
     }
     el.addEventListener('click', () => { clearTimeout(dwell); show(el); });
   });
+
+  let armed = false;
+  glass.addEventListener('pointerenter', () => { armed = true; });
+  glass.addEventListener('pointerleave', () => { if (armed) hide(); });
 
   x.addEventListener('click', hide);
   scrim.addEventListener('click', hide);
