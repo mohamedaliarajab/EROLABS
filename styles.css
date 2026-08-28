@@ -737,7 +737,7 @@ body.ready .hud{opacity:1}
    turbulence displacement, plus blur and drained colour. --melt is written
    per frame by the engine; the class is only present while melting, so a
    page in normal use carries no filter cost at all. */
-.stop.melting{
+.stop.melting,.reader-glass.melting{
   filter:url(#melt)
          blur(var(--blur,0px))
          saturate(calc(1 - var(--melt,0) * .55))
@@ -783,7 +783,7 @@ body.ready .hud{opacity:1}
   .eq-done-msg{font-size:calc(var(--u)*2)}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
   .foot-end{text-align:left}
-  .stop.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
+  .stop.melting,.reader-glass.melting{filter:blur(var(--blur,0px)) saturate(calc(1 - var(--melt,0) * .55))}
 }
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */
@@ -824,3 +824,81 @@ body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{
 
 body.reduced #aurora{display:none}
 body.reduced .star{animation:none}
+
+/* ── reading view ───────────────────────────────────────────────────
+   Dense blocks are legible at a glance but hard to actually read at the
+   size the frame allows. Dwelling on one lifts it out into a glass panel
+   at 75% of the viewport, and blurs everything behind it. The melt still
+   applies while it is open — but to the panel on top, not the page below,
+   because the panel is what is being looked at. */
+.reader{position:fixed;inset:0;z-index:60;display:none}
+.reader.on{display:block}
+.reader-scrim{position:absolute;inset:0;background:rgba(2,3,9,.5);opacity:0;transition:opacity .45s var(--ease)}
+.reader.on .reader-scrim{opacity:1}
+
+.reader-glass{
+  position:absolute;left:50%;top:50%;
+  display:flex;flex-direction:column;
+  width:min(75vw,1180px);height:min(75vh,900px);
+  border-radius:calc(var(--u)*1.1);overflow:hidden;
+  background:linear-gradient(158deg,rgba(44,48,70,.52),rgba(12,14,24,.66));
+  -webkit-backdrop-filter:blur(26px) saturate(1.4);
+  backdrop-filter:blur(26px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 40px 120px rgba(0,0,0,.66),inset 0 1px 0 rgba(255,255,255,.18);
+  /* --sag / --sagY are written by the melt, so no transform transition here */
+  transform:translate(-50%,-50%) translateY(var(--sag,0px)) scaleY(var(--sagY,1));
+  opacity:0;transition:opacity .4s var(--ease);
+}
+.reader.on .reader-glass{opacity:1}
+.reader.on .reader-body{animation:readerRise .55s var(--ease)}
+@keyframes readerRise{from{opacity:0;transform:translateY(16px)}}
+
+.reader-head{display:flex;justify-content:flex-end;padding:calc(var(--u)*1.1) calc(var(--u)*1.1) 0}
+.reader-x{
+  display:grid;place-items:center;width:calc(var(--u)*2.4);height:calc(var(--u)*2.4);
+  border-radius:50%;border:1px solid rgba(255,255,255,.16);color:var(--ink-2);
+  transition:color .3s,border-color .3s,background .3s,transform .3s var(--ease);
+}
+.reader-x svg{width:58%;height:58%}
+.reader-x:hover{color:#fff;border-color:var(--violet);background:rgba(166,37,238,.16);transform:rotate(90deg)}
+.reader-body{
+  flex:1;overflow-y:auto;overscroll-behavior:contain;
+  padding:calc(var(--u)*.6) clamp(24px,3.4vw,60px) clamp(28px,3.4vw,56px);
+}
+
+/* read at a comfortable size, not the size the frame could spare */
+.reader-body .cs-k,.reader-body .cat-n,.reader-body .p-idx{font-size:clamp(10px,.85vw,13px);letter-spacing:.28em}
+.reader-body h3,.reader-body h4{
+  font-family:var(--f-display);font-weight:200;
+  font-size:clamp(26px,2.7vw,44px);line-height:1.15;letter-spacing:-.022em;
+  color:var(--ink);margin:clamp(10px,1vw,18px) 0 clamp(14px,1.4vw,24px);
+}
+.reader-body p{font-size:clamp(15px,1.22vw,21px);line-height:1.72;color:var(--ink-2);max-width:68ch}
+.reader-body .cd-table{font-size:clamp(13px,1.05vw,17px)}
+.reader-body .cd-table th{font-size:clamp(10px,.8vw,12px)}
+.reader-body .cd-table td{padding:clamp(7px,.7vw,12px) 0}
+.reader-body .cd-note{font-size:clamp(13px,1vw,16px);line-height:1.65;margin-top:clamp(14px,1.4vw,22px);max-width:78ch}
+.reader-body .case-step,.reader-body .cat,.reader-body .pillar,.reader-body .cd-panel{
+  opacity:1!important;transform:none!important;
+}
+.reader-body .case-step::before,.reader-body .case-step::after{display:none}
+.reader-body .p-vis{height:clamp(70px,7vw,120px);margin-bottom:clamp(12px,1.2vw,20px)}
+
+/* a dense block invites the reading view */
+.readable{cursor:none}
+.readable::after{content:"";position:absolute;inset:calc(var(--u)*-.6);border-radius:calc(var(--u)*.5);
+  background:rgba(255,255,255,.028);opacity:0;transition:opacity .35s;pointer-events:none;z-index:-1}
+.readable:hover::after{opacity:1}
+.cd-panel.readable{position:relative}
+
+/* everything behind recedes while reading */
+body.reading #viewport,body.reading #field,body.reading #aurora,
+body.reading .nav,body.reading .hud,body.reading .progress-rail{
+  filter:blur(9px);transition:filter .45s var(--ease);
+}
+
+@media (max-width:900px){
+  .reader-glass{width:92vw;height:82vh}
+}
+body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}

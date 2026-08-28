@@ -634,6 +634,7 @@ function auroraRig() {
    cursor lights mean the mouse is almost always drifting, and treating
    that as engagement would mean the melt never fires. */
 const MELT_AFTER = 20000;
+let readingEl = null;      // set by the reading view; see melt() below
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -690,7 +691,9 @@ function melt(t, dt, i) {
      can be minutes. Treat a long frame gap as coming back to the page and
      restart the countdown, rather than snapping straight to a deep melt. */
   if (dt > 500) { lastActive = t; meltT = 0; }
-  const el = stops[i];
+  /* If a panel is open it is the thing being looked at, so it is the thing
+     that melts — the page underneath is already blurred behind it. */
+  const el = readingEl || stops[i];
   if (meltEl && meltEl !== el) clearMelt();
 
   if (t - lastActive < MELT_AFTER) {
@@ -989,6 +992,72 @@ function caseTabs() {
   }));
 }
 
+/* ── reading view ──────────────────────────────────────────────────
+   Dwell on a dense block and it lifts out into a glass panel at 75% of the
+   viewport, with everything behind it blurred. Closing counts as activity,
+   so a melt that crept in while reading is cleared on the way out.       */
+function reader() {
+  const shell = $('#reader');
+  if (!shell || reduced) return;
+  const glass = $('.reader-glass', shell),
+        body  = $('#readerBody'),
+        x     = $('.reader-x', shell),
+        scrim = $('.reader-scrim', shell);
+  const BLOCKS = '.case-step, .cd-panel, .cat, .pillar';
+  let dwell = null, open = false;
+
+  const show = src => {
+    if (open) return;
+    open = true;
+    const clone = src.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.hidden = false;
+    // strip anything that would run twice: a cloned video would play over
+    // the original, and a cloned canvas is dead pixels
+    clone.querySelectorAll('.cat-media, canvas, video').forEach(n => n.remove());
+    body.innerHTML = '';
+    body.appendChild(clone);
+
+    shell.classList.add('on');
+    shell.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('reading');
+    readingEl = glass;
+    wake();
+    x.focus({ preventScroll: true });
+  };
+
+  const hide = () => {
+    if (!open) return;
+    open = false;
+    shell.classList.remove('on');
+    shell.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('reading');
+    readingEl = null;
+    glass.classList.remove('melting');
+    ['--melt', '--blur', '--sag', '--sagY'].forEach(v => glass.style.removeProperty(v));
+    clearMelt();          // closing counts as activity, exactly like a scroll
+    wake();
+    setTimeout(() => { if (!open) body.innerHTML = ''; }, 450);
+  };
+
+  $$(BLOCKS).forEach(el => {
+    el.classList.add('readable');
+    if (!touch) {
+      el.addEventListener('pointerenter', () => {
+        if (open) return;
+        clearTimeout(dwell);
+        dwell = setTimeout(() => show(el), 420);   // a dwell, not a twitch
+      });
+      el.addEventListener('pointerleave', () => clearTimeout(dwell));
+    }
+    el.addEventListener('click', () => { clearTimeout(dwell); show(el); });
+  });
+
+  x.addEventListener('click', hide);
+  scrim.addEventListener('click', hide);
+  addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+}
+
 /* ── cursor ────────────────────────────────────────────────────── */
 function cursor() {
   const c = $('#cursor'); if (touch || reduced) return;
@@ -1132,7 +1201,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); paintPillars(); enquiry(); caseTabs(); reader(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 

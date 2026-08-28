@@ -96,6 +96,32 @@ The mast belongs to the hero and fades out as the camera travels away
 twin — mast items are `tabindex="-1"` and the stage is `aria-hidden`, so
 screen readers get one clean set of links, not two.
 
+## The reading view
+
+Dense blocks are legible at a glance but hard to actually read at the size the
+frame allows. Dwelling on one for 420ms (or clicking it) lifts it into a glass
+panel at 75% x 75% of the viewport — headings go from ~11px to ~39px, body from
+~11px to ~18px — and blurs everything behind it. Close with the X, the scrim,
+or Escape.
+
+Applied to `.case-step`, `.cd-panel`, `.cat` and `.pillar` — 13 blocks.
+
+Three details that matter:
+
+- **The block is cloned, not moved.** Reparenting a node out of the world would
+  wreck the camera layout it sits in. The clone drops `.cat-media`, `canvas`
+  and `video`, since a cloned video would play over the original and a cloned
+  canvas is dead pixels.
+- **The melt retargets to the panel.** If the idle melt starts while a panel is
+  open, `melt()` uses `readingEl` instead of the stop — the panel is what is
+  being looked at, and the page beneath it is already blurred.
+- **Closing counts as activity.** It calls `clearMelt()` and `wake()`, so a
+  melt that crept in while reading is gone the moment the panel closes, exactly
+  as if you had scrolled.
+
+A dwell rather than an instant hover, because a full-screen takeover on a
+twitch of the mouse would be intolerable.
+
 ## The case study
 
 Company A, facility management, Lagos. Four steps on a drawn spine (Problem,
