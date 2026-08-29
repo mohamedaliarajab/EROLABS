@@ -25,17 +25,18 @@
   /* one unit that respects BOTH axes, so every stop fits the frame */
   --u:min(1vw,1.72vh);
 
-  /* Three voices, and the contrast between them is the point: an editorial
-     serif for the statements, a quiet sans for everything that has to be read,
-     a monospace for the system talking under its breath.
+  /* Sora is the authority, Manrope the human clarity, Plex Mono the system
+     running underneath. The cosmic ground is already busy; the type's job is
+     to bring order to it, so the display voice carries real weight rather than
+     competing delicately with the stars.
 
-     Cormorant's cap-height is 0.85 of Sora's at the same size, so every display
-     size below is multiplied by 1.18 to hold the scale the layout was built
-     around. Geist Mono's advance width is identical to IBM Plex Mono's, so the
-     spaced labels keep their exact metrics and nothing reflows. */
-  --f-display:"Cormorant Garamond",Georgia,"Times New Roman",serif;
-  --f-text:"DM Sans",system-ui,-apple-system,"Helvetica Neue",sans-serif;
-  --f-mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+     Measured before sizing: Sora's cap-height is 74/100px at EVERY weight, so
+     weight can change without the scale moving. Manrope sits within 3% of the
+     sans it replaces on both cap and width, and Plex Mono's advance is
+     identical to Geist's — so body and labels needed no size changes at all. */
+  --f-display:"Sora",system-ui,sans-serif;
+  --f-text:"Manrope",system-ui,-apple-system,"Helvetica Neue",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   --f-mark:"Poppins",system-ui,sans-serif;   /* the wordmark only — the logo */
 
   --ease:cubic-bezier(.22,1,.36,1);
@@ -231,7 +232,7 @@ body.is-touch .cursor{display:none}
 .ld-status{
   margin-top:calc(var(--u)*2.6);
   font-family:var(--f-mono);font-weight:400;font-size:clamp(10px,1.05vw,14px);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);
   animation:ldBreathe 3.2s ease-in-out infinite;
   transition:opacity .45s var(--ease),transform .45s var(--ease);
 }
@@ -269,12 +270,12 @@ body.is-touch .cursor{display:none}
 .ld-pct{
   margin-top:calc(var(--u)*1.4);
   font-family:var(--f-mono);font-weight:400;font-size:clamp(20px,2.4vw,34px);
-  letter-spacing:.16em;color:var(--ink);font-variant-numeric:tabular-nums;
+  letter-spacing:.13em;color:var(--ink);font-variant-numeric:tabular-nums;
 }
 .ld-ready{
   margin-top:calc(var(--u)*.5);height:1.2em;
   font-family:var(--f-mono);font-weight:400;font-size:clamp(9px,.95vw,12px);
-  letter-spacing:.22em;text-transform:uppercase;
+  letter-spacing:.18em;text-transform:uppercase;
   background:linear-gradient(90deg,#3FA9FF,#A625EE);
   -webkit-background-clip:text;background-clip:text;color:transparent;
   opacity:0;transform:translateY(4px);transition:opacity .5s var(--ease),transform .5s var(--ease);
@@ -291,7 +292,7 @@ body.is-touch .cursor{display:none}
 #loader.asks .loader-audio{opacity:1;transform:none;pointer-events:auto}
 .loader-audio-k{
   font-family:var(--f-mono);font-weight:400;font-size:clamp(9px,.95vw,12px);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);
 }
 .loader-audio-k em{
   font-style:normal;
@@ -304,7 +305,7 @@ body.is-touch .cursor{display:none}
   gap:calc(var(--u)*1.1);min-width:min(52vw,330px);
   padding:calc(var(--u)*1.05) calc(var(--u)*2.4);border-radius:100px;
   font-family:var(--f-mono);font-weight:400;font-size:clamp(10px,1.05vw,13px);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-2);
   background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.14);
   cursor:pointer;overflow:hidden;
   transition:color .35s,border-color .35s,box-shadow .45s,transform .35s var(--ease);
@@ -329,8 +330,8 @@ body.is-touch .cursor{display:none}
 .la-on:hover{box-shadow:0 0 34px rgba(30,144,255,.6),0 0 80px rgba(166,37,238,.45)}
 
 @media (max-width:900px){
-  .ld-status{letter-spacing:.21em}
-  .la-btn{min-width:78vw;letter-spacing:.19em}
+  .ld-status{letter-spacing:.17em}
+  .la-btn{min-width:78vw;letter-spacing:.15em}
 }
 body.reduced #loader .ld-wing,body.reduced .ld-ring,body.reduced .ld-core,
 body.reduced .ld-orbit,body.reduced .ld-status,body.reduced .ld-bar i{animation:none}
@@ -381,12 +382,18 @@ body.ready .nav{opacity:1;transform:none}
 
 .nav-links{
   display:flex;gap:clamp(16px,2.2vw,34px);
-  font-family:var(--f-mono);font-weight:400;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  font-family:var(--f-mono);font-weight:400;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
   opacity:0;pointer-events:none;transform:translateY(-6px);
   transition:opacity .55s var(--ease),transform .55s var(--ease);
 }
 body.nav-bar .nav-links{opacity:1;pointer-events:auto;transform:none}
 .nav-links a{position:relative;display:flex;align-items:baseline;gap:7px;padding:5px 0;color:var(--ink-3);transition:color .35s}
+/* letter-spacing declared in em computes to px at the element that declares it
+   and then inherits as an ABSOLUTE length. These index numbers are smaller than
+   the label around them, so they keep the parent's pixel gap and read
+   proportionally wider — 0.19em and 0.22em against a parent set to 0.16em.
+   Restating the value puts every one of them back on the same ratio. */
+.nav-links a em,.orbit-in em,.ly-t em,.eyebrow em{letter-spacing:.16em}
 .nav-links a em{font-size:9px;font-style:normal;color:var(--ink-3);opacity:.6;transition:color .35s,opacity .35s}
 .nav-links a::after{content:"";position:absolute;left:0;bottom:0;width:0;height:1px;background:var(--grad);transition:width .45s var(--ease)}
 .nav-links a:hover,.nav-links a.on{color:var(--ink)}
@@ -430,7 +437,7 @@ body.is-touch .vol-slider{cursor:pointer}
 .vol-slider:focus-visible{outline:1px solid var(--blue);outline-offset:4px}
 
 .nav-cta{
-  font-family:var(--f-mono);font-weight:400;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
+  font-family:var(--f-mono);font-weight:400;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
   color:var(--ink-2);padding:6px 0;border-bottom:1px solid var(--line);transition:color .35s,border-color .35s;
 }
 .nav-cta:hover{color:var(--ink);border-color:var(--violet)}
@@ -443,7 +450,7 @@ body.is-touch .vol-slider{cursor:pointer}
 /* ── HUD ───────────────────────────────────────────────────────── */
 .hud{
   position:fixed;bottom:26px;z-index:20;display:flex;flex-direction:column;gap:5px;
-  font-family:var(--f-mono);font-weight:400;font-size:9.5px;letter-spacing:.19em;
+  font-family:var(--f-mono);font-weight:400;font-size:9.5px;letter-spacing:.15em;
   opacity:0;transition:opacity .9s var(--ease) .6s;
 }
 body.ready .hud{opacity:1}
@@ -481,7 +488,7 @@ body.ready .hud{opacity:1}
 }
 .progress-pct{
   position:absolute;right:0;top:11px;transform:translateX(50%);
-  font-family:var(--f-mono);font-weight:400;font-size:9px;letter-spacing:.16em;
+  font-family:var(--f-mono);font-weight:400;font-size:9px;letter-spacing:.13em;
   color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap;
   transition:transform .3s var(--ease);
 }
@@ -512,15 +519,17 @@ body.ready .hud{opacity:1}
 
 /* ── type ──────────────────────────────────────────────────────────
    Light weights only. 200 for the largest sizes, 300 for the rest. */
-/* line-height carries real risk here. The split animation wraps every glyph
-   in a .char-w with overflow:hidden, and Cormorant's ink spans 1.01em —
-   73% above the baseline, 28% below. At 1.02 that left 0.6px of headroom
-   and any deeper descender would have been sliced off inside the wrapper.
-   1.12 gives ~7px at display size, and lets the headlines breathe. */
-.display{font-family:var(--f-display);font-weight:300;line-height:1.12;letter-spacing:-.022em;
+/* Weight is the point now, not delicacy. Sora's cap-height is identical across
+   weights, so going from 200 to 600 changes presence without moving the scale
+   — and Bold is only 3.9% wider than the Thin the layout was built around, so
+   nothing had to be resized to fit it.
+
+   line-height still matters: split() wraps every glyph in a .char-w with
+   overflow:hidden, and Sora's ink spans .95em. 1.05 clears it with room. */
+.display{font-family:var(--f-display);font-weight:600;line-height:1.05;letter-spacing:-.02em;
   overflow-wrap:normal;word-break:keep-all;hyphens:none}
-.xxl{font-size:calc(var(--u)*7.3)}
-.xl{font-size:calc(var(--u)*5.3)}
+.xxl{font-size:calc(var(--u)*6.2);font-weight:700}   /* the hero alone carries Bold */
+.xl{font-size:calc(var(--u)*4.5)}
 
 .char,.word{display:inline-block;will-change:transform,opacity}
 .char-w,.word-w{display:inline-block;overflow:hidden;vertical-align:top}
@@ -537,7 +546,7 @@ body.ready .hud{opacity:1}
 
 .eyebrow{
   display:flex;align-items:center;gap:11px;
-  font-size:calc(var(--u)*.72);letter-spacing:.22em;text-transform:uppercase;
+  font-size:calc(var(--u)*.72);letter-spacing:.18em;text-transform:uppercase;
   color:var(--ink-3);margin-bottom:calc(var(--u)*2.6);
 }
 .eyebrow em{font-style:normal;opacity:.55}
@@ -545,18 +554,18 @@ body.ready .hud{opacity:1}
 @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(30,144,255,0)}100%{box-shadow:0 0 0 0 rgba(30,144,255,0)}}
 
 .lede{font-size:calc(var(--u)*1.24);font-weight:400;color:var(--ink-2);letter-spacing:.005em;margin-top:calc(var(--u)*2.2)}
-.kicker{font-size:calc(var(--u)*.72);letter-spacing:.22em;text-transform:uppercase;color:var(--blue);margin-bottom:calc(var(--u)*1.1)}
+.kicker{font-size:calc(var(--u)*.72);letter-spacing:.18em;text-transform:uppercase;color:var(--blue);margin-bottom:calc(var(--u)*1.1)}
 .dim{color:var(--ink-2)}
 
 .stop-head{
   display:flex;align-items:center;gap:14px;margin-bottom:calc(var(--u)*1.8);
-  font-size:calc(var(--u)*.7);letter-spacing:.21em;text-transform:uppercase;
+  font-size:calc(var(--u)*.7);letter-spacing:.17em;text-transform:uppercase;
 }
 .idx{color:var(--blue)}
 .stop-name{color:var(--ink-2)}
 .stop-move{margin-left:auto;color:var(--ink-3);opacity:.65}
 
-.triad{display:flex;align-items:center;gap:calc(var(--u)*1.1);font-size:calc(var(--u)*.74);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3);margin-top:calc(var(--u)*2)}
+.triad{display:flex;align-items:center;gap:calc(var(--u)*1.1);font-size:calc(var(--u)*.74);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-top:calc(var(--u)*2)}
 .triad i{color:var(--violet);font-style:normal}
 .triad.sm{font-size:calc(var(--u)*.68)}
 
@@ -568,8 +577,8 @@ body.ready .hud{opacity:1}
 .cue-ring svg{width:100%;height:100%;display:block}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 .cue-txt{display:flex;flex-direction:column;gap:4px;font-size:calc(var(--u)*.95);font-weight:400;letter-spacing:.01em}
-.cue-txt em{font-style:normal;font-size:calc(var(--u)*.66);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
-.hero-note{max-width:30ch;font-size:calc(var(--u)*.7);line-height:1.7;letter-spacing:.12em;color:var(--ink-2)}
+.cue-txt em{font-style:normal;font-size:calc(var(--u)*.66);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+.hero-note{max-width:30ch;font-size:calc(var(--u)*.7);line-height:1.7;letter-spacing:.1em;color:var(--ink-2)}
 .hero-note em{font-style:normal;color:var(--violet)}
 
 /* ── 01 about ──────────────────────────────────────────────────── */
@@ -586,11 +595,11 @@ body.ready .hud{opacity:1}
 .cat{position:relative;--tone:var(--blue)}
 .cat-n{
   display:block;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);
-  letter-spacing:.19em;color:var(--tone);opacity:.9;
+  letter-spacing:.15em;color:var(--tone);opacity:.9;
 }
 .cat h3{
-  font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*2.36);
-  letter-spacing:-.02em;margin:calc(var(--u)*.35) 0 calc(var(--u)*1);
+  font-family:var(--f-display);font-weight:600;font-size:calc(var(--u)*2);
+  letter-spacing:-.018em;margin:calc(var(--u)*.35) 0 calc(var(--u)*1);
 }
 
 /* the slot a video drops into — a <video> child simply takes it over */
@@ -611,7 +620,7 @@ body.ready .hud{opacity:1}
 .cat-media-k{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.6);
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
 }
 .cat-media video,.cat-media img{
   width:100%;height:100%;object-fit:cover;display:block;position:relative;z-index:1;
@@ -636,7 +645,7 @@ body.ready .hud{opacity:1}
   transform:translateX(-50%);opacity:0;translate:0 8px;pointer-events:none;
   display:flex;align-items:center;gap:calc(var(--u)*.55);
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.6);
-  letter-spacing:.19em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-2);
   padding:calc(var(--u)*.52) calc(var(--u)*1.15);border-radius:999px;
   background:rgba(6,8,16,.62);border:1px solid rgba(255,255,255,.24);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
@@ -670,13 +679,13 @@ body.ready .hud{opacity:1}
    The densest stop on the site, so its heading runs a step smaller —
    fitStops scales the whole section uniformly, which means the only way
    to make the TABLES legible is to spend less height on everything else. */
-#cases .xl{font-size:calc(var(--u)*4.6)}
+#cases .xl{font-size:calc(var(--u)*3.9)}
 
 .case{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*1);border-top:1px solid var(--line-2)}
 .case-brief{position:relative}
 .case-head{display:flex;align-items:flex-start;justify-content:space-between;gap:calc(var(--u)*2)}
-.case-who h3{font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*2);letter-spacing:-.018em}
-.case-meta{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);letter-spacing:.12em;color:var(--ink-3);margin-top:calc(var(--u)*.3)}
+.case-who h3{font-family:var(--f-display);font-weight:600;font-size:calc(var(--u)*1.7);letter-spacing:-.015em}
+.case-meta{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);letter-spacing:.1em;color:var(--ink-3);margin-top:calc(var(--u)*.3)}
 /* the honesty label — this is a model, and it says so where it cannot be missed */
 .case-claim{
   font-family:var(--f-text);font-weight:400;font-size:calc(var(--u)*1.06);line-height:1.55;
@@ -696,8 +705,8 @@ body.ready .hud{opacity:1}
 .case-step::before{content:"";position:absolute;left:0;top:0;width:calc(var(--u)*.9);height:calc(var(--u)*.9);border-radius:50%;border:1px solid var(--line);background:var(--bg)}
 .case-step::after{content:"";position:absolute;left:calc(var(--u)*.27);top:calc(var(--u)*.27);width:calc(var(--u)*.36);height:calc(var(--u)*.36);border-radius:50%;background:var(--grad-v);opacity:0;transition:opacity .5s}
 .stop.live .case-step::after{opacity:1;transition-delay:calc(var(--step)*150ms + 700ms)}
-.cs-k{font-size:calc(var(--u)*.68);letter-spacing:.2em;text-transform:uppercase;color:var(--blue)}
-.case-step h4{font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*1.32);line-height:1.2;letter-spacing:-.008em;margin:calc(var(--u)*.5) 0 calc(var(--u)*.6)}
+.cs-k{font-size:calc(var(--u)*.68);letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
+.case-step h4{font-family:var(--f-display);font-weight:500;font-size:calc(var(--u)*1.12);line-height:1.3;letter-spacing:-.005em;margin:calc(var(--u)*.5) 0 calc(var(--u)*.6)}
 .case-step p{font-size:calc(var(--u)*.86);font-weight:400;line-height:1.65;color:var(--ink-2)}
 
 /* ── film beside the figures ── */
@@ -708,7 +717,7 @@ body.ready .hud{opacity:1}
 .case-figs{position:relative;display:flex;flex:1 1 100%;justify-content:space-between;
   gap:calc(var(--u)*2);flex-wrap:wrap}
 .fig{display:flex;align-items:baseline;gap:calc(var(--u)*.5)}
-.stat{font-family:var(--f-display);font-weight:300;font-size:calc(var(--u)*2.06);letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.stat{font-family:var(--f-display);font-weight:600;font-size:calc(var(--u)*1.75);letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
 .fig i{font-style:normal;color:var(--ink-3);font-size:calc(var(--u)*.78);max-width:11ch;line-height:1.3}
 
 .cd-bar{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*2);flex-wrap:wrap}
@@ -814,7 +823,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
   border-radius:999px;border:1px solid rgba(255,255,255,.24);
   background:rgba(6,8,16,.62);
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.6);
-  letter-spacing:.19em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-2);
   transition:color .3s,border-color .3s,background .3s,transform .35s var(--ease),
              opacity .35s var(--ease),translate .35s var(--ease);
 }
@@ -842,7 +851,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 .eq-grid .eq-field{margin-top:0}
 .eq-k{
   display:block;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.84);
-  letter-spacing:.2em;text-transform:uppercase;color:var(--ink);margin-bottom:calc(var(--u)*.6);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink);margin-bottom:calc(var(--u)*.6);
   transition:color .3s;
 }
 .eq-field input{
@@ -894,7 +903,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 }
 .eq-field input::placeholder{color:var(--ink-3);opacity:.7;font-weight:400}
 .eq-field:focus-within .eq-k{color:var(--blue)}
-.eq-wide .eq-k{font-size:calc(var(--u)*.9);letter-spacing:.16em}
+.eq-wide .eq-k{font-size:calc(var(--u)*.9);letter-spacing:.13em}
 
 /* an error says what is wrong, in a colour that is not the accent */
 .eq-field.invalid::before{background:var(--warn)}
@@ -902,7 +911,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 .eq-field.invalid .eq-k{color:var(--warn)}
 
 .eq-foot{display:flex;align-items:center;gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2)}
-.eq-note{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);letter-spacing:.16em;color:var(--ink-3);transition:color .3s}
+.eq-note{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);letter-spacing:.13em;color:var(--ink-3);transition:color .3s}
 .eq-note.warn{color:var(--warn)}
 
 /* ── the confirmation ── */
@@ -925,8 +934,8 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
   100%{opacity:.85;transform:translate(-50%,-50%) scale(1)}
 }
 .eq-done-msg{
-  position:relative;font-family:var(--f-display);font-weight:300;
-  font-size:calc(var(--u)*2.95);letter-spacing:-.022em;line-height:1.1;
+  position:relative;font-family:var(--f-display);font-weight:600;
+  font-size:calc(var(--u)*2.5);letter-spacing:-.02em;line-height:1.15;
 }
 .eq-done-msg .dchar{
   display:inline-block;opacity:0;transform:translateY(18px) rotateX(-40deg);
@@ -950,7 +959,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 
 
 .foot{display:grid;grid-template-columns:1fr auto;gap:calc(var(--u)*2);margin-top:calc(var(--u)*3);padding-top:calc(var(--u)*1.6);border-top:1px solid var(--line-2)}
-.foot-k{display:block;font-size:calc(var(--u)*.62);letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);opacity:.7;margin-bottom:calc(var(--u)*.7)}
+.foot-k{display:block;font-size:calc(var(--u)*.62);letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);opacity:.7;margin-bottom:calc(var(--u)*.7)}
 .foot-mail{font-size:calc(var(--u)*.98);font-weight:400;border-bottom:1px solid var(--line);padding-bottom:2px;transition:border-color .4s}
 .foot-mail:hover{border-color:var(--violet)}
 .foot-social{display:flex;gap:calc(var(--u)*1.3);font-size:calc(var(--u)*.84);font-weight:400;color:var(--ink-2)}
@@ -983,7 +992,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 .orbit-in{
   display:flex;align-items:center;gap:10px;
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.82);
-  letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);
   /* the mast writes translate3d on the button every frame, so the hover
      lift lives on the inner span where nothing else is touching transform */
   transform:scale(1);transform-origin:50% 50%;
@@ -1015,7 +1024,7 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 .pole-hint{
   position:absolute;left:50%;bottom:calc(var(--u)*-1.4);transform:translateX(-50%);
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.6);
-  letter-spacing:.21em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
+  letter-spacing:.17em;text-transform:uppercase;color:var(--ink-3);opacity:.5;
   transition:opacity .4s;pointer-events:none;
 }
 .pole.dragging .pole-hint{opacity:0}
@@ -1043,14 +1052,14 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
   .nav.open .nav-links{
     display:flex;flex-direction:column;gap:26px;
     position:fixed;inset:0;background:rgba(1,2,5,.97);z-index:-1;
-    align-items:center;justify-content:center;font-size:15px;letter-spacing:.19em;
+    align-items:center;justify-content:center;font-size:15px;letter-spacing:.15em;
   }
   .nav.open .nav-links{opacity:1;pointer-events:auto;transform:none}
   .nav.open .nav-links a{color:var(--ink)}
   .pole{left:0}
   .stop{width:86vw}
-  .xxl{font-size:calc(var(--u)*6.4)}
-  .xl{font-size:calc(var(--u)*4.7)}
+  .xxl{font-size:calc(var(--u)*5.4)}
+  .xl{font-size:calc(var(--u)*4)}
   .hero-wrap{grid-template-columns:1fr;gap:calc(var(--u)*2.4)}
   .pole{height:calc(var(--u)*18)}
   .orbit-in{font-size:calc(var(--u)*.78)}
@@ -1188,10 +1197,10 @@ body.reduced .star{animation:none}
 }
 
 /* read at a comfortable size, not the size the frame could spare */
-.reader-body .cs-k,.reader-body .cat-n,.reader-body .p-idx{font-size:clamp(10px,.85vw,13px);letter-spacing:.21em}
+.reader-body .cs-k,.reader-body .cat-n,.reader-body .p-idx{font-size:clamp(10px,.85vw,13px);letter-spacing:.17em}
 .reader-body h3,.reader-body h4{
-  font-family:var(--f-display);font-weight:300;
-  font-size:clamp(31px,3.2vw,52px);line-height:1.1;letter-spacing:-.02em;
+  font-family:var(--f-display);font-weight:600;
+  font-size:clamp(26px,2.7vw,44px);line-height:1.2;letter-spacing:-.018em;
   color:var(--ink);margin:clamp(10px,1vw,18px) 0 clamp(14px,1.4vw,24px);
 }
 .reader-body p{font-size:clamp(15px,1.22vw,21px);line-height:1.72;color:var(--ink-2);max-width:68ch}
@@ -1263,7 +1272,7 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
 .filmbox-cap{
   position:absolute;left:calc(var(--u)*1.2);bottom:calc(var(--u)*.9);z-index:4;
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.66);
-  letter-spacing:.19em;text-transform:uppercase;color:var(--ink-2);
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-2);
   text-shadow:0 2px 12px rgba(0,0,0,.9);
 }
 /* the page recedes behind a film exactly as it does behind a reading panel */
@@ -1374,7 +1383,7 @@ body.is-touch .fb-seek{cursor:pointer}
 .fb-seek::-moz-range-thumb{width:10px;height:10px;border:0;border-radius:50%;background:#fff}
 .fb-time{
   flex:none;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.66);
-  letter-spacing:.12em;color:var(--ink-2);font-variant-numeric:tabular-nums;
+  letter-spacing:.1em;color:var(--ink-2);font-variant-numeric:tabular-nums;
 }
 /* while shrinking back to its card, nothing should intercept the pointer */
 .filmbox.closing,.reader.closing{pointer-events:none}
@@ -1438,14 +1447,14 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 .ly-bar{display:flex;align-items:center;gap:calc(var(--u)*1.6);flex-wrap:wrap}
 .ly-k{
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.86);
-  letter-spacing:.2em;text-transform:uppercase;color:var(--ink);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink);
   text-shadow:0 0 18px rgba(120,150,255,.38);flex:none;
 }
 .ly-toggles{display:flex;gap:calc(var(--u)*.6)}
 .ly-t{
   display:inline-flex;align-items:center;gap:8px;
   font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.66);
-  letter-spacing:.18em;text-transform:uppercase;color:#5F677B;   /* --ink-3 +10% */
+  letter-spacing:.14em;text-transform:uppercase;color:#5F677B;   /* --ink-3 +10% */
   padding:calc(var(--u)*.38) calc(var(--u)*1);border:1px solid var(--line-2);border-radius:100px;
   /* lit even when off, so they read as controls rather than captions */
   box-shadow:0 0 14px rgba(120,150,255,.121),inset 0 0 16px rgba(120,150,255,.055);
@@ -1688,7 +1697,7 @@ body.reduced .ly-cue{display:none}
 .ly-m{display:flex;align-items:center;gap:calc(var(--u)*.7)}
 .ly-m b{
   flex:none;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.6);
-  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);width:8.4em;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);width:8.4em;
 }
 .ly-m i{flex:1;height:2px;background:rgba(255,255,255,.10);border-radius:2px;overflow:hidden}
 .ly-m s{display:block;height:100%;width:0;text-decoration:none;background:var(--grad);transition:width .7s var(--ease)}
