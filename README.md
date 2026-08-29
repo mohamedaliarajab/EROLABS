@@ -470,6 +470,22 @@ would be invented. The case study is where the real numbers live.
 It is deliberately not a text-parsing demo. The point is the system, not a
 clever reading of a sentence.
 
+## Run it
+
+```
+python3 serve.py 4173
+```
+
+**Not `python3 -m http.server`.** That sends no `Cache-Control`, so browsers
+fall back to a heuristic cache keyed off `Last-Modified` and keep serving
+yesterday's `styles.css` and `main.js` against today's `index.html`. The result
+looks exactly like a broken build — unstyled text, missing elements, stale
+behaviour — and sends you hunting through code that is already correct.
+`serve.py` sends `no-store` on everything.
+
+The same trap exists in production: `netlify.toml` now sets `no-cache` on CSS
+and JS so a returning visitor never runs an old script against a new page.
+
 ## The loader
 
 Timed as one movement rather than a screen that leaves and another that

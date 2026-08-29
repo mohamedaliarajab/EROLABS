@@ -11,10 +11,17 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# Revalidate code on every request. A returning visitor should never run an
+# old main.js against a new index.html — the ETag keeps it cheap.
 [[headers]]
   for = "/*.js"
   [headers.values]
-    Cache-Control = "public, max-age=3600"
+    Cache-Control = "public, no-cache"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, no-cache"
 
 [[headers]]
   for = "/audio/*"
