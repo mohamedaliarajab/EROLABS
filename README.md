@@ -470,6 +470,30 @@ would be invented. The case study is where the real numbers live.
 It is deliberately not a text-parsing demo. The point is the system, not a
 clever reading of a sentence.
 
+## The loader
+
+Timed as one movement rather than a screen that leaves and another that
+arrives:
+
+```
+    0ms  click — the panel begins falling inward
+  640ms  the site starts arriving underneath (ldLand)
+  720ms  the singularity flares
+  755ms  the veil begins lifting
+  880ms  flash peaks
+ 1050ms  panel fully collapsed
+ 1420ms  loader marked done
+```
+
+**The veil has to lift with the collapse.** Left to the `.done` transition the
+black ground outlived the animation by more than a second, and the hero landed
+underneath an opaque screen — technically correct, visually broken. `ldVeil`
+fades the background from 52% of the sequence instead.
+
+The starfield runs its own short rAF loop, cancelled on enter. The wings are
+blurred once and only ever transformed after that, so a 60px blur costs nothing
+per frame.
+
 ## The hero's sky
 
 `galaxy` bakes a Milky Way once into an offscreen texture — a diagonal band of

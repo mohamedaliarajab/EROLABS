@@ -115,44 +115,250 @@ body.is-touch button,body.is-touch a{cursor:pointer}
 .cursor.is-lg i{transform:scale(4);opacity:.28}
 body.is-touch .cursor{display:none}
 
-/* ── loader ────────────────────────────────────────────────────── */
+/* ── loader ─────────────────────────────────────────────────────────
+   A cosmos, not a progress bar. Aurora wings drift behind a starfield, the
+   aperture beats like a heart, and choosing an audio option collapses the
+   whole thing into the mark and drops you at the hero. */
 #loader{
-  position:fixed;inset:0;z-index:100;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
-  transition:opacity .7s var(--ease),visibility .7s;
+  position:fixed;inset:0;z-index:100;background:#000;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity .5s var(--ease),visibility .5s;
 }
 #loader.done{opacity:0;visibility:hidden;pointer-events:none}
-.loader-mark{width:44px;height:44px;color:#fff;animation:spinIn 2.4s var(--ease) infinite}
-.loader-mark svg{width:100%;height:100%;display:block}
-@keyframes spinIn{0%{transform:rotate(0) scale(.94)}50%{transform:rotate(180deg) scale(1.04)}100%{transform:rotate(360deg) scale(.94)}}
-.loader-meta{display:flex;align-items:baseline;gap:14px;font-family:var(--f-mono);font-weight:300;font-size:10px;letter-spacing:.3em}
-.loader-label{color:var(--ink-3)}
-.loader-count{color:var(--ink);font-variant-numeric:tabular-nums}
-.loader-bar{width:150px;height:1px;background:var(--line)}
-.loader-bar i{display:block;height:100%;width:0;background:var(--grad)}
+.ld-stars{position:absolute;inset:0;width:100%;height:100%}
 
-/* The loader waits for a choice rather than dismissing itself — that click
-   is also the gesture browsers require before audio may play. */
+/* the aurora, blurred once and then only ever transformed */
+.ld-wing{
+  position:absolute;border-radius:50%;pointer-events:none;
+  filter:blur(60px);mix-blend-mode:screen;
+}
+.ld-wing-a{
+  left:-18vw;top:6vh;width:76vw;height:46vh;
+  background:radial-gradient(ellipse at 72% 50%,rgba(30,144,255,.60),rgba(30,144,255,0) 64%);
+  animation:ldWingA 17s ease-in-out infinite;
+}
+.ld-wing-b{
+  right:-18vw;top:2vh;width:78vw;height:50vh;
+  background:radial-gradient(ellipse at 28% 50%,rgba(166,37,238,.58),rgba(166,37,238,0) 64%);
+  animation:ldWingB 21s ease-in-out infinite;
+}
+.ld-wing-c{
+  left:12vw;top:-6vh;width:66vw;height:40vh;
+  background:radial-gradient(ellipse at 50% 60%,rgba(90,200,255,.30),rgba(90,200,255,0) 62%);
+  animation:ldWingC 26s ease-in-out infinite;
+}
+@keyframes ldWingA{
+  0%,100%{transform:translate(0,0) rotate(-8deg) scale(1)}
+  50%    {transform:translate(6vw,4vh) rotate(6deg) scale(1.18)}
+}
+@keyframes ldWingB{
+  0%,100%{transform:translate(0,0) rotate(7deg) scale(1.06)}
+  50%    {transform:translate(-7vw,5vh) rotate(-6deg) scale(1.22)}
+}
+@keyframes ldWingC{
+  0%,100%{transform:translate(0,0) scale(1);opacity:.5}
+  50%    {transform:translate(4vw,7vh) scale(1.3);opacity:.9}
+}
+
+.ld-panel{
+  position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:0 6vw;
+}
+
+/* ── the mark ── */
+.ld-mark{position:relative;width:min(34vh,240px);aspect-ratio:1;display:grid;place-items:center}
+.ld-orbit{
+  position:absolute;border-radius:50%;border:1px solid rgba(150,185,255,.13);
+  animation:ldSpin 26s linear infinite;
+}
+.ld-orbit-1{inset:6%}
+.ld-orbit-2{inset:-8%;border-color:rgba(180,140,255,.10);animation-duration:38s;animation-direction:reverse}
+.ld-orbit-3{inset:-22%;border-color:rgba(150,185,255,.07);animation-duration:52s}
+.ld-orbit-1::after{
+  content:"";position:absolute;top:-2px;left:50%;width:4px;height:4px;border-radius:50%;
+  background:#9ecbff;box-shadow:0 0 12px 3px rgba(120,180,255,.9);
+}
+.ld-orbit-2::after{
+  content:"";position:absolute;bottom:6%;right:12%;width:3px;height:3px;border-radius:50%;
+  background:#d79cff;box-shadow:0 0 12px 3px rgba(190,120,255,.9);
+}
+@keyframes ldSpin{to{transform:rotate(360deg)}}
+
+/* white ring — the heartbeat, two thumps then a rest */
+.ld-ring{
+  position:absolute;inset:22%;border-radius:50%;
+  border:calc(min(34vh,240px)*.055) solid #fff;
+  box-shadow:0 0 30px 6px rgba(160,200,255,.55),
+             0 0 70px 22px rgba(90,140,255,.30),
+             inset 0 0 22px 4px rgba(140,180,255,.45);
+  animation:ldBeat 1.35s ease-in-out infinite;
+}
+@keyframes ldBeat{
+  0%,100%{transform:scale(1);        box-shadow:0 0 30px 6px rgba(160,200,255,.55),0 0 70px 22px rgba(90,140,255,.30),inset 0 0 22px 4px rgba(140,180,255,.45)}
+  6%     {transform:scale(1.075);    box-shadow:0 0 46px 12px rgba(200,225,255,.85),0 0 110px 38px rgba(110,160,255,.5),inset 0 0 30px 7px rgba(180,210,255,.65)}
+  13%    {transform:scale(1.012)}
+  22%    {transform:scale(1.048);    box-shadow:0 0 40px 9px rgba(185,215,255,.7),0 0 92px 30px rgba(100,150,255,.42),inset 0 0 26px 6px rgba(165,200,255,.55)}
+  34%    {transform:scale(1)}
+}
+
+/* the core — blue through violet, drifting */
+.ld-core{
+  position:absolute;inset:38%;border-radius:50%;
+  background:radial-gradient(circle at 36% 30%,#8FC0FF 0%,#3F5BFF 42%,#8A2BE8 100%);
+  box-shadow:0 0 34px 8px rgba(90,120,255,.6);
+  animation:ldCore 7s ease-in-out infinite,ldBeat 1.35s ease-in-out infinite;
+}
+@keyframes ldCore{
+  0%,100%{filter:hue-rotate(-18deg) saturate(1.05)}
+  50%    {filter:hue-rotate(26deg)  saturate(1.25)}
+}
+
+/* ── status, bar, percentage ── */
+.ld-status{
+  margin-top:calc(var(--u)*2.6);
+  font-family:var(--f-mono);font-weight:300;font-size:clamp(10px,1.05vw,14px);
+  letter-spacing:.42em;text-transform:uppercase;color:var(--ink-2);
+  animation:ldBreathe 3.2s ease-in-out infinite;
+}
+@keyframes ldBreathe{0%,100%{opacity:.55}50%{opacity:1}}
+
+.ld-bar{
+  position:relative;width:min(58vw,620px);height:2px;margin-top:calc(var(--u)*1.5);
+  background:rgba(255,255,255,.09);border-radius:2px;
+}
+.ld-bar i{
+  position:relative;   /* or the head anchors to the track and never moves */
+  display:block;height:100%;width:0;border-radius:2px;
+  background:linear-gradient(90deg,#22D3EE,#1E90FF,#6A46F5,#A625EE,#22D3EE);
+  background-size:260% 100%;
+  animation:ldFlow 4.5s linear infinite;
+  box-shadow:0 0 14px rgba(80,140,255,.6);
+}
+@keyframes ldFlow{to{background-position:-260% 0}}
+/* the light riding the leading edge */
+.ld-bar i::after{
+  content:"";position:absolute;top:50%;right:0;width:11px;height:11px;
+  border-radius:50%;background:#fff;transform:translate(50%,-50%);
+  box-shadow:0 0 16px 4px rgba(220,235,255,.95),
+             0 0 40px 12px rgba(120,170,255,.75),
+             0 0 80px 26px rgba(166,37,238,.45);
+  animation:ldHead 1.6s ease-in-out infinite;
+}
+@keyframes ldHead{0%,100%{opacity:.85;transform:translate(50%,-50%) scale(1)}50%{opacity:1;transform:translate(50%,-50%) scale(1.25)}}
+
+.ld-pct{
+  margin-top:calc(var(--u)*1.4);
+  font-family:var(--f-mono);font-weight:300;font-size:clamp(20px,2.4vw,34px);
+  letter-spacing:.16em;color:var(--ink);font-variant-numeric:tabular-nums;
+}
+.ld-ready{
+  margin-top:calc(var(--u)*.5);height:1.2em;
+  font-family:var(--f-mono);font-weight:400;font-size:clamp(9px,.95vw,12px);
+  letter-spacing:.4em;text-transform:uppercase;
+  background:linear-gradient(90deg,#3FA9FF,#A625EE);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;transform:translateY(4px);transition:opacity .5s var(--ease),transform .5s var(--ease);
+}
+#loader.asks .ld-ready{opacity:1;transform:none}
+
+/* ── the audio choice ── */
 .loader-audio{
-  display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:6px;
-  opacity:0;transform:translateY(8px);pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*1.2);
+  margin-top:calc(var(--u)*3.2);
+  opacity:0;transform:translateY(10px);pointer-events:none;
   transition:opacity .6s var(--ease),transform .6s var(--ease);
 }
 #loader.asks .loader-audio{opacity:1;transform:none;pointer-events:auto}
 .loader-audio-k{
-  font-family:var(--f-mono);font-weight:300;font-size:10px;
-  letter-spacing:.26em;text-transform:uppercase;color:var(--ink-2);
+  font-family:var(--f-mono);font-weight:300;font-size:clamp(9px,.95vw,12px);
+  letter-spacing:.34em;text-transform:uppercase;color:var(--ink-2);
 }
-.loader-audio-btns{display:flex;gap:10px}
+.loader-audio-k em{
+  font-style:normal;
+  background:linear-gradient(90deg,#3FA9FF,#A625EE);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.loader-audio-btns{display:flex;flex-direction:column;gap:calc(var(--u)*.9)}
 .la-btn{
-  padding:9px 20px;border:1px solid var(--line);border-radius:100px;
-  font-family:var(--f-mono);font-weight:300;font-size:10px;
-  letter-spacing:.22em;text-transform:uppercase;color:var(--ink-2);
-  transition:color .3s,border-color .3s,background .3s;cursor:pointer;
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  gap:calc(var(--u)*1.1);min-width:min(52vw,330px);
+  padding:calc(var(--u)*1.05) calc(var(--u)*2.4);border-radius:100px;
+  font-family:var(--f-mono);font-weight:300;font-size:clamp(10px,1.05vw,13px);
+  letter-spacing:.34em;text-transform:uppercase;color:var(--ink-2);
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.14);
+  cursor:pointer;overflow:hidden;
+  transition:color .35s,border-color .35s,box-shadow .45s,transform .35s var(--ease);
 }
-.la-btn:hover{color:var(--ink);border-color:var(--ink-3)}
-.la-on{color:var(--ink);border-color:transparent;background:var(--grad)}
-.la-on:hover{color:#fff;border-color:transparent;filter:brightness(1.15)}
+.la-btn .la-wave{width:22px;height:16px;flex:none;opacity:.65;transition:opacity .35s}
+/* the blue-to-violet edge, painted as a masked gradient ring */
+.la-btn::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(90deg,#22D3EE,#1E90FF,#A625EE);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;opacity:0;transition:opacity .4s;
+}
+.la-btn:hover,.la-btn:focus-visible{
+  color:#fff;border-color:transparent;transform:translateY(-2px);
+  box-shadow:0 0 26px rgba(30,144,255,.45),0 0 60px rgba(166,37,238,.35);
+}
+.la-btn:hover::before,.la-btn:focus-visible::before{opacity:1}
+.la-btn:hover .la-wave{opacity:1}
+.la-on{color:var(--ink)}
+.la-on::before{opacity:.85}
+.la-on:hover{box-shadow:0 0 34px rgba(30,144,255,.6),0 0 80px rgba(166,37,238,.45)}
+
+/* ── the collapse ── */
+.ld-flash{
+  position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;
+  transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none;z-index:3;
+  background:radial-gradient(circle,#fff 0%,rgba(190,215,255,.9) 18%,rgba(120,90,255,.55) 42%,transparent 70%);
+}
+#loader.warp .ld-panel{animation:ldSuck 1.05s cubic-bezier(.55,0,.85,.2) forwards}
+#loader.warp .ld-wing{animation:ldWingSuck .95s cubic-bezier(.55,0,.85,.2) forwards}
+#loader.warp .ld-stars{animation:ldStarSuck 1.05s cubic-bezier(.5,0,.85,.25) forwards}
+#loader.warp .ld-flash{animation:ldFlash .75s cubic-bezier(.2,.7,.3,1) .72s forwards}
+/* The veil has to lift with the collapse, not after it. Left to the .done
+   transition the black ground outlived the animation and the site landed
+   underneath an opaque screen. */
+#loader.warp{animation:ldVeil 1.45s linear forwards}
+@keyframes ldVeil{
+  0%,52%{background-color:#000}
+  100%  {background-color:rgba(0,0,0,0)}
+}
+
+@keyframes ldSuck{
+  0%  {transform:scale(1) rotate(0);opacity:1;filter:blur(0)}
+  55% {transform:scale(.42) rotate(120deg);opacity:.9;filter:blur(1px)}
+  100%{transform:scale(.015) rotate(300deg);opacity:0;filter:blur(4px)}
+}
+@keyframes ldWingSuck{
+  0%  {opacity:1}
+  100%{opacity:0;transform:scale(.1) rotate(180deg)}
+}
+@keyframes ldStarSuck{
+  0%  {transform:scale(1);opacity:1;filter:blur(0)}
+  100%{transform:scale(.05) rotate(260deg);opacity:0;filter:blur(3px)}
+}
+@keyframes ldFlash{
+  0%  {opacity:0;transform:translate(-50%,-50%) scale(0)}
+  22% {opacity:1;transform:translate(-50%,-50%) scale(26)}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(150)}
+}
+/* the site arrives as the collapse peaks */
+body.warping #viewport{animation:ldLand 1.1s cubic-bezier(.2,.7,.25,1) forwards}
+@keyframes ldLand{
+  0%  {transform:scale(1.14);opacity:0;filter:blur(9px)}
+  45% {opacity:.35}
+  100%{transform:scale(1);opacity:1;filter:blur(0)}
+}
+
+@media (max-width:900px){
+  .ld-status{letter-spacing:.28em}
+  .la-btn{min-width:78vw;letter-spacing:.24em}
+}
+body.reduced #loader .ld-wing,body.reduced .ld-ring,body.reduced .ld-core,
+body.reduced .ld-orbit,body.reduced .ld-status,body.reduced .ld-bar i{animation:none}
 
 /* ── nav ───────────────────────────────────────────────────────── */
 .nav{

@@ -70,6 +70,19 @@ randomised.
 
 ## The sections
 
+**The loader** — a cosmos, not a progress bar. A twinkling starfield under
+three drifting aurora wings; the aperture at the centre with orbit rings, a
+white halo beating lub-dub and a core drifting between blue and violet. Below
+it *Preparing your experience*, a bar whose gradient flows independently of the
+fill with a hard light riding the leading edge, the percentage, and — only at
+100% — *Experience ready*. Then the audio choice, each button lit by a
+blue-to-violet edge on hover.
+
+Choosing either **collapses the whole screen into the mark**: everything
+spirals inward and shrinks, the singularity flares, the veil lifts, and the
+hero is already arriving underneath by the time the flash peaks — one movement
+through, not a fade between two screens.
+
 **Hero** — the wordmark (rebuilt in HTML/SVG, the Ọ lifted out as the studio's
 aperture mark). A **Milky Way** baked once into a texture, drifting, belonging
 to the hero alone. The **orbiting mast**: the four rooms and the aperture

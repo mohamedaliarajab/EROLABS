@@ -1950,28 +1950,79 @@ function boot() {
   navLinksEl.inert = true;        // the mast has the floor until the hero exits
   requestAnimationFrame(tick);
 
-  // loader — a short, honest calibration, not a fake wait
+  // ── loader ──
   const bar = $('#loaderBar'), num = $('#loaderCount'), box = $('#loader');
+
+  // a starfield behind the aurora wings, twinkling on its own short loop
+  const sky = $('#ldStars');
+  let skyRaf = null;
+  if (sky) {
+    const sx = sky.getContext('2d');
+    let stars = [], sw = 0, sh = 0;
+    const seed = () => {
+      if (!innerWidth || !innerHeight) return;
+      const d = Math.min(devicePixelRatio || 1, 2);
+      sw = innerWidth; sh = innerHeight;
+      sky.width = sw * d; sky.height = sh * d;
+      sx.setTransform(d, 0, 0, d, 0, 0);
+      stars = Array.from({ length: Math.round(sw * sh / 4200) }, () => {
+        const b = Math.random();
+        const c = Math.random();
+        return {
+          x: Math.random() * sw, y: Math.random() * sh,
+          r: b > .975 ? 1.8 : b > .82 ? 1.05 : .55,
+          ph: Math.random() * 7, sp: .5 + Math.random() * 1.5,
+          col: c < .3 ? '150,190,255' : c < .55 ? '205,165,255' : '236,243,255'
+        };
+      });
+    };
+    seed();
+    addEventListener('resize', seed);
+    (function twinkle(t) {
+      if (sw) {
+        sx.clearRect(0, 0, sw, sh);
+        for (const s of stars) {
+          const a = .18 + .70 * Math.pow(Math.max(0, Math.sin(t * .0008 * s.sp + s.ph)), 2);
+          sx.fillStyle = `rgba(${s.col},${a.toFixed(3)})`;
+          sx.beginPath(); sx.arc(s.x, s.y, s.r, 0, 7); sx.fill();
+        }
+      }
+      skyRaf = requestAnimationFrame(twinkle);
+    })(0);
+  }
+
   let entered = false;
   const enter = withAudio => {
     if (entered) return;
     entered = true;
     if (withAudio) audioEnable(true);
-    box.classList.add('done');
-    document.body.classList.add('ready');
-    stops[0].classList.add('live');
+
+    /* Everything falls into the mark, the singularity flares, and the site is
+       already arriving underneath by the time the flash peaks — so it reads as
+       one movement through, rather than a fade between two screens. */
+    box.classList.add('warp');
+    document.body.classList.add('warping');
+    setTimeout(() => {
+      document.body.classList.add('ready');
+      stops[0].classList.add('live');
+    }, 640);
+    setTimeout(() => {
+      box.classList.add('done');
+      document.body.classList.remove('warping');
+      if (skyRaf) cancelAnimationFrame(skyRaf);
+    }, 1420);
   };
   $('#audioOn') ?.addEventListener('click', () => enter(true));
   $('#audioOff')?.addEventListener('click', () => enter(false));
 
-  const t0 = performance.now(), DUR = 1250;
+  const t0 = performance.now(), DUR = 1700;
   (function run(now) {
     const k = clamp((now - t0) / DUR, 0, 1);
     const e = 1 - Math.pow(1 - k, 2.2);
-    num.textContent = String(Math.round(e * 100)).padStart(2, '0');
+    num.textContent = Math.round(e * 100) + '%';
     bar.style.width = (e * 100) + '%';
     if (k < 1) return requestAnimationFrame(run);
-    box.classList.add('asks');                 // hand the choice over
+    box.classList.add('asks');                 // 100% — hand the choice over
     $('#audioOn')?.focus({ preventScroll: true });
   })(t0);
 }
