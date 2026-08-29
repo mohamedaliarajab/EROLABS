@@ -470,6 +470,28 @@ would be invented. The case study is where the real numbers live.
 It is deliberately not a text-parsing demo. The point is the system, not a
 clever reading of a sentence.
 
+## Why the ground is black
+
+Two things were holding the site off #000, and neither was the background
+colour:
+
+- `#grain` painted a full-screen noise wash in normal blend at `opacity:.13`.
+  Measured, that is **+12/255 on every pixel**, ground included. It now blends
+  in `overlay`, where anything below mid-grey multiplies through: #000 stays
+  #000 and the texture only lands where there is already light. The loader
+  always looked blacker than the site for exactly this reason — it sits at
+  z-index 100, above the grain at 6.
+- The galaxy's band is 190 overlapping blobs, none bright on its own. Their
+  union added a median of +2/255 across the frame. `bake()` now applies a black
+  point (`FLOOR`) to the band's alpha before the stars are drawn, so the haze
+  clips to nothing and the bright cores keep their range. Raise `FLOOR` for a
+  darker sky, lower it to bring the band's faint glow back — the stars are
+  drawn after it and are never affected either way.
+
+Measure before changing either. Sample `#galaxy` with `getImageData` and look
+at the percentiles, not at a screenshot — a screenshot of this site through a
+throttled preview is not evidence of anything.
+
 ## Run it
 
 ```

@@ -54,8 +54,14 @@ body.is-touch button,body.is-touch a{cursor:pointer}
 /* ── canvas + film ─────────────────────────────────────────────── */
 #galaxy{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* Grain in normal blend paints ~12/255 of grey over EVERY pixel, ground
+   included — measured, not guessed — which is why the site never read as black
+   while the loader (which sits above the grain, at z-index 100) did. In overlay
+   the formula multiplies through on anything below mid-grey, so #000 stays
+   exactly #000 and the texture only lands where there is already light. */
 #grain{
-  position:fixed;inset:-50%;z-index:6;pointer-events:none;opacity:.13;
+  position:fixed;inset:-50%;z-index:6;pointer-events:none;opacity:.17;
+  mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   animation:grain 5s steps(5) infinite;
 }

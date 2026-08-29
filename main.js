@@ -226,6 +226,19 @@ const galaxy = (() => {
       c.beginPath(); c.arc(p.x, p.y, r, 0, 7); c.fill();
     }
 
+    /* Black point. No single blob is bright, but 190 of them overlap, and the
+       union was holding the whole sky a couple of levels off #000. Clipping the
+       bottom of the alpha range and rescaling what survives drops the haze
+       without touching the bright cores — those are the band. Stars are drawn
+       after this line, so they keep every bit of their range. */
+    const FLOOR = .04;
+    const im = c.getImageData(0, 0, w, h), pix = im.data;
+    for (let i = 3; i < pix.length; i += 4) {
+      const a = pix[i] / 255;
+      pix[i] = a <= FLOOR ? 0 : Math.round(255 * (a - FLOOR) / (1 - FLOOR));
+    }
+    c.putImageData(im, 0, 0);
+
     c.globalCompositeOperation = 'lighter';               // stars, densest in the band
     for (let i = 0; i < 2800; i++) {
       const inBand = Math.random() < .72;
