@@ -638,7 +638,15 @@ body.ready .hud{opacity:1}
   transform:translateX(-50%) scale(1.06);
 }
 .cat-media:has(video) .cat-media-k,.cat-media:has(img) .cat-media-k,
-.cat-media:has(video)::after,.cat-media:has(img)::after{display:none}
+.cat-media.lifted .cat-media-k,
+.cat-media:has(video)::after,.cat-media:has(img)::after,
+.cat-media.lifted::after{display:none}
+/* While its film is out, the card wears the film's own poster. Without this it
+   empties for the length of the flight — and because the "no video" styling is
+   keyed on :has(video), the idle sweep and the VIDEO label would both come
+   back for exactly as long as the film is expanded. */
+.cat-media.lifted,.cfilm.lifted{background-size:cover;background-position:50% 50%}
+.cat-media.lifted{cursor:none}
 
 .cat p{
   font-size:calc(var(--u)*.84);font-weight:300;line-height:1.72;color:var(--ink-3);
@@ -1208,7 +1216,10 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
   border-radius:calc(var(--u)*1);overflow:hidden;isolation:isolate;
   background:#05060A;border:1px solid rgba(255,255,255,.14);
   box-shadow:0 50px 150px rgba(0,0,0,.8),0 0 90px rgba(90,120,255,.16);
-  opacity:0;transition:opacity .4s var(--ease),transform .5s var(--ease);
+  /* No opening transition of its own: flipFrom() drives the whole arrival with
+     an inline transition, and a second one on the same properties only fights
+     it. This is the resting state it is handed back to. */
+  opacity:0;
 }
 .filmbox.on .filmbox-frame{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .filmbox-ring{

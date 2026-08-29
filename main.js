@@ -1546,24 +1546,71 @@ const readerVis = (() => {
   };
 })();
 
+/* ── the morph ─────────────────────────────────────────────────────
+   Opening and closing a film is one continuous movement between two places on
+   the page, not a panel appearing over it. Both directions are the same FLIP:
+   measure the card, express it as a transform on the overlay, and let one
+   transition carry the overlay between that and its resting size.
+
+   Three things make it read as one motion rather than a dialog:
+
+   Geometry comes from offsetWidth, never getBoundingClientRect, because the
+   overlay is usually already mid-transform when we are asked to measure it.
+   A rect is the TRANSFORMED box, so scaling against it compounds whatever is
+   already applied — which is exactly the case when you close a film that is
+   still opening. Layout size is stable, so an interrupted flight simply
+   retargets from wherever it currently is.
+
+   The scale is uniform, taken from width. Card and frame are both 16:9, so a
+   separate vertical factor buys nothing and any rounding difference between
+   the two shows up as a squash.
+
+   And the easing is the site's own --ease, not the Material curve that was
+   here before. Everything else on this page — the camera, the reveals, the
+   overlays — decelerates on cubic-bezier(.22,1,.36,1). A film that arrives on
+   a different curve is the thing that feels bolted on. */
+const MORPH = 'cubic-bezier(.22,1,.36,1)';
+
+function flipFrom(el, src) {
+  const b = src && src.getBoundingClientRect();
+  if (!b || !b.width || !el.offsetWidth || reduced) return null;
+  const s = Math.max(.04, b.width / el.offsetWidth);
+  // left:50%/top:50% inside a fixed, inset:0 shell — the rest is the viewport
+  const dx = (b.left + b.width / 2) - innerWidth / 2;
+  const dy = (b.top + b.height / 2) - innerHeight / 2;
+  el.style.transition = 'none';
+  el.style.transformOrigin = '50% 50%';
+  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${s})`;
+  el.style.opacity = '.42';
+  void el.offsetWidth;                          // commit the start frame
+  el.style.transition = `transform .64s ${MORPH},opacity .3s linear`;
+  el.style.transform = 'translate(-50%,-50%) scale(1)';
+  el.style.opacity = '1';
+  return setTimeout(() => {
+    el.style.transition = ''; el.style.transform = '';
+    el.style.opacity = ''; el.style.transformOrigin = '';
+  }, 680);
+}
+
 /* Shrink an overlay back onto the element it was lifted from — measured at
    the moment of closing, so if the page has melted and drifted it returns to
-   where the block actually is now. */
+   where the block actually is now. It lands at .16 rather than 0: fading to
+   nothing in mid-air is a dismissal, arriving and then going is a return. */
 function minimizeTo(el, src, done) {
-  const a = el.getBoundingClientRect(), b = src && src.getBoundingClientRect();
-  if (!b || !b.width || !a.width || reduced) { done(); return; }
-  const sx = Math.max(.04, b.width / a.width), sy = Math.max(.04, b.height / a.height);
-  const dx = (b.left + b.width / 2) - (a.left + a.width / 2);
-  const dy = (b.top + b.height / 2) - (a.top + a.height / 2);
-  el.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1),opacity .45s ease';
+  const b = src && src.getBoundingClientRect();
+  if (!b || !b.width || !el.offsetWidth || reduced) { done(); return; }
+  const s = Math.max(.04, b.width / el.offsetWidth);
+  const dx = (b.left + b.width / 2) - innerWidth / 2;
+  const dy = (b.top + b.height / 2) - innerHeight / 2;
+  el.style.transition = `transform .58s ${MORPH},opacity .52s ease-in`;
   el.style.transformOrigin = '50% 50%';
-  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${sx},${sy})`;
-  el.style.opacity = '0';
+  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${s})`;
+  el.style.opacity = '.16';
   return setTimeout(() => {
     el.style.transition = ''; el.style.transform = '';
     el.style.opacity = ''; el.style.transformOrigin = '';
     done();
-  }, 520);
+  }, 580);
 }
 
 /* Re-opening while a previous panel is still shrinking used to let the old
@@ -1600,7 +1647,8 @@ function films() {
   if (!cards.length) return;
 
   const play = $('#fbPlay'), seek = $('#fbSeek'), time = $('#fbTime');
-  let open = false, armed = false, current = null, home = null, tick = null, minTimer = null;
+  let open = false, armed = false, current = null, home = null, tick = null,
+      minTimer = null, growTimer = null;
   /* A film that has been lifted out but not yet put back. Cancelling a close
      also cancels the callback that would have returned it, so the handover has
      to be explicit or a card comes back empty. */
@@ -1610,6 +1658,8 @@ function films() {
     const { v, card } = pending;
     pending = null;
     if (!card.contains(v)) card.insertBefore(v, card.firstChild);
+    card.classList.remove('lifted');
+    card.style.removeProperty('background-image');
     v.currentTime = 0;
     if (card.dataset.hoverOnly === undefined &&
         card.closest('.stop')?.classList.contains('live')) v.play().catch(() => {});
@@ -1639,9 +1689,16 @@ function films() {
     if (!v) return;
     sendHome();                          // whatever was mid-close goes back first
     minTimer = cancelMinimize(minTimer, frame, box);
+    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
     open = true; armed = false; current = v; home = card;
     cap.textContent = card.dataset.cap || card.closest('.cat')?.querySelector('h3')?.textContent || '';
     v.style.removeProperty('transform');
+    /* The film is MOVED into the frame, so the card it left would otherwise
+       blink to an empty slot for the whole flight. Wearing its own poster, it
+       still reads as the thing the film came out of. */
+    const poster = v.getAttribute('poster');
+    if (poster) card.style.backgroundImage = `url("${poster}")`;
+    card.classList.add('lifted');
     slot.appendChild(v);
     box.classList.add('on');
     box.setAttribute('aria-hidden', 'false');
@@ -1649,6 +1706,7 @@ function films() {
     v.currentTime = 0;                    // expanded, it starts from the top
     v.play().catch(() => {});
     if (!tick) tick = requestAnimationFrame(paint);
+    growTimer = flipFrom(frame, card);
     wake();
     x.focus({ preventScroll: true });
   };
@@ -1664,6 +1722,9 @@ function films() {
     const v = current, card = home;
     current = null; home = null;
     if (tick) { cancelAnimationFrame(tick); tick = null; }
+    /* Closing while still opening: kill the grow's cleanup timer or it fires
+       mid-shrink and strips the transform the shrink is riding on. */
+    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
     pending = (v && card) ? { v, card } : null;
     // shrink the frame back onto its card, then hand the film back
     minTimer = minimizeTo(frame, card, () => {
@@ -1833,11 +1894,12 @@ function reader() {
      steps used to open too, and the tables, but the steps now say everything
      they have to say on the page and the tables are gone. */
   const BLOCKS = '.case-brief';
-  let dwell = null, open = false, srcEl = null, minTimer = null;
+  let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
   const show = src => {
     if (open) return;
     minTimer = cancelMinimize(minTimer, glass, shell);
+    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
     open = true; srcEl = src;
     const clone = src.cloneNode(true);
     clone.removeAttribute('id');
@@ -1855,6 +1917,8 @@ function reader() {
     shell.setAttribute('aria-hidden', 'false');
     document.body.classList.add('reading');
     readerVis.start(src.dataset.vis);
+    // the panel grows out of the block it is quoting, as the films do
+    growTimer = flipFrom(glass, src);
     wake();
     x.focus({ preventScroll: true });
   };
@@ -1869,6 +1933,7 @@ function reader() {
     clearMelt();          // closing counts as activity, exactly like a scroll
     wake();
     // shrink back onto the block it came from, measured now — if the page has
+    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
     // melted and drifted, it returns to where that block actually is
     minTimer = minimizeTo(glass, srcEl, () => {
       minTimer = null;
