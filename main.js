@@ -1368,20 +1368,6 @@ function enquiry() {
   });
 }
 
-/* ── case study figures ────────────────────────────────────────── */
-function caseTabs() {
-  const wrap = $('.case-data'); if (!wrap) return;
-  const tabs = $$('.cd-tab', wrap), panels = $$('.cd-panel', wrap);
-  tabs.forEach(t => t.addEventListener('click', () => {
-    tabs.forEach(x => {
-      const on = x === t;
-      x.classList.toggle('on', on);
-      x.setAttribute('aria-selected', String(on));
-    });
-    panels.forEach(p => { p.hidden = p.dataset.panel !== t.dataset.tab; });
-  }));
-}
-
 /* ── the strip that animates to match what is being read ───────────
    Each block declares data-vis, and the panel draws to suit: chaos for the
    problem, a caliper for the mapping, a routed packet for the solution, a
@@ -1652,7 +1638,7 @@ function films() {
     sendHome();                          // whatever was mid-close goes back first
     minTimer = cancelMinimize(minTimer, frame, box);
     open = true; armed = false; current = v; home = card;
-    cap.textContent = card.closest('.cat')?.querySelector('h3')?.textContent || '';
+    cap.textContent = card.dataset.cap || card.closest('.cat')?.querySelector('h3')?.textContent || '';
     v.style.removeProperty('transform');
     slot.appendChild(v);
     box.classList.add('on');
@@ -1713,7 +1699,13 @@ function films() {
       card.style.setProperty('--px', 0);
       card.style.setProperty('--py', 0);
     });
-    card.addEventListener('click', e => { e.stopPropagation(); show(card); });
+    card.addEventListener('click', e => {
+      e.stopPropagation();
+      /* A card carrying its own seek bar must not open on every click, or
+         scrubbing it throws you into the expanded view. */
+      if (card.dataset.expandOnly !== undefined && !e.target.closest('[data-expand]')) return;
+      show(card);
+    });
   });
 
   frame.addEventListener('pointerenter', () => { armed = true; });
@@ -1746,6 +1738,82 @@ function films() {
   };
 }
 
+/* ── the case film ─────────────────────────────────────────────────
+   The film sits below the line at the full width of it, frosted over, with a
+   hole that opens at the cursor. Two things are deliberate here.
+
+   The frost is a backdrop-filter masked by a radial gradient: at radius 0 the
+   gradient resolves to its last stop everywhere, so the plate covers the whole
+   film; as the radius grows a soft-edged hole opens under the pointer. That is
+   cheaper and steadier than compositing two copies of the video.
+
+   And it carries its own seek bar rather than borrowing the expanded view's,
+   because the film is now something you watch in place — the expanded view is
+   the option, not the only way to see it. */
+function caseFilm() {
+  const wrap = $('.cfilm');
+  if (!wrap) return;
+  const v     = wrap.querySelector('video'),
+        frost = $('.cfilm-frost', wrap),
+        play  = $('.cf-play', wrap),
+        seek  = $('.cf-seek', wrap),
+        time  = $('.cf-time', wrap);
+
+  // the file's own shape, so the frame is never letterboxed against a guess
+  const shape = () => {
+    if (v.videoWidth) wrap.style.aspectRatio = v.videoWidth + ' / ' + v.videoHeight;
+  };
+  v.addEventListener('loadedmetadata', shape);
+  shape();
+
+  const clock = n => {
+    if (!isFinite(n)) n = 0;
+    return Math.floor(n / 60) + ':' + String(Math.floor(n % 60)).padStart(2, '0');
+  };
+  let seeking = false, raf = null;
+  const paint = () => {
+    const d = v.duration || 0;
+    if (!seeking) {
+      const k = d ? (v.currentTime / d) * 1000 : 0;
+      seek.value = k;
+      seek.style.setProperty('--v', k / 10);
+    }
+    time.textContent = clock(v.currentTime) + ' / ' + clock(d);
+    play.classList.toggle('paused', v.paused);
+    raf = requestAnimationFrame(paint);
+  };
+  raf = requestAnimationFrame(paint);
+
+  play.addEventListener('click', e => {
+    e.stopPropagation();
+    v.paused ? v.play().catch(() => {}) : v.pause();
+  });
+  ['pointerdown', 'keydown'].forEach(ev => seek.addEventListener(ev, () => { seeking = true; }));
+  ['pointerup', 'pointercancel', 'keyup', 'change'].forEach(ev =>
+    seek.addEventListener(ev, () => { seeking = false; }));
+  seek.addEventListener('input', e => {
+    e.stopPropagation();
+    if (!v.duration) return;
+    v.currentTime = (+seek.value / 1000) * v.duration;
+    seek.style.setProperty('--v', +seek.value / 10);
+  });
+
+  // ── the hole in the frost ──
+  /* --r is a registered custom property, so the browser interpolates it and
+     the open/close is a plain CSS transition. Driving it from a rAF lerp
+     instead meant the hole simply never opened whenever the frame loop was
+     throttled — a background tab, a hidden window — because every write to it
+     lived inside the loop. */
+  if (touch || reduced) return;
+  wrap.addEventListener('pointermove', e => {
+    const b = wrap.getBoundingClientRect();
+    frost.style.setProperty('--mx', (e.clientX - b.left).toFixed(0) + 'px');
+    frost.style.setProperty('--my', (e.clientY - b.top).toFixed(0) + 'px');
+    frost.style.setProperty('--r', Math.min(b.width * .26, 250).toFixed(0) + 'px');
+  }, { passive: true });
+  wrap.addEventListener('pointerleave', () => frost.style.setProperty('--r', '0px'));
+}
+
 /* ── reading view ──────────────────────────────────────────────────
    Dwell on a dense block and it lifts out into a glass panel at 75% of the
    viewport, with everything behind it blurred. Closing counts as activity,
@@ -1759,7 +1827,10 @@ function reader() {
         scrim = $('.reader-scrim', shell);
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
-  const BLOCKS = '.case-step, .cd-panel, .case-figs, .case-brief';
+  /* The brief only — the Company A header and the claim under it. The four
+     steps used to open too, and the tables, but the steps now say everything
+     they have to say on the page and the tables are gone. */
+  const BLOCKS = '.case-brief';
   let dwell = null, open = false, srcEl = null, minTimer = null;
 
   const show = src => {
@@ -1774,7 +1845,6 @@ function reader() {
     // strip anything that would run twice: a cloned video would play over
     // the original, and a cloned canvas is dead pixels
     clone.querySelectorAll('.cat-media, canvas, video').forEach(n => n.remove());
-    clone.querySelectorAll('.cs-full[hidden]').forEach(n => n.removeAttribute('hidden'));
     body.innerHTML = '';
     body.appendChild(clone);
 
@@ -2026,7 +2096,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); caseTabs(); reader(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); layersRig(); enquiry(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();
   addEventListener('resize', measure);
 
