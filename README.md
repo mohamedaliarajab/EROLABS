@@ -470,6 +470,19 @@ would be invented. The case study is where the real numbers live.
 It is deliberately not a text-parsing demo. The point is the system, not a
 clever reading of a sentence.
 
+## Slicing the stylesheet
+
+Two edits have now removed things they were not aiming at. A regex deletion
+once left a stray `}` that silently terminated parsing for every rule after it,
+and an edit meant to replace the arrows in the layer cue carried away the
+shooting star's animation, which happened to sit between the same two markers.
+Neither threw. Both were only visible by looking at the page.
+
+`build.mjs` now checks brace balance and a list of load-bearing selectors, so
+either failure stops the build instead of shipping. When you add something
+whose absence would not throw — a keyframe, a canvas, an overlay — put it on
+that list.
+
 ## The seek bars were never broken
 
 Dragging a film's slider left it at 0:00, and the JS looked right because it

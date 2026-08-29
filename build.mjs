@@ -32,6 +32,33 @@ const mp3  = readFileSync('audio/ambient.mp3');
   }
 }
 
+/* CSS guard. Editing this stylesheet by slicing between two markers has twice
+   now carried away rules that happened to sit between them — a stray brace
+   once killed every rule after line 394, and the shooting star's animation was
+   removed by an edit that was only meant to replace the arrows beside it. Both
+   were invisible until someone looked at the page.
+
+   Braces catch the first. This list catches the second: anything named here is
+   load-bearing and cannot quietly vanish. Add to it when you build something
+   whose absence would not throw. */
+{
+  const required = [
+    '@keyframes lyStar', '@keyframes filmGrow', '@keyframes filmShrink',
+    '@keyframes lyPulse', '@keyframes ldBeat', '@keyframes ringSpin',
+    '.ly-cue', '.cfilm-frost', '.cfilm-ring', '.filmbox-frame', '.reader-glass',
+    '.stop-num', '#sky', '#galaxy', '#grain',
+  ];
+  const open = (css.match(/{/g) || []).length, close = (css.match(/}/g) || []).length;
+  const missing = required.filter(sel => !css.includes(sel));
+  const problems = [];
+  if (open !== close) problems.push(`unbalanced braces: { ${open} vs } ${close}`);
+  if (missing.length) problems.push(`missing: ${missing.join(', ')}`);
+  if (problems.length) {
+    console.error('styles.css is wrong:\n  - ' + problems.join('\n  - '));
+    process.exit(1);
+  }
+}
+
 const inlined = html
   .replace('<link rel="stylesheet" href="styles.css">', `<style>\n${css}\n</style>`)
   .replace('<script src="main.js"></script>', `<script>\n${js}\n</script>`);
