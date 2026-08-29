@@ -1432,15 +1432,33 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 .ly-t{
   display:inline-flex;align-items:center;gap:8px;
   font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);
-  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  letter-spacing:.18em;text-transform:uppercase;color:#5F677B;   /* --ink-3 +10% */
   padding:calc(var(--u)*.38) calc(var(--u)*1);border:1px solid var(--line-2);border-radius:100px;
   /* lit even when off, so they read as controls rather than captions */
-  box-shadow:0 0 13px rgba(120,150,255,.11),inset 0 0 16px rgba(120,150,255,.05);
+  box-shadow:0 0 14px rgba(120,150,255,.121),inset 0 0 16px rgba(120,150,255,.055);
   transition:color .35s,border-color .35s,background .35s,box-shadow .45s;
 }
 .ly-t em{font-style:normal;font-size:calc(var(--u)*.56);opacity:.6}
 .ly-t:hover{color:var(--ink-2);border-color:var(--line);box-shadow:0 0 22px rgba(140,175,255,.26),inset 0 0 20px rgba(140,175,255,.08)}
 .ly-t[aria-pressed="true"]{color:#fff;border-color:transparent}
+/* Until one is chosen they breathe, staggered so the row reads as a row rather
+   than as three things flashing at once. It stops on .switched — which the
+   click handler sets from whether ANY layer is on — so turning the last one
+   back off starts them breathing again. That is the honest state to key on:
+   the invitation belongs on screen exactly as long as nothing is on.
+
+   :not(.switched) also outranks the pressed rule below, so the two can never
+   run at once on the same button. */
+.stop.live .layers:not(.switched) .ly-t{animation:lyIdle 2.8s ease-in-out infinite}
+.stop.live .layers:not(.switched) .ly-t:nth-child(2){animation-delay:.34s}
+.stop.live .layers:not(.switched) .ly-t:nth-child(3){animation-delay:.68s}
+@keyframes lyIdle{
+  0%,100%{box-shadow:0 0 14px rgba(120,150,255,.121),inset 0 0 16px rgba(120,150,255,.055);
+          border-color:var(--line-2)}
+  50%    {box-shadow:0 0 27px 3px rgba(130,165,255,.32),inset 0 0 22px rgba(130,165,255,.11);
+          border-color:rgba(150,180,255,.30)}
+}
+
 /* An enabled layer should read as switched on, not merely tinted — a wide
    glow that breathes, in that layer's own colour. */
 .ly-t[aria-pressed="true"]{animation:lyPulse 2.6s ease-in-out infinite}
@@ -1459,7 +1477,8 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
   67%    {box-shadow:0 0 24px 3px rgba(235,242,255,.62),0 0 60px 15px rgba(150,180,255,.26);
           text-shadow:0 0 17px rgba(255,255,255,.95)}
 }
-body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px rgba(90,140,255,.6)}
+body.reduced .ly-t[aria-pressed="true"],body.reduced .ly-t{animation:none}
+body.reduced .ly-t[aria-pressed="true"]{box-shadow:0 0 22px rgba(90,140,255,.6)}
 
 /* ── "press these" ──────────────────────────────────────────────────
    Nothing on the page said the layers were switches, so people read them as
@@ -1496,6 +1515,20 @@ body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px rgba(
   border-top:1.5px solid var(--violet-ink);border-right:1.5px solid var(--violet-ink);
   transform:rotate(45deg);
 }
+/* Clicked, and the invitation is over. The wrapper fades, and the streak and
+   the arrows actually stop rather than running on unseen behind it.
+
+   Paused, not `animation:none`: none snaps every element to its base state —
+   opacity 0 — which would kill the wrapper's own fade and make the cue vanish
+   instead of leave.
+
+   The .stop.live .layers.switched prefix is what makes the pause bite. The
+   arrows take their names from .stop.live .ly-cue b:nth-child(n), and a
+   shorter selector would tie on specificity and be settled by source order. */
+.layers.switched .ly-cue{opacity:0;visibility:hidden}
+.stop.live .layers.switched .ly-cue s,
+.stop.live .layers.switched .ly-cue b{animation-play-state:paused}
+
 /* The streak itself. It runs at constant speed so its position maps
    predictably to time, which is what every arrow's exit is solved against. */
 .stop.live .ly-cue s{animation:lyStar 2.4s linear infinite}

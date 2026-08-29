@@ -44,8 +44,8 @@ const mp3  = readFileSync('audio/ambient.mp3');
 {
   const required = [
     '@keyframes lyStar', '@keyframes filmGrow', '@keyframes filmShrink',
-    '@keyframes lyPulse', '@keyframes ldBeat', '@keyframes ringSpin',
-    '.ly-cue', '.cfilm-frost', '.cfilm-ring', '.filmbox-frame', '.reader-glass',
+    '@keyframes lyPulse', '@keyframes lyIdle', '@keyframes ldBeat', '@keyframes ringSpin',
+    '.ly-cue', '.layers.switched .ly-cue', '.cfilm-frost', '.cfilm-ring', '.filmbox-frame', '.reader-glass',
     '.stop-num', '#sky', '#galaxy', '#grain',
   ];
   const open = (css.match(/{/g) || []).length, close = (css.match(/}/g) || []).length;
