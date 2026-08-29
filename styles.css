@@ -1414,7 +1414,17 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
   color:rgba(255,255,255,.080);opacity:calc(.375 + .625 * var(--near,0));
   pointer-events:none;user-select:none;
 }
+/* The hero is the one stop whose numeral shares its corner with the orbiting
+   mast, so it is smaller and half as present as the other four. Halving the
+   opacity multiplier halves both ends of the cursor lift at once — .030 to
+   .015 at rest, .080 to .040 under the pointer — rather than flattening the
+   response by editing only one of them. */
+#hero .stop-num{
+  font-size:calc(var(--u)*13);
+  opacity:calc(.1875 + .3125 * var(--near,0));
+}
 @media (max-width:900px){.stop-num{font-size:calc(var(--u)*14);right:calc(var(--u)*-.5)}}
+@media (max-width:900px){#hero .stop-num{font-size:calc(var(--u)*9)}}
 
 /* ── the layers ─────────────────────────────────────────────────────
    The three words as a system you switch on. With nothing enabled the work
