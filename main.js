@@ -292,7 +292,7 @@ const galaxy = (() => {
     /* Global alpha scales everything equally, so it lifts the band into view
        without touching the contrast ratio — the darks stay dark relative to
        the stars. */
-    ctx.globalAlpha = near * .68;
+    ctx.globalAlpha = near * .714;   // .68 +5%: cores, stars and lanes together
 
     /* The drift was 8.5e-6 per ms, which after ten seconds is sin(0.00026) —
        arithmetically static. It needs to be four orders larger to read as
@@ -1888,6 +1888,42 @@ wordmark?.addEventListener('animationend', e => {
 });
 
 let lastTick = 0;
+/* ── section numerals ───────────────────────────────────────────────
+   01–04 sit at 3% white so they read as watermark rather than content. They
+   now lift toward 8% as the cursor approaches — five points of white, which is
+   what "5% brighter" can mean here that is actually perceptible: five percent
+   OF the alpha would be .030 → .0315, a change no display resolves.
+
+   Distance is measured to the glyph's box, not its centre. These are enormous
+   characters, so centre distance would keep the number dark while the cursor
+   sat directly on top of it. Rects are read only for live stops — at most two
+   in frame — because reading layout every frame for all five would thrash
+   against the transforms the same loop has just written. */
+const numGlow = (() => {
+  const nums = $$('.stop-num');
+  if (!nums.length || touch) return () => {};
+  let mx = -9e9, my = -9e9;
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  const cur = nums.map(() => 0);
+  return () => {
+    const reach = Math.min(vw, vh) * .55;
+    nums.forEach((n, i) => {
+      const stop = n.closest('.stop');
+      let want = 0;
+      if (stop && stop.classList.contains('live')) {
+        const b = n.getBoundingClientRect();
+        const dx = Math.max(b.left - mx, 0, mx - b.right);
+        const dy = Math.max(b.top - my, 0, my - b.bottom);
+        want = clamp(1 - Math.hypot(dx, dy) / reach, 0, 1);
+      }
+      // lerped, not transitioned: --near is rewritten every frame and a CSS
+      // transition on top of that only ever lags behind the pointer
+      cur[i] = lerp(cur[i], want, .12);
+      n.style.setProperty('--near', cur[i].toFixed(3));
+    });
+  };
+})();
+
 function tick(t) {
   const dt = lastTick ? Math.min(64, t - lastTick) : 16; lastTick = t;
   readScroll();
@@ -1979,6 +2015,7 @@ function tick(t) {
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   layersUpdate(t, dt, near === 1 && nearD < 1.2);
+  numGlow();
   sky.draw(t, heroD);
   galaxy.draw(t, heroD);
   field.draw(t);

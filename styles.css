@@ -1292,7 +1292,11 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
 .stop-num{
   position:absolute;right:calc(var(--u)*-1.5);top:calc(var(--u)*-3.4);z-index:-1;
   font-family:var(--f-display);font-weight:200;font-size:calc(var(--u)*20);
-  line-height:.78;letter-spacing:-.05em;color:rgba(255,255,255,.030);
+  line-height:.78;letter-spacing:-.05em;
+  /* painted at its brightest and scaled down, so --near 0 lands on the
+     original .030 and --near 1 on .080 — the numbers stay readable here
+     rather than hiding inside a calc() in the alpha channel */
+  color:rgba(255,255,255,.080);opacity:calc(.375 + .625 * var(--near,0));
   pointer-events:none;user-select:none;
 }
 @media (max-width:900px){.stop-num{font-size:calc(var(--u)*14);right:calc(var(--u)*-.5)}}
