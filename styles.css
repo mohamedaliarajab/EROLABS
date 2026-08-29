@@ -1345,17 +1345,23 @@ body.reduced .readable::before,body.reduced .btn-primary svg{animation:none}
    thing into something a person can read. */
 .layers{margin-top:calc(var(--u)*2);padding-top:calc(var(--u)*1.4);border-top:1px solid var(--line-2)}
 .ly-bar{display:flex;align-items:center;gap:calc(var(--u)*1.6);flex-wrap:wrap}
-.ly-k{font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);letter-spacing:.28em;text-transform:uppercase;color:var(--ink-3)}
+.ly-k{
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.86);
+  letter-spacing:.26em;text-transform:uppercase;color:var(--ink);
+  text-shadow:0 0 18px rgba(120,150,255,.38);flex:none;
+}
 .ly-toggles{display:flex;gap:calc(var(--u)*.6)}
 .ly-t{
   display:inline-flex;align-items:center;gap:8px;
   font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.66);
   letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
   padding:calc(var(--u)*.38) calc(var(--u)*1);border:1px solid var(--line-2);border-radius:100px;
+  /* lit even when off, so they read as controls rather than captions */
+  box-shadow:0 0 13px rgba(120,150,255,.11),inset 0 0 16px rgba(120,150,255,.05);
   transition:color .35s,border-color .35s,background .35s,box-shadow .45s;
 }
 .ly-t em{font-style:normal;font-size:calc(var(--u)*.56);opacity:.6}
-.ly-t:hover{color:var(--ink-2);border-color:var(--line)}
+.ly-t:hover{color:var(--ink-2);border-color:var(--line);box-shadow:0 0 22px rgba(140,175,255,.26),inset 0 0 20px rgba(140,175,255,.08)}
 .ly-t[aria-pressed="true"]{color:#fff;border-color:transparent}
 /* An enabled layer should read as switched on, not merely tinted — a wide
    glow that breathes, in that layer's own colour. */
@@ -1388,14 +1394,14 @@ body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px rgba(
    switched-on glow it is pointing at. Both animations hang off .stop.live,
    so they start when you arrive and re-run if you leave and come back. */
 .ly-cue{
-  position:relative;display:flex;align-items:center;gap:calc(var(--u)*.26);
-  margin-left:auto;width:calc(var(--u)*5.4);height:calc(var(--u)*1.4);
-  justify-content:flex-end;pointer-events:none;flex:none;
+  position:relative;display:flex;align-items:center;justify-content:flex-end;
+  gap:calc(var(--u)*.26);flex:1;min-width:calc(var(--u)*4);height:calc(var(--u)*1.4);
+  pointer-events:none;transition:opacity .55s var(--ease),visibility .55s;
 }
 .ly-cue s{
   position:absolute;left:0;top:50%;width:calc(var(--u)*2.4);height:2px;
   border-radius:2px;text-decoration:none;opacity:0;
-  transform:translate(-120%,-50%);
+  transform:translateY(-50%);
   background:linear-gradient(90deg,rgba(120,170,255,0),rgba(150,190,255,.55),#fff);
   box-shadow:0 0 12px 2px rgba(150,190,255,.75),0 0 26px 6px rgba(120,90,255,.4);
 }
@@ -1404,19 +1410,24 @@ body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px rgba(
   border-top:1.5px solid var(--violet-ink);border-right:1.5px solid var(--violet-ink);
   transform:rotate(45deg);
 }
-.stop.live .ly-cue s{animation:lyStar 1.6s ease-in 3}
-.stop.live .ly-cue b{animation:lyChev 1.6s ease-in-out 3}
-.stop.live .ly-cue b:nth-child(3){animation-delay:.12s}
-.stop.live .ly-cue b:nth-child(4){animation-delay:.24s}
+.stop.live .ly-cue s{animation:lyStar 2.4s ease-in infinite}
+.stop.live .ly-cue b{animation:lyChev 2.4s ease-in-out infinite}
+.stop.live .ly-cue b:nth-child(3){animation-delay:.13s}
+.stop.live .ly-cue b:nth-child(4){animation-delay:.26s}
+/* Obeyed: the instruction goes. It is `left` rather than a transform because
+   the streak has to cross the whole gap between the label and the switches,
+   and a percentage translate would only ever move it by its own width. One
+   absolutely-positioned 2px bar, so the layout it dirties is its own. */
+.layers.switched .ly-cue{opacity:0;visibility:hidden}
 @keyframes lyStar{
-  0%  {opacity:0;transform:translate(-120%,-50%) scaleX(.5)}
-  20% {opacity:1}
-  64% {opacity:1;transform:translate(150%,-50%) scaleX(1.3)}
-  100%{opacity:0;transform:translate(240%,-50%) scaleX(.55)}
+  0%  {opacity:0;left:0;transform:translateY(-50%) scaleX(.5)}
+  16% {opacity:1}
+  70% {opacity:1;left:calc(100% - var(--u)*2.4);transform:translateY(-50%) scaleX(1.3)}
+  100%{opacity:0;left:100%;transform:translateY(-50%) scaleX(.55)}
 }
 @keyframes lyChev{
   0%,100%{opacity:0;translate:-4px 0}
-  46%    {opacity:.95;translate:0 0}
+  52%    {opacity:.95;translate:0 0}
 }
 @media (max-width:900px){.ly-cue{display:none}}
 body.reduced .ly-cue{display:none}

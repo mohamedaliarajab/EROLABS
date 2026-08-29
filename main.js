@@ -647,6 +647,8 @@ function layersRig() {
     want[k] = want[k] ? 0 : 1;
     btn.setAttribute('aria-pressed', String(!!want[k]));
     if (k === 'auto') cascadeAt = performance.now();   // the rails come up in order
+    // the cue is an instruction, and it has been followed
+    box.classList.toggle('switched', !!(want.intel || want.auto || want.design));
     applyState();
   }));
 
