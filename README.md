@@ -470,6 +470,23 @@ would be invented. The case study is where the real numbers live.
 It is deliberately not a text-parsing demo. The point is the system, not a
 clever reading of a sentence.
 
+## The seek bars were never broken
+
+Dragging a film's slider left it at 0:00, and the JS looked right because it
+was right — the handler fired, `--v` updated, `currentTime` was assigned.
+`video.seekable` was `0..0`, so the browser clamped every assignment straight
+back to zero.
+
+`SimpleHTTPRequestHandler` ignores `Range` completely: ask it for bytes
+1000000-1000100 of a film and it returns `200` with all 13MB. A browser that
+cannot fetch a byte range cannot seek. `serve.py` now answers ranges with `206`
+and a `Content-Range`, and `video.seekable` reads `0..30.8`.
+
+Netlify serves ranges, so this only ever bit local previews — which is where
+all the testing happens, which is why it looked like a code bug for so long.
+When a media control misbehaves, check `video.seekable` and the response to a
+`Range` request before reading the handler again.
+
 ## Why the ground is black
 
 Two things were holding the site off #000, and neither was the background

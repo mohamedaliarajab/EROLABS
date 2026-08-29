@@ -1593,7 +1593,14 @@ const MORPH_IN = 1800, MORPH_OUT = 1000;
 function morphFrom(el, src, dir) {
   const b = src && src.getBoundingClientRect();
   if (!b || !b.width || !el.offsetWidth || reduced) return null;
-  const s = Math.max(.04, b.width / el.offsetWidth);
+  /* Clamped, and this is a deliberate trade. A strict morph starts at the
+     source's real size, which is 0.72 for the case film (810px into 1120) but
+     0.30 for a project card (339px) — the same animation, but one grows 1.4x
+     and the other 3.3x, so page 2 read as a pop where page 3 read as a drift.
+     A floor makes every film emerge at the same rate. The cost is that a small
+     card's panel starts larger than the card itself; it still starts centred
+     on it, so it reads as emerging from that spot rather than from that box. */
+  const s = Math.max(.62, b.width / el.offsetWidth);
   const dx = (b.left + b.width / 2) - innerWidth / 2;
   const dy = (b.top + b.height / 2) - innerHeight / 2;
   const here = getComputedStyle(el).transform;
