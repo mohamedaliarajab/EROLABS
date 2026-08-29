@@ -613,16 +613,30 @@ body.ready .hud{opacity:1}
   border-color:rgba(255,255,255,.24);
   box-shadow:0 18px 60px rgba(0,0,0,.5),0 0 34px color-mix(in srgb,var(--tone) 42%,transparent);
 }
+/* The same control the case film carries: bracket, spaced caps, and a violet
+   answer under the pointer. The entrance offset rides on `translate` so it
+   cannot collide with the centring and the hover scale, both of which live in
+   `transform` — one property holding all three means the last rule to match
+   silently wins and one of the effects never paints. */
 .cat-play{
-  position:absolute;left:50%;bottom:calc(var(--u)*.8);transform:translateX(-50%) translateY(6px);z-index:2;
-  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.58);
-  letter-spacing:.26em;text-transform:uppercase;color:var(--ink);
-  padding:calc(var(--u)*.3) calc(var(--u)*.8);border-radius:100px;
-  background:rgba(10,12,20,.55);border:1px solid rgba(255,255,255,.18);
+  position:absolute;left:50%;bottom:calc(var(--u)*.8);z-index:2;
+  transform:translateX(-50%);opacity:0;translate:0 8px;pointer-events:none;
+  display:flex;align-items:center;gap:calc(var(--u)*.55);
+  font-family:var(--f-mono);font-weight:300;font-size:calc(var(--u)*.6);
+  letter-spacing:.24em;text-transform:uppercase;color:var(--ink-2);
+  padding:calc(var(--u)*.52) calc(var(--u)*1.15);border-radius:999px;
+  background:rgba(6,8,16,.62);border:1px solid rgba(255,255,255,.24);
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  opacity:0;transition:opacity .35s,transform .35s var(--ease);pointer-events:none;
+  transition:color .3s,border-color .3s,background .3s,transform .35s var(--ease),
+             opacity .35s var(--ease),translate .35s var(--ease);
 }
-.cat-media:hover .cat-play{opacity:1;transform:translateX(-50%) translateY(0)}
+.cat-play svg{width:calc(var(--u)*.92);height:calc(var(--u)*.92);flex:none}
+.cat-play i{font-style:normal}
+.cat-media:hover .cat-play{opacity:1;translate:0 0;pointer-events:auto}
+.cat-play:hover{
+  color:#fff;border-color:var(--violet);background:rgba(166,37,238,.3);
+  transform:translateX(-50%) scale(1.06);
+}
 .cat-media:has(video) .cat-media-k,.cat-media:has(img) .cat-media-k,
 .cat-media:has(video)::after,.cat-media:has(img)::after{display:none}
 
