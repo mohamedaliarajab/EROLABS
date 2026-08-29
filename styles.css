@@ -728,32 +728,22 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm{animation:none}
 
 .cfilm-frost{
   position:absolute;inset:0;z-index:2;pointer-events:none;
-  /* Dark glass. Three things had to be true at once: black enough to sit on a
-     black page, blurred enough that the film reads as being behind something,
-     and textured enough to look like a pane rather than a dimmer.
+  /* Blur, and nothing else. The lit-glass plate is gone: every version of it
+     put a texture and a tint between you and the film, and the point of the
+     film sitting here is that you can see something is moving. So the only
+     treatment is a blur heavy enough to withhold the detail and light enough
+     to keep the motion and the colour — plus a neutral veil, no hue, because
+     a tinted one is what read as blue.
 
-     The texture is feDiffuseLighting over fractal noise — a genuinely lit
-     surface whose ridges catch the light. The first attempt set surfaceScale
-     to 2.6 and measured almost perfectly flat (sd 4 of 255): no relief, so no
-     glass, just a grey wash. At 34 it has real relief, and a gamma of 8 crushes
-     its dark half so the troughs fall to black while the crests survive. That
-     stretch is what lets it be dark and textured at the same time rather than
-     trading one for the other.
-
-     Composited: median 14/255, troughs at 8, crests to 87. */
-  -webkit-backdrop-filter:blur(30px) brightness(.20) saturate(.5) contrast(1.05);
-  backdrop-filter:blur(30px) brightness(.20) saturate(.5) contrast(1.05);
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.10'/%3E%3C/svg%3E"),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.010' numOctaves='3' seed='9' result='n'/%3E%3CfeDiffuseLighting in='n' lighting-color='%23cfe0ff' surfaceScale='34'%3E%3CfeDistantLight azimuth='122' elevation='32'/%3E%3C/feDiffuseLighting%3E%3CfeComponentTransfer%3E%3CfeFuncR type='gamma' exponent='8'/%3E%3CfeFuncG type='gamma' exponent='8'/%3E%3CfeFuncB type='gamma' exponent='8'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='900' height='500' filter='url(%23g)' opacity='.90'/%3E%3C/svg%3E"),
-    linear-gradient(200deg,rgba(2,3,7,.82),rgba(0,0,0,.90));
-  background-size:140px 140px,100% 100%,auto;
-  background-blend-mode:screen,screen,normal;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+     The hole under the cursor is unchanged: --r opens it, and inside it the
+     film is completely clear. */
+  -webkit-backdrop-filter:blur(24px) brightness(.60) saturate(.92);
+  backdrop-filter:blur(24px) brightness(.60) saturate(.92);
+  background:rgba(0,0,0,.26);
   transition:--r .45s var(--ease);
   --r:0px;--mx:50%;--my:50%;
-  -webkit-mask-image:radial-gradient(circle var(--r) at var(--mx) var(--my),transparent 0%,rgba(0,0,0,.22) 46%,#000 100%);
-  mask-image:radial-gradient(circle var(--r) at var(--mx) var(--my),transparent 0%,rgba(0,0,0,.22) 46%,#000 100%);
+  -webkit-mask-image:radial-gradient(circle var(--r) at var(--mx) var(--my),transparent 0%,rgba(0,0,0,.20) 48%,#000 100%);
+  mask-image:radial-gradient(circle var(--r) at var(--mx) var(--my),transparent 0%,rgba(0,0,0,.20) 48%,#000 100%);
 }
 /* Controls and the expand button both sit ABOVE the frost, so neither is ever
    blurred — a seek bar you cannot read is not a control. */
