@@ -74,6 +74,7 @@ function measure() {
   dress();
   field.resize();
   galaxy.size();
+  sky.size();
 }
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
@@ -314,6 +315,61 @@ const galaxy = (() => {
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
     }
     ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  };
+
+  return { size, draw };
+})();
+
+/* ── sky ────────────────────────────────────────────────────────────
+   The loader's starfield, carried into the rest of the site. Same density,
+   same three size tiers, same three colours, same twinkle curve — so crossing
+   from the loader into the site reads as one continuous sky rather than two
+   different ones.
+
+   It fades UP exactly as the galaxy fades out. The hero already has the
+   galaxy's 2,800 baked stars; doubling a second field on top of them would
+   make the one screen that is already the busiest busier still, and would
+   leave every other stop bare the moment the galaxy went. */
+const sky = (() => {
+  const cv = $('#sky');
+  if (!cv) return { size() {}, draw() {} };
+  const ctx = cv.getContext('2d');
+  let stars = [], W = 0, H = 0;
+
+  const size = () => {
+    const d = Math.min(devicePixelRatio || 1, 2);
+    W = vw; H = vh;
+    cv.width = W * d; cv.height = H * d;
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    stars = Array.from({ length: Math.round(W * H / 4200) }, () => {
+      const b = Math.random(), c = Math.random();
+      return {
+        x: Math.random() * W, y: Math.random() * H,
+        r: b > .975 ? 1.8 : b > .82 ? 1.05 : .55,
+        ph: Math.random() * 7, sp: .5 + Math.random() * 1.5,
+        col: c < .3 ? '150,190,255' : c < .55 ? '205,165,255' : '236,243,255'
+      };
+    });
+  };
+
+  const draw = (t, heroD) => {
+    if (!W) return;
+    ctx.clearRect(0, 0, W, H);
+    const veil = clamp((heroD - .45) / .40, 0, 1);
+    if (veil <= .002) return;                    // the hero keeps its own sky
+    ctx.globalAlpha = veil;
+    /* A hair of parallax. Pinned exactly to the glass, stars read as a sticker
+       on the screen rather than a sky you are travelling under. Wrapped, so
+       the field never runs out however far the camera goes. */
+    const ox = cam.x * .03, oy = cam.y * .03;
+    for (const s of stars) {
+      const a = reduced ? .5
+        : .18 + .70 * Math.pow(Math.max(0, Math.sin(t * .0008 * s.sp + s.ph)), 2);
+      ctx.fillStyle = `rgba(${s.col},${a.toFixed(3)})`;
+      const x = ((s.x - ox) % W + W) % W, y = ((s.y - oy) % H + H) % H;
+      ctx.beginPath(); ctx.arc(x, y, s.r, 0, 7); ctx.fill();
+    }
     ctx.globalAlpha = 1;
   };
 
@@ -1923,6 +1979,7 @@ function tick(t) {
   poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   layersUpdate(t, dt, near === 1 && nearD < 1.2);
+  sky.draw(t, heroD);
   galaxy.draw(t, heroD);
   field.draw(t);
   requestAnimationFrame(tick);

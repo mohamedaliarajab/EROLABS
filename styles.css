@@ -52,6 +52,7 @@ body.is-touch button,body.is-touch a{cursor:pointer}
 :focus-visible{outline:1px solid var(--blue);outline-offset:3px}
 
 /* ── canvas + film ─────────────────────────────────────────────── */
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #galaxy{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 #field{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
 /* Grain in normal blend paints ~12/255 of grey over EVERY pixel, ground
