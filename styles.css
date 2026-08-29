@@ -1261,61 +1261,57 @@ body.filming .nav,body.filming .hud,body.filming .progress-rail{
 @media (max-width:900px){.filmbox-frame{width:94vw}}
 
 /* ── the flight ─────────────────────────────────────────────────────
-   Not a straight line. The panel leaves the card, drifts left and part-way up
-   as it grows, then settles into the middle — two beats rather than one slide.
-   The per-segment easing is what makes the turn read as considered instead of
-   as a corner: each half eases in and out of the waypoint at 42%.
+   A quadratic Bezier from the card to the centre, bowing left, sampled at 17
+   evenly spaced moments in TIME. Two things follow from that, and both were
+   wrong before:
 
-   --fx/--fy/--fs are the card's offset and scale, written by morphFrom() at
-   the moment of the click. --fromT is the CURRENT matrix, so a close that
-   interrupts an open starts from where the panel actually is.
+   The samples are uniform in time and the EASING is in where each one lands
+   along the curve — so distance per frame falls away smoothly and the panel
+   decelerates into place. The previous version sampled uniformly along the
+   curve instead, which pushed the last waypoint out to 65% of the duration
+   and left the final third as a constant crawl.
 
-   Every keyframe carries exactly two shadow layers. Shadows only interpolate
-   when the layer counts match — a keyframe with one layer and another with
-   three would snap between them instead of blending, and the trail is the
-   whole point. Blue on the way out, violet through the turn, white as it
-   lands. */
+   And animation-timing-function is linear. It was ease-in-out, which CSS
+   applies to EVERY segment, so the panel braked to a near stop and pulled
+   away again at each waypoint. That stutter is what read as angular; with a
+   fine enough sampling, linear between points is the smooth curve. */
 @keyframes filmGrow{
-  0%{
-    transform:translate(-50%,-50%) translate(var(--fx),var(--fy)) scale(var(--fs));
-    opacity:.3;
-    box-shadow:0 0 0 0 rgba(30,144,255,0),0 0 0 0 rgba(30,144,255,0);
-  }
-  42%{
-    transform:translate(-50%,-50%)
-              translate(calc(var(--fx) - 11vw),calc(var(--fy) * .46))
-              scale(calc(var(--fs) + (1 - var(--fs)) * .38));
-    opacity:.92;
-    box-shadow:0 0 70px 10px rgba(30,144,255,.5),0 0 150px 38px rgba(106,70,245,.22);
-  }
-  74%{
-    transform:translate(-50%,-50%) translate(calc(var(--fx) * .12),0) scale(.97);
-    opacity:1;
-    box-shadow:0 0 80px 12px rgba(166,37,238,.46),0 0 165px 42px rgba(166,37,238,.2);
-  }
-  100%{
-    transform:translate(-50%,-50%) scale(1);
-    opacity:1;
-    box-shadow:0 0 60px 6px rgba(226,238,255,.16),0 0 120px 26px rgba(90,120,255,.14);
-  }
+  0%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 1.0000 + -0.00vw),calc(var(--fy) * 1.0000)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.0000));opacity:0.12;box-shadow:0 0 22px 3px rgba(30,144,255,0.125),0 0 46px 9px rgba(30,144,255,0.048)}
+  6.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.8811 + -1.78vw),calc(var(--fy) * 0.8430)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.1616));opacity:0.46;box-shadow:0 0 37px 5px rgba(72,111,250,0.24),0 0 78px 15px rgba(72,111,250,0.091)}
+  12.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.7667 + -2.92vw),calc(var(--fy) * 0.7044)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.2941));opacity:0.881;box-shadow:0 0 54px 8px rgba(110,81,245,0.345),0 0 113px 22px rgba(110,81,245,0.131)}
+  18.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.6580 + -3.53vw),calc(var(--fy) * 0.5826)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.4103));opacity:1;box-shadow:0 0 69px 10px rgba(145,54,241,0.441),0 0 145px 29px rgba(145,54,241,0.168)}
+  25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.5559 + -3.75vw),calc(var(--fy) * 0.4760)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.5129));opacity:1;box-shadow:0 0 74px 11px rgba(170,49,239,0.472),0 0 155px 31px rgba(170,49,239,0.179)}
+  31.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.4614 + -3.66vw),calc(var(--fy) * 0.3834)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.6035));opacity:1;box-shadow:0 0 61px 9px rgba(180,84,242,0.394),0 0 128px 25px rgba(180,84,242,0.150)}
+  37.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.3751 + -3.36vw),calc(var(--fy) * 0.3034)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.6830));opacity:1;box-shadow:0 0 51px 7px rgba(189,114,245,0.324),0 0 107px 21px rgba(189,114,245,0.123)}
+  43.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.2975 + -2.93vw),calc(var(--fy) * 0.2350)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.7522));opacity:1;box-shadow:0 0 41px 6px rgba(197,141,247,0.264),0 0 86px 17px rgba(197,141,247,0.100)}
+  50%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.2290 + -2.43vw),calc(var(--fy) * 0.1772)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.8115));opacity:1;box-shadow:0 0 33px 5px rgba(204,164,249,0.211),0 0 69px 14px rgba(204,164,249,0.080)}
+  56.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.1697 + -1.91vw),calc(var(--fy) * 0.1290)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.8617));opacity:1;box-shadow:0 0 26px 4px rgba(210,183,250,0.166),0 0 55px 11px rgba(210,183,250,0.063)}
+  62.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.1198 + -1.41vw),calc(var(--fy) * 0.0898)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9032));opacity:1;box-shadow:0 0 22px 3px rgba(215,200,252,0.129),0 0 46px 9px rgba(215,200,252,0.049)}
+  68.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0792 + -0.96vw),calc(var(--fy) * 0.0586)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9364));opacity:1;box-shadow:0 0 22px 3px rgba(218,213,253,0.1),0 0 46px 9px rgba(218,213,253,0.038)}
+  75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0476 + -0.59vw),calc(var(--fy) * 0.0349)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9620));opacity:1;box-shadow:0 0 22px 3px rgba(222,223,254,0.1),0 0 46px 9px rgba(222,223,254,0.038)}
+  81.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0246 + -0.31vw),calc(var(--fy) * 0.0179)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9804));opacity:1;box-shadow:0 0 22px 3px rgba(224,230,254,0.1),0 0 46px 9px rgba(224,230,254,0.038)}
+  87.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0097 + -0.12vw),calc(var(--fy) * 0.0070)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9923));opacity:1;box-shadow:0 0 22px 3px rgba(225,235,255,0.1),0 0 46px 9px rgba(225,235,255,0.038)}
+  93.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0020 + -0.03vw),calc(var(--fy) * 0.0014)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.9984));opacity:1;box-shadow:0 0 22px 3px rgba(226,237,255,0.1),0 0 46px 9px rgba(226,237,255,0.038)}
+  100%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0000 + -0.00vw),calc(var(--fy) * 0.0000)) scale(calc(var(--fs) + (1 - var(--fs)) * 1.0000));opacity:1;box-shadow:0 0 22px 3px rgba(226,238,255,0.1),0 0 46px 9px rgba(226,238,255,0.038)}
 }
 @keyframes filmShrink{
-  0%{
-    transform:var(--fromT);opacity:1;
-    box-shadow:0 0 60px 6px rgba(226,238,255,.16),0 0 120px 26px rgba(90,120,255,.14);
-  }
-  40%{
-    transform:translate(-50%,-50%)
-              translate(calc(var(--fx) * .3 - 8vw),calc(var(--fy) * .3))
-              scale(calc(var(--fs) + (1 - var(--fs)) * .5));
-    opacity:.9;
-    box-shadow:0 0 72px 10px rgba(166,37,238,.42),0 0 150px 36px rgba(106,70,245,.2);
-  }
-  100%{
-    transform:translate(-50%,-50%) translate(var(--fx),var(--fy)) scale(var(--fs));
-    opacity:.12;
-    box-shadow:0 0 40px 4px rgba(30,144,255,.2),0 0 90px 20px rgba(30,144,255,.08);
-  }
+  0%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.0000 + -0.00vw),calc(var(--fy) * 0.0000)) scale(calc(var(--fs) + (1 - var(--fs)) * 1.0000));opacity:1.0;box-shadow:0 0 22px 3px rgba(226,238,255,0.125),0 0 46px 9px rgba(226,238,255,0.048)}
+  6.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.1019 + -1.07vw),calc(var(--fy) * 0.0784)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.8986));opacity:0.997;box-shadow:0 0 34px 5px rgba(214,198,252,0.216),0 0 71px 14px rgba(214,198,252,0.082)}
+  12.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.2002 + -1.85vw),calc(var(--fy) * 0.1599)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.8016));opacity:0.984;box-shadow:0 0 47px 7px rgba(203,160,248,0.303),0 0 99px 20px rgba(203,160,248,0.115)}
+  18.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.2947 + -2.36vw),calc(var(--fy) * 0.2432)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.7090));opacity:0.957;box-shadow:0 0 60px 9px rgba(192,124,245,0.385),0 0 126px 25px rgba(192,124,245,0.146)}
+  25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.3849 + -2.65vw),calc(var(--fy) * 0.3271)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.6210));opacity:0.917;box-shadow:0 0 72px 10px rgba(182,90,243,0.462),0 0 151px 30px rgba(182,90,243,0.176)}
+  31.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.4706 + -2.75vw),calc(var(--fy) * 0.4106)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.5377));opacity:0.862;box-shadow:0 0 73px 10px rgba(172,59,240,0.466),0 0 153px 30px rgba(172,59,240,0.177)}
+  37.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.5513 + -2.69vw),calc(var(--fy) * 0.4925)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.4592));opacity:0.795;box-shadow:0 0 62px 9px rgba(160,42,239,0.399),0 0 130px 26px rgba(160,42,239,0.152)}
+  43.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.6267 + -2.52vw),calc(var(--fy) * 0.5717)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.3857));opacity:0.719;box-shadow:0 0 53px 8px rgba(137,60,242,0.337),0 0 111px 22px rgba(137,60,242,0.128)}
+  50%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.6964 + -2.25vw),calc(var(--fy) * 0.6473)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.3173));opacity:0.635;box-shadow:0 0 44px 6px rgba(117,76,244,0.281),0 0 92px 18px rgba(117,76,244,0.107)}
+  56.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.7602 + -1.92vw),calc(var(--fy) * 0.7182)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.2544));opacity:0.548;box-shadow:0 0 36px 5px rgba(98,90,246,0.23),0 0 76px 15px rgba(98,90,246,0.087)}
+  62.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.8176 + -1.56vw),calc(var(--fy) * 0.7835)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.1971));opacity:0.46;box-shadow:0 0 29px 4px rgba(82,103,249,0.184),0 0 61px 12px rgba(82,103,249,0.070)}
+  68.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.8681 + -1.19vw),calc(var(--fy) * 0.8422)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.1457));opacity:0.375;box-shadow:0 0 23px 3px rgba(67,115,250,0.144),0 0 48px 10px rgba(67,115,250,0.055)}
+  75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.9115 + -0.83vw),calc(var(--fy) * 0.8933)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.1007));opacity:0.296;box-shadow:0 0 22px 3px rgba(55,124,252,0.11),0 0 46px 9px rgba(55,124,252,0.042)}
+  81.25%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.9471 + -0.51vw),calc(var(--fy) * 0.9359)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.0625));opacity:0.228;box-shadow:0 0 22px 3px rgba(45,132,253,0.1),0 0 46px 9px rgba(45,132,253,0.038)}
+  87.5%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.9745 + -0.25vw),calc(var(--fy) * 0.9689)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.0320));opacity:0.173;box-shadow:0 0 22px 3px rgba(37,138,254,0.1),0 0 46px 9px rgba(37,138,254,0.038)}
+  93.75%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 0.9927 + -0.07vw),calc(var(--fy) * 0.9910)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.0101));opacity:0.135;box-shadow:0 0 22px 3px rgba(32,142,255,0.1),0 0 46px 9px rgba(32,142,255,0.038)}
+  100%{transform:translate(-50%,-50%) translate(calc(var(--fx) * 1.0000 + -0.00vw),calc(var(--fy) * 1.0000)) scale(calc(var(--fs) + (1 - var(--fs)) * 0.0000));opacity:0.12;box-shadow:0 0 22px 3px rgba(30,144,255,0.1),0 0 46px 9px rgba(30,144,255,0.038)}
 }
 
 /* ── film controls ──────────────────────────────────────────────── */

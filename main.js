@@ -1569,7 +1569,12 @@ const readerVis = (() => {
    here before. Everything else on this page — the camera, the reveals, the
    overlays — decelerates on cubic-bezier(.22,1,.36,1). A film that arrives on
    a different curve is the thing that feels bolted on. */
-const MORPH = 'cubic-bezier(.42,0,.58,1)';
+/* linear, deliberately. The arc's shape and its easing both live in the
+   keyframes — the samples are spaced evenly in time and it is WHERE each one
+   sits on the curve that decelerates the panel. Any timing function here would
+   be applied to every segment on top of that, braking into each waypoint and
+   pulling out of it again, which is exactly the stutter that read as angular. */
+const MORPH = 'linear';
 const MORPH_IN = 1800, MORPH_OUT = 1000;
 
 /* Both directions of the flight. The overlay is driven by a keyframe animation
@@ -1661,7 +1666,7 @@ function films() {
   if (!cards.length) return;
 
   const play = $('#fbPlay'), seek = $('#fbSeek'), time = $('#fbTime');
-  let open = false, armed = false, current = null, home = null, tick = null,
+  let open = false, current = null, home = null, tick = null,
       minTimer = null, growTimer = null;
   /* A film that has been lifted out but not yet put back. Cancelling a close
      also cancels the callback that would have returned it, so the handover has
@@ -1704,7 +1709,7 @@ function films() {
     sendHome();                          // whatever was mid-close goes back first
     minTimer = cancelMinimize(minTimer, frame, box);
     if (growTimer) { clearTimeout(growTimer); growTimer = null; }
-    open = true; armed = false; current = v; home = card;
+    open = true; current = v; home = card;
     cap.textContent = card.dataset.cap || card.closest('.cat')?.querySelector('h3')?.textContent || '';
     v.style.removeProperty('transform');
     /* The film is MOVED into the frame, so the card it left would otherwise
@@ -1785,8 +1790,10 @@ function films() {
     });
   });
 
-  frame.addEventListener('pointerenter', () => { armed = true; });
-  frame.addEventListener('pointerleave', () => { if (armed) hide(); });
+  /* No hover-out close. The flight lasts 1.8s and bows left on its way to the
+     centre, so the frame routinely travels out from under a stationary cursor
+     — pointerleave then fired on a panel the viewer had only just opened.
+     Closing is deliberate now: the X, the scrim, or Escape. */
   x.addEventListener('click', e => { e.stopPropagation(); hide(); });
   scrim.addEventListener('click', hide);
   addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
@@ -1926,7 +1933,6 @@ function reader() {
     body.innerHTML = '';
     body.appendChild(clone);
 
-    armed = false;                      // not until the pointer has been inside
     shell.classList.add('on');
     shell.setAttribute('aria-hidden', 'false');
     document.body.classList.add('reading');
@@ -1978,10 +1984,7 @@ function reader() {
     });
   });
 
-  let armed = false;
-  glass.addEventListener('pointerenter', () => { armed = true; });
-  glass.addEventListener('pointerleave', () => { if (armed) hide(); });
-
+  // same reason as the films: the panel moves, the cursor does not
   x.addEventListener('click', hide);
   scrim.addEventListener('click', hide);
   addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
