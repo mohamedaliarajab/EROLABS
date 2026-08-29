@@ -1569,48 +1569,60 @@ const readerVis = (() => {
    here before. Everything else on this page — the camera, the reveals, the
    overlays — decelerates on cubic-bezier(.22,1,.36,1). A film that arrives on
    a different curve is the thing that feels bolted on. */
-const MORPH = 'cubic-bezier(.22,1,.36,1)';
+const MORPH = 'cubic-bezier(.42,0,.58,1)';
+const MORPH_IN = 1800, MORPH_OUT = 1000;
 
-function flipFrom(el, src) {
+/* Both directions of the flight. The overlay is driven by a keyframe animation
+   rather than a transition because the path is not a straight line: it leaves
+   the card, drifts LEFT and part-way up while it grows, and only then settles
+   into the middle of the screen. A transition can only interpolate A to B, so
+   the detour has to live in a keyframe.
+
+   The card's geometry is handed to the CSS as --fx/--fy/--fs and the keyframes
+   do the rest, which keeps the shape of the movement in the stylesheet next to
+   everything else that describes how this site moves.
+
+   Closing starts from --fromT, the CURRENT resolved matrix, not from the
+   centre. Close a film that is still opening and it flies back from wherever
+   it had got to; anchoring 0% at the centre would snap it there first. */
+function morphFrom(el, src, dir) {
   const b = src && src.getBoundingClientRect();
   if (!b || !b.width || !el.offsetWidth || reduced) return null;
   const s = Math.max(.04, b.width / el.offsetWidth);
-  // left:50%/top:50% inside a fixed, inset:0 shell — the rest is the viewport
   const dx = (b.left + b.width / 2) - innerWidth / 2;
   const dy = (b.top + b.height / 2) - innerHeight / 2;
-  el.style.transition = 'none';
-  el.style.transformOrigin = '50% 50%';
-  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${s})`;
-  el.style.opacity = '.42';
-  void el.offsetWidth;                          // commit the start frame
-  el.style.transition = `transform .64s ${MORPH},opacity .3s linear`;
-  el.style.transform = 'translate(-50%,-50%) scale(1)';
-  el.style.opacity = '1';
+  const here = getComputedStyle(el).transform;
+  el.style.setProperty('--fx', dx.toFixed(1) + 'px');
+  el.style.setProperty('--fy', dy.toFixed(1) + 'px');
+  el.style.setProperty('--fs', s.toFixed(4));
+  el.style.setProperty('--fromT', here && here !== 'none' ? here : 'translate(-50%,-50%) scale(1)');
+  el.style.animation = 'none';
+  void el.offsetWidth;                       // commit, or the restart is ignored
+  const dur = dir === 'in' ? MORPH_IN : MORPH_OUT;
+  el.style.animation = `film${dir === 'in' ? 'Grow' : 'Shrink'} ${dur}ms ${MORPH} forwards`;
+  return dur;
+}
+
+function flipFrom(el, src) {
+  const dur = morphFrom(el, src, 'in');
+  if (!dur) return null;
   return setTimeout(() => {
-    el.style.transition = ''; el.style.transform = '';
-    el.style.opacity = ''; el.style.transformOrigin = '';
-  }, 680);
+    el.style.animation = '';
+    ['--fx', '--fy', '--fs', '--fromT'].forEach(k => el.style.removeProperty(k));
+  }, dur + 40);
 }
 
 /* Shrink an overlay back onto the element it was lifted from — measured at
    the moment of closing, so if the page has melted and drifted it returns to
-   where the block actually is now. It lands at .16 rather than 0: fading to
-   nothing in mid-air is a dismissal, arriving and then going is a return. */
+   where the block actually is now. */
 function minimizeTo(el, src, done) {
-  const b = src && src.getBoundingClientRect();
-  if (!b || !b.width || !el.offsetWidth || reduced) { done(); return; }
-  const s = Math.max(.04, b.width / el.offsetWidth);
-  const dx = (b.left + b.width / 2) - innerWidth / 2;
-  const dy = (b.top + b.height / 2) - innerHeight / 2;
-  el.style.transition = `transform .58s ${MORPH},opacity .52s ease-in`;
-  el.style.transformOrigin = '50% 50%';
-  el.style.transform = `translate(-50%,-50%) translate(${dx}px,${dy}px) scale(${s})`;
-  el.style.opacity = '.16';
+  const dur = morphFrom(el, src, 'out');
+  if (!dur) { done(); return; }
   return setTimeout(() => {
-    el.style.transition = ''; el.style.transform = '';
-    el.style.opacity = ''; el.style.transformOrigin = '';
+    el.style.animation = '';
+    ['--fx', '--fy', '--fs', '--fromT'].forEach(k => el.style.removeProperty(k));
     done();
-  }, 580);
+  }, dur);
 }
 
 /* Re-opening while a previous panel is still shrinking used to let the old
@@ -1621,8 +1633,10 @@ function minimizeTo(el, src, done) {
 function cancelMinimize(timer, el, shell) {
   if (timer) clearTimeout(timer);
   shell.classList.remove('closing');
+  el.style.animation = '';
   el.style.transition = ''; el.style.transform = '';
   el.style.opacity = ''; el.style.transformOrigin = '';
+  ['--fx', '--fy', '--fs', '--fromT'].forEach(k => el.style.removeProperty(k));
   return null;
 }
 
