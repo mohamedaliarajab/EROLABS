@@ -1496,58 +1496,103 @@ body.reduced .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 0 22px rgba(
   border-top:1.5px solid var(--violet-ink);border-right:1.5px solid var(--violet-ink);
   transform:rotate(45deg);
 }
-.ly-cue b:nth-child(2){left:30%}
-.ly-cue b:nth-child(3){left:58%}
-.ly-cue b:nth-child(4){left:86%}
-.stop.live .ly-cue s{animation:lyStar 2.4s linear infinite}
-/* The chevrons belong to the star, not to a clock of their own. All three
-   come up as it launches and each is knocked out as the head reaches it, so
-   the streak reads as sweeping them along rather than as two things blinking
-   near each other.
+/* Nine arrows along the star's path, each cleared as the light reaches it.
+   The exits are solved, not eyeballed: the streak's left edge covers 91% of
+   the cue over the first 70% of the cycle at constant speed, and its head
+   leads that edge by the streak's length. An arrow centred at x clears at
+   70*(x-7.2)/91, spacing the nine about 6.5% apart.
 
-   That is why this is three keyframe sets and not one with staggered delays:
-   a delay shifts the whole cycle, so staggering the exits would have staggered
-   the entrances too — and they have to arrive together, on the launch. Same
-   duration, no delay, so all three stay locked to the star's cycle. */
-.stop.live .ly-cue b:nth-child(2){animation:lyChevA 2.4s ease-in-out infinite}
-.stop.live .ly-cue b:nth-child(3){animation:lyChevB 2.4s ease-in-out infinite}
-.stop.live .ly-cue b:nth-child(4){animation:lyChevC 2.4s ease-in-out infinite}
-/* Obeyed: the instruction goes. It is `left` rather than a transform because
-   the streak has to cross the whole gap between the label and the switches,
-   and a percentage translate would only ever move it by its own width. One
-   absolutely-positioned 2px bar, so the layout it dirties is its own. */
-.layers.switched .ly-cue{opacity:0;visibility:hidden}
-@keyframes lyStar{
-  0%  {opacity:0;left:0;transform:translateY(-50%) scaleX(.5)}
-  16% {opacity:1}
-  70% {opacity:1;left:calc(100% - var(--u)*2.4);transform:translateY(-50%) scaleX(1.3)}
-  100%{opacity:0;left:100%;transform:translateY(-50%) scaleX(.55)}
+   That 7.2 is measured against the running animation rather than the element:
+   the streak sits at scaleX(.5) at 0%, so reading its width off the DOM gives
+   half the truth, and taking it at face value made all nine clear 5% of the
+   cue late — a constant error is the tell that the constant is wrong.
+
+   Generated rather than hand-written: nine near-identical keyframe blocks is
+   exactly where one transposed number hides forever. */
+.stop.live .ly-cue b{
+  animation-duration:2.4s;animation-timing-function:ease-in-out;
+  animation-iteration-count:infinite;
 }
-/* Each exit is timed to the head arriving. The star's left edge runs 0 to
-   91% of the cue over the first 70% of the cycle at constant speed, and the
-   streak is 2.4u (~9%) long, so its head is at left + 9%. Solving for the
-   three chevron positions gives 17%, 38% and 60% — the holds end just before
-   each, so the arrow is still lit as the light reaches it and gone once it has
-   passed. */
-@keyframes lyChevA{
-  0%  {opacity:0;translate:-6px 0}
-  8%  {opacity:.95;translate:0 0}
-  13% {opacity:.95;translate:0 0}
-  21% {opacity:0;translate:10px 0}
+.ly-cue b:nth-child(2){left:24%}
+.stop.live .ly-cue b:nth-child(2){animation-name:lyChev1}
+.ly-cue b:nth-child(3){left:32.5%}
+.stop.live .ly-cue b:nth-child(3){animation-name:lyChev2}
+.ly-cue b:nth-child(4){left:41%}
+.stop.live .ly-cue b:nth-child(4){animation-name:lyChev3}
+.ly-cue b:nth-child(5){left:49.5%}
+.stop.live .ly-cue b:nth-child(5){animation-name:lyChev4}
+.ly-cue b:nth-child(6){left:58%}
+.stop.live .ly-cue b:nth-child(6){animation-name:lyChev5}
+.ly-cue b:nth-child(7){left:66.5%}
+.stop.live .ly-cue b:nth-child(7){animation-name:lyChev6}
+.ly-cue b:nth-child(8){left:75%}
+.stop.live .ly-cue b:nth-child(8){animation-name:lyChev7}
+.ly-cue b:nth-child(9){left:83.5%}
+.stop.live .ly-cue b:nth-child(9){animation-name:lyChev8}
+.ly-cue b:nth-child(10){left:92%}
+.stop.live .ly-cue b:nth-child(10){animation-name:lyChev9}
+
+@keyframes lyChev1{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  7.385%{opacity:.95;translate:0 0}
+  13.38%{opacity:0;translate:10px 0}
   100%{opacity:0;translate:10px 0}
 }
-@keyframes lyChevB{
-  0%  {opacity:0;translate:-6px 0}
-  8%  {opacity:.95;translate:0 0}
-  34% {opacity:.95;translate:0 0}
-  42% {opacity:0;translate:10px 0}
+@keyframes lyChev2{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  13.92%{opacity:.95;translate:0 0}
+  19.92%{opacity:0;translate:10px 0}
   100%{opacity:0;translate:10px 0}
 }
-@keyframes lyChevC{
-  0%  {opacity:0;translate:-6px 0}
-  8%  {opacity:.95;translate:0 0}
-  56% {opacity:.95;translate:0 0}
-  64% {opacity:0;translate:10px 0}
+@keyframes lyChev3{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  20.46%{opacity:.95;translate:0 0}
+  26.46%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev4{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  27%{opacity:.95;translate:0 0}
+  33%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev5{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  33.54%{opacity:.95;translate:0 0}
+  39.54%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev6{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  40.08%{opacity:.95;translate:0 0}
+  46.08%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev7{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  46.62%{opacity:.95;translate:0 0}
+  52.62%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev8{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  53.15%{opacity:.95;translate:0 0}
+  59.15%{opacity:0;translate:10px 0}
+  100%{opacity:0;translate:10px 0}
+}
+@keyframes lyChev9{
+  0%{opacity:0;translate:-6px 0}
+  6%{opacity:.95;translate:0 0}
+  59.69%{opacity:.95;translate:0 0}
+  65.69%{opacity:0;translate:10px 0}
   100%{opacity:0;translate:10px 0}
 }
 @media (max-width:900px){.ly-cue{display:none}}
