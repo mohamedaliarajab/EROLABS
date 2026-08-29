@@ -1152,7 +1152,7 @@ function poleRig() {
   poleUpdate = (t, dt, heroD) => {
     if (!dragging) {
       vel *= Math.pow(.94, dt / 16);                  // momentum bleeds off
-      rot += vel + dt * .00015 + scrollVel * 8;       // drift + scroll torque
+      rot += vel + dt * .0001725 + scrollVel * 8;     // drift +15% + scroll torque
     }
     // the mast belongs to the hero; it fades as you leave
     const fade = clamp(1 - (heroD - .3) / .5, 0, 1);
@@ -1684,6 +1684,7 @@ function films() {
     const { v, card } = pending;
     pending = null;
     if (!card.contains(v)) card.insertBefore(v, card.firstChild);
+    v.loop = true;                        // back to wallpaper
     card.classList.remove('lifted');
     card.style.removeProperty('background-image');
     v.currentTime = 0;
@@ -1729,6 +1730,16 @@ function films() {
     box.classList.add('on');
     box.setAttribute('aria-hidden', 'false');
     document.body.classList.add('filming');
+    /* Looping is right for a film playing ambiently in a card — it is wallpaper,
+       and it should never stop. It is wrong once someone has opened it to watch:
+       a viewer wants it to end. So the loop comes off on the way in and goes
+       back on when the film returns to its card.
+
+       Nothing else is needed for the button: paint() already derives the icon
+       from v.paused every frame, and an ended video reports paused, so it flips
+       to play by itself. play() on an ended video rewinds and starts again,
+       and the next frame flips the icon back to pause. */
+    v.loop = false;
     v.currentTime = 0;                    // expanded, it starts from the top
     v.play().catch(() => {});
     if (!tick) tick = requestAnimationFrame(paint);
@@ -1825,7 +1836,9 @@ function films() {
       c.closest('.stop')?.classList.contains('live')
         ? v.play().catch(() => {}) : v.pause();
     });
-    if (open && current) current.play().catch(() => {});
+    // a film the viewer watched to the end stays ended; the camera moving on
+    // is not a reason to start it over
+    if (open && current && !current.ended) current.play().catch(() => {});
   };
 }
 
