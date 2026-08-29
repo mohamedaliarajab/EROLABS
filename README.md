@@ -594,10 +594,20 @@ second. That is the intended behaviour, not a bug.
 
 ## Type
 
-Display is **Sora at weight 200**, never heavier. Weight, not size, is what
-makes large type feel bulky — the headlines are big and light on purpose.
-**IBM Plex Mono 300** carries every label, index and readout. Poppins 600 is
-loaded for one thing only: the wordmark, which has to match the logo.
+Display is **Cormorant Garamond 300**. The cosmic ground already carries the
+futurism, so the type carries the opposite: editorial, calm, unhurried. The
+serif's cap-height is 0.85 of Sora's, so every display size is multiplied by
+1.18 — matching cap-height, not point size, is what preserves the scale a
+layout was built around.
+
+Watch `.display`'s line-height. `split()` wraps every glyph in a `.char-w` with
+`overflow:hidden`, and Cormorant's ink spans 1.01em — 73% above the baseline
+and 28% below. At line-height 1.02 that left 0.6px of headroom and the next
+deep descender would have been sliced off inside the wrapper. It is 1.12.
+
+**DM Sans 400** carries prose; **Geist Mono 400** carries every label, index and
+readout. Geist's advance width is identical to IBM Plex Mono's, so swapping
+them reflowed nothing. Poppins 600 is
 
 There are no cards anywhere. Structure comes from hairlines, mono labels and
 whitespace, so the black ground and the canvas stay the loudest things on
