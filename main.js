@@ -1997,20 +1997,13 @@ function boot() {
     entered = true;
     if (withAudio) audioEnable(true);
 
-    /* Everything falls into the mark, the singularity flares, and the site is
-       already arriving underneath by the time the flash peaks — so it reads as
-       one movement through, rather than a fade between two screens. */
-    box.classList.add('warp');
-    document.body.classList.add('warping');
-    setTimeout(() => {
-      document.body.classList.add('ready');
-      stops[0].classList.add('live');
-    }, 640);
-    setTimeout(() => {
-      box.classList.add('done');
-      document.body.classList.remove('warping');
-      if (skyRaf) cancelAnimationFrame(skyRaf);
-    }, 1420);
+    /* Straight to the hero. The loader lifts in a quarter second: long enough
+       not to flash white, short enough to read as a cut rather than a
+       transition you have to sit through. */
+    document.body.classList.add('ready');
+    stops[0].classList.add('live');
+    box.classList.add('done');
+    setTimeout(() => { if (skyRaf) cancelAnimationFrame(skyRaf); }, 300);
   };
   $('#audioOn') ?.addEventListener('click', () => enter(true));
   $('#audioOff')?.addEventListener('click', () => enter(false));
