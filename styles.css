@@ -533,6 +533,8 @@ body.ready .hud{opacity:1}
 
 .char,.word{display:inline-block;will-change:transform,opacity}
 .char-w,.word-w{display:inline-block;overflow:hidden;vertical-align:top}
+/* a word's glyphs travel together, so a line can only break between words */
+.word-g{display:inline-block;white-space:nowrap;vertical-align:top}
 [data-split] .char,[data-split] .word{transform:translateY(110%);opacity:0}
 .stop.live [data-split] .char,.stop.live [data-split] .word{
   transform:none;opacity:1;
@@ -540,7 +542,7 @@ body.ready .hud{opacity:1}
   transition-delay:calc(var(--i,0)*20ms + var(--base,0ms));
 }
 
-.mono,.eyebrow,.kicker,.stop-head,.triad,.cs-k,.p-idx,.pn,.eq-k,.foot-k,.hero-note,.cue-txt em{
+.mono,.eyebrow,.kicker,.stop-head,.triad,.cs-k,.p-idx,.pn,.eq-k,.foot-k,.cue-txt em{
   font-family:var(--f-mono);font-weight:400;
 }
 
@@ -578,8 +580,22 @@ body.ready .hud{opacity:1}
 @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 .cue-txt{display:flex;flex-direction:column;gap:4px;font-size:calc(var(--u)*.95);font-weight:400;letter-spacing:.01em}
 .cue-txt em{font-style:normal;font-size:calc(var(--u)*.66);letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
-.hero-note{max-width:30ch;font-size:calc(var(--u)*.7);line-height:1.7;letter-spacing:.1em;color:var(--ink-2)}
-.hero-note em{font-style:normal;color:var(--violet)}
+/* A dictionary entry, set like one: headword, pronunciation, part of speech,
+   then the sense. EB Garamond is the old-lexicon voice and it is scoped to
+   this single block — it is a quotation from another kind of document, not a
+   fourth voice in the system.
+
+   It leaves the mono group above with its .1em tracking: letterspacing is for
+   system labels, and a lexicon entry is prose. Garamond's x-height is small,
+   so .7u to .92u holds the same reading size it had in the monospace. */
+.hero-note{
+  max-width:34ch;font-family:"EB Garamond",Georgia,"Times New Roman",serif;
+  font-size:calc(var(--u)*.92);line-height:1.6;letter-spacing:.004em;color:var(--ink-2);
+}
+.hero-note b{font-weight:600;color:var(--ink)}
+.hero-note .hn-say{font-style:normal;color:var(--ink-3);letter-spacing:.02em}
+.hero-note .hn-pos{font-style:italic;color:var(--ink-3)}
+.hero-note em{font-style:italic;color:var(--violet)}
 
 /* ── 01 about ──────────────────────────────────────────────────── */
 .about-body{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*3);max-width:min(760px,70vw);margin-top:calc(var(--u)*2)}
@@ -679,7 +695,16 @@ body.ready .hud{opacity:1}
    The densest stop on the site, so its heading runs a step smaller —
    fitStops scales the whole section uniformly, which means the only way
    to make the TABLES legible is to spend less height on everything else. */
-#cases .xl{font-size:calc(var(--u)*3.9)}
+/* Declared larger so it RENDERS the same. Case Studies carries more than the
+   frame holds, so fitStops() scales the whole stop to ~0.72 — at the same
+   declared size as every other title it came out at 45.6px against their 63px.
+   7.2u pre-compensates for that scale, re-solved once the title went to three
+   lines and grew the stop again. Solved from two measured (size, fit)
+   pairs rather than guessed, because the size feeds back into the fit: a bigger
+   title makes the stop taller, which scales it down again. The cost is that the
+   rest of this stop renders ~5% smaller, which is invisible; the title being
+   two-thirds the size of every other one was not. */
+#cases .xl{font-size:calc(var(--u)*7.2)}
 
 .case{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*1);border-top:1px solid var(--line-2)}
 .case-brief{position:relative}
@@ -1703,7 +1728,11 @@ body.reduced .ly-cue{display:none}
 .ly-m s{display:block;height:100%;width:0;text-decoration:none;background:var(--grad);transition:width .7s var(--ease)}
 .ly-note{
   margin-top:calc(var(--u)*.9);font-size:calc(var(--u)*.82);line-height:1.6;color:var(--ink-2);
-  max-width:74ch;min-height:calc(var(--u)*2.6);transition:color .4s;
+  /* One line. The size was never the problem: the longest of the eight notes
+     measures 680px and the column offers 1080, but the 74ch cap was 518px and
+     forced a wrap. The cap goes; the column bounds it. min-height reserves a
+     single line so swapping notes cannot shift the layout under the demo. */
+  max-width:none;min-height:calc(var(--u)*1.45);transition:color .4s;
 }
 @media (max-width:900px){
   .ly-toggles{margin-left:0}

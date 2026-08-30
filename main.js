@@ -534,20 +534,36 @@ function split(el) {
   const mode = el.dataset.split;
   const out = document.createDocumentFragment();
   let i = 0;
+  const unit = (txt, cls) => {
+    const wrap = document.createElement('span');
+    wrap.className = cls === 'char' ? 'char-w' : 'word-w';
+    const inner = document.createElement('span');
+    inner.className = cls;
+    inner.textContent = txt;
+    inner.style.setProperty('--i', i++);
+    wrap.appendChild(inner);
+    return wrap;
+  };
   for (const node of [...el.childNodes]) {
     if (node.nodeName === 'BR') { out.appendChild(node.cloneNode()); continue; }
     if (node.nodeType !== 3) { out.appendChild(node.cloneNode(true)); continue; }
-    const units = mode === 'char' ? [...node.textContent] : node.textContent.split(/(\s+)/);
-    for (const u of units) {
-      if (!u.trim()) { out.appendChild(document.createTextNode(' ')); continue; }
-      const wrap = document.createElement('span');
-      wrap.className = mode === 'char' ? 'char-w' : 'word-w';
-      const inner = document.createElement('span');
-      inner.className = mode === 'char' ? 'char' : 'word';
-      inner.textContent = u;
-      inner.style.setProperty('--i', i++);
-      wrap.appendChild(inner); out.appendChild(wrap);
-      if (mode === 'word') out.appendChild(document.createTextNode(' '));
+    for (const piece of node.textContent.split(/(\s+)/)) {
+      if (!piece.trim()) { if (piece) out.appendChild(document.createTextNode(' ')); continue; }
+      if (mode === 'char') {
+        /* Each glyph becomes its own inline-block, and adjacent inline-blocks
+           are independent break opportunities — so the browser is free to break
+           a line INSIDE a word, and did: "What's Nex / t.". The word's glyphs go
+           in one nowrap box to make the word atomic again. word-break and
+           overflow-wrap cannot fix this, because by the time the line breaker
+           runs there is no word left to keep together, only a row of boxes. */
+        const g = document.createElement('span');
+        g.className = 'word-g';
+        for (const ch of [...piece]) g.appendChild(unit(ch, 'char'));
+        out.appendChild(g);
+      } else {
+        out.appendChild(unit(piece, 'word'));
+        out.appendChild(document.createTextNode(' '));
+      }
     }
   }
   el.textContent = ''; el.appendChild(out);
