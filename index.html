@@ -43,7 +43,11 @@
   </defs>
 </svg>
 
-<audio id="ambient" src="audio/ambient.mp3" loop preload="auto"></audio>
+<!-- preload="none": at 1.9MB this was 75% of first load, fetched in full during
+     the loader, before anyone had chosen Sound On or Sound Off. It is CBR MP3,
+     so play() streams it — audio starts on the first buffered frames, not the
+     last. See audioEnable(). -->
+<audio id="ambient" src="audio/ambient.mp3" loop preload="none"></audio>
 
 <!-- ─────────────────────────── loader ─────────────────────────── -->
 <div id="loader" aria-hidden="true">
