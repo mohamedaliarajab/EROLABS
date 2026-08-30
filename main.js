@@ -304,6 +304,7 @@ const galaxy = (() => {
     ctx.clearRect(0, 0, W, H);
     // the hero's sky, and only the hero's — gone by the time you have left it
     const near = clamp(1 - heroD / .8, 0, 1);
+    // (heroD is scroll-derived in flat mode — see tick())
     if (near <= .002) return;
     /* Global alpha scales everything equally, so it lifts the band into view
        without touching the contrast ratio — the darks stay dark relative to
@@ -377,8 +378,15 @@ const sky = (() => {
     ctx.globalAlpha = veil;
     /* A hair of parallax. Pinned exactly to the glass, stars read as a sticker
        on the screen rather than a sky you are travelling under. Wrapped, so
-       the field never runs out however far the camera goes. */
-    const ox = cam.x * .03, oy = cam.y * .03;
+       the field never runs out however far the camera goes.
+
+       Flat mode has no camera to lag behind, so the parallax comes off the
+       scroll instead — the sky drifts at a fraction of the page's speed. This
+       is the whole of the journey that survives on a phone, and it is the
+       cheapest depth there is: without it the stars sit flat on the glass and
+       the page stops feeling like somewhere you are moving through. */
+    const ox = flat ? 0 : cam.x * .03;
+    const oy = flat ? scrollY * .18 : cam.y * .03;
     for (const s of stars) {
       const a = reduced ? .5
         : .18 + .70 * Math.pow(Math.max(0, Math.sin(t * .0008 * s.sp + s.ph)), 2);
@@ -2252,7 +2260,36 @@ function boot() {
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
   audioRig(); auroraRig(); layersRig(); enquiry(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
   measure();
-  addEventListener('resize', measure);
+  /* iOS fires resize continuously while the URL bar collapses, and every one of
+     them used to re-run the whole measure pipeline mid-scroll — flowLayout,
+     buildRoute, dress, and an O(n^2) rebuild of the node field. A height-only
+     change smaller than the bar is not a new viewport, so it is ignored; width
+     changes and real rotations still go through, debounced.
+
+     Crossing the flat threshold (rotating a tablet, dragging a window narrow)
+     switches mode live, and clears the inline opacity and .hidden that the
+     camera path leaves on the stops — otherwise a section could arrive in flat
+     mode still faded out from wherever the camera had been. */
+  let rw = innerWidth, rh = innerHeight, rt = null;
+  addEventListener('resize', () => {
+    const widthMoved  = Math.abs(innerWidth - rw) > 1;
+    const heightJumped = Math.abs(innerHeight - rh) > 120;
+    if (!widthMoved && !heightJumped) return;
+    rw = innerWidth; rh = innerHeight;
+    clearTimeout(rt);
+    rt = setTimeout(() => {
+      const nowFlat = reduced || innerWidth < FLAT_AT;
+      if (nowFlat !== flat) {
+        flat = nowFlat;
+        document.body.classList.toggle('flat', flat);
+        if (flat) stops.forEach(x => {
+          x.style.removeProperty('opacity');
+          x.classList.remove('hidden');
+        });
+      }
+      measure();
+    }, 120);
+  });
 
   if (reduced) {
     stops.forEach(s => s.classList.add('live'));

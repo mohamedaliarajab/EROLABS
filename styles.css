@@ -181,7 +181,7 @@ body.is-touch .cursor{display:none}
 }
 
 /* ── the mark ── */
-.ld-mark{position:relative;width:min(34vh,240px);aspect-ratio:1;display:grid;place-items:center}
+.ld-mark{position:relative;width:min(34vh,240px);width:min(34svh,240px);aspect-ratio:1;display:grid;place-items:center}
 .ld-orbit{
   position:absolute;border-radius:50%;border:1px solid rgba(150,185,255,.13);
   animation:ldSpin 26s linear infinite;
@@ -203,6 +203,7 @@ body.is-touch .cursor{display:none}
 .ld-ring{
   position:absolute;inset:22%;border-radius:50%;
   border:calc(min(34vh,240px)*.055) solid #fff;
+  border-width:calc(min(34svh,240px)*.055);
   box-shadow:0 0 30px 6px rgba(160,200,255,.55),
              0 0 70px 22px rgba(90,140,255,.30),
              inset 0 0 22px 4px rgba(140,180,255,.45);
@@ -868,6 +869,25 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 }
 @media (max-width:900px){.cfilm-expand{bottom:calc(var(--u)*3)}}
 
+/* ── touch has no hover, so nothing may hide behind one ───────────────
+   The film controls, the Expand button on both the project cards and the case
+   film, and the demist hole were all revealed by :hover — which on a phone
+   never fires, so they would simply never appear. They are permanent here.
+
+   The demist hole is the one that cannot be adapted, only replaced: it follows
+   a cursor, and there is no cursor. Instead the plate is lighter to begin with,
+   so the film reads through it without needing a hole. */
+body.is-touch .cfilm-ctrl,
+body.is-touch .cat-play{opacity:1;transform:none;translate:0 0;pointer-events:auto}
+body.is-touch .cfilm-expand{opacity:1;translate:0 0;pointer-events:auto}
+body.is-touch .cfilm-frost{
+  -webkit-backdrop-filter:blur(14px) brightness(.74) saturate(.95);
+  backdrop-filter:blur(14px) brightness(.74) saturate(.95);
+  background:rgba(0,0,0,.16);
+}
+/* the hot glow is a hover state; on touch the calm cycle is the only one */
+body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
+
 /* ── 04 reach ──────────────────────────────────────────────────── */
 .reach-lede{max-width:54ch;font-size:calc(var(--u)*.96);font-weight:400;line-height:1.65;color:var(--ink-2);margin-top:calc(var(--u)*2)}
 /* no box — a hairline above is enough to set it apart */
@@ -1185,7 +1205,11 @@ body.reduced .star{animation:none}
 .reader-glass{
   position:absolute;left:50%;top:50%;
   display:flex;flex-direction:column;
-  width:min(75vw,1180px);height:min(75vh,900px);
+  /* svh, not vh: on iOS vh is always the LARGE viewport, so a panel sized in
+     it hangs below the visible area whenever the URL bar is showing. svh is
+     the small viewport — the one you can actually see. vh first as a fallback
+     for anything that does not know svh. */
+  width:min(75vw,1180px);height:min(75vh,900px);height:min(75svh,900px);
   border-radius:calc(var(--u)*1.4);overflow:hidden;isolation:isolate;
   background:
     linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 62%),
@@ -1268,7 +1292,7 @@ body.reading .nav,body.reading .hud,body.reading .progress-rail{
 }
 
 @media (max-width:900px){
-  .reader-glass{width:92vw;height:82vh}
+  .reader-glass{width:92vw;height:82vh;height:82svh}
 }
 body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
 
@@ -1283,7 +1307,7 @@ body.reduced .reader-glass{backdrop-filter:none;background:rgba(10,12,20,.97)}
 .filmbox.on .filmbox-scrim{opacity:1}
 .filmbox-frame{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.965);
-  width:min(80vw,1520px);aspect-ratio:16/9;max-height:82vh;
+  width:min(80vw,1520px);aspect-ratio:16/9;max-height:82vh;max-height:82svh;
   border-radius:calc(var(--u)*1);overflow:hidden;isolation:isolate;
   background:#05060A;border:1px solid rgba(255,255,255,.14);
   box-shadow:0 50px 150px rgba(0,0,0,.8),0 0 90px rgba(90,120,255,.16);
