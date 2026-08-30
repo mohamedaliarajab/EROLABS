@@ -1879,12 +1879,12 @@ function caseFilm() {
         seek  = $('.cf-seek', wrap),
         time  = $('.cf-time', wrap);
 
-  // the file's own shape, so the frame is never letterboxed against a guess
-  const shape = () => {
-    if (v.videoWidth) wrap.style.aspectRatio = v.videoWidth + ' / ' + v.videoHeight;
-  };
-  v.addEventListener('loadedmetadata', shape);
-  shape();
+  /* The frame's shape is the stylesheet's call, not the file's. This used to
+     write an inline aspect-ratio from the video's own 1920x1080 — which both
+     overrode the CSS and, because it fires on loadedmetadata, landed AFTER
+     fitStops() had measured the stop. The section was sized against a box that
+     then grew underneath it. object-fit:cover crops to whatever ratio the CSS
+     asks for, so nothing is letterboxed or stretched either way. */
 
   const clock = n => {
     if (!isFinite(n)) n = 0;
