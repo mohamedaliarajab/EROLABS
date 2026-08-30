@@ -88,7 +88,18 @@ function measure() {
   // nonsense into --fit. Wait for real dimensions; resize brings us back.
   if (!innerWidth || !innerHeight) return;
   vw = innerWidth; vh = innerHeight;
-  xScale = vw < 900 ? .42 : 1;              // tame the lateral travel on phones
+  /* The lateral travel is no longer compressed. This used to squash x to .42
+     under 900px to tame the camera on a phone — but phones run flat now, and
+     under 900 the only things left are tablets, which have the room and need
+     the separation.
+
+     Compressing x does not just shorten the journey, it moves the stops closer
+     together in the world, and the fade is distance-based: Projects and Case
+     Studies sit 1.06 viewports apart, which at .42 collapses to 0.45, and
+     1.65 - 0.45*2.05 leaves BOTH on screen at 73%. That is the pile-up on iPad
+     Air and iPad mini. At full scale they separate to 0.00. iPad Pro was always
+     above the threshold, which is why it alone looked right. */
+  xScale = 1;
   pts = stops.map((s, i) => ({
     x: ((+s.dataset.x + jitter[i].x) / 100) * vw * xScale,
     y: ((+s.dataset.y + jitter[i].y) / 100) * vh,
