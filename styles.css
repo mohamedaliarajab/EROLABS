@@ -893,14 +893,21 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
    The demist hole is the one that cannot be adapted, only replaced: it follows
    a cursor, and there is no cursor. Instead the plate is lighter to begin with,
    so the film reads through it without needing a hole. */
-body.is-touch .cfilm-ctrl,
-body.is-touch .cat-play{opacity:1;transform:none;translate:0 0;pointer-events:auto}
-body.is-touch .cfilm-expand{opacity:1;translate:0 0;pointer-events:auto}
-body.is-touch .cfilm-frost{
-  -webkit-backdrop-filter:blur(14px) brightness(.74) saturate(.95);
-  backdrop-filter:blur(14px) brightness(.74) saturate(.95);
-  background:rgba(0,0,0,.16);
-}
+/* transform:none is right for .cfilm-ctrl, whose transform is only an entrance
+   offset — and wrong for .cat-play, whose transform is the translateX(-50%)
+   that centres it. Sharing one rule knocked every project card's Expand button
+   half its own width to the right. They are separate now. */
+body.is-touch .cfilm-ctrl,body.flat .cfilm-ctrl{opacity:1;transform:none;pointer-events:auto}
+body.is-touch .cat-play,body.flat .cat-play{opacity:1;transform:translateX(-50%);translate:0 0;pointer-events:auto}
+body.is-touch .cfilm-expand,body.flat .cfilm-expand{opacity:1;transform:translateX(-50%);translate:0 0;pointer-events:auto}
+/* No frost. The plate exists so a cursor can melt a hole in it, and on a phone
+   there is no cursor — it was blur with no way to see past it.
+
+   Keyed on the MODE as well as on touch. is-touch asks what the input is;
+   body.flat asks which layout is running. A narrow desktop window gets the
+   mobile layout with a mouse attached, and would otherwise have kept a frost
+   whose only purpose is a hole that mode never opens. */
+body.is-touch .cfilm-frost,body.flat .cfilm-frost{display:none}
 /* the hot glow is a hover state; on touch the calm cycle is the only one */
 body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
 
@@ -1799,6 +1806,14 @@ body.reduced .ly-cue{display:none}
 
 .ly-canvas{display:block;width:100%;height:calc(var(--u)*11);margin-top:calc(var(--u)*1)}
 
+/* The stations sit at fractions of the canvas, so its proportions ARE the
+   diagram's proportions: a 5.7:1 box on an iPad pulled the graph flat. Taller
+   below 1280 brings it back toward the shape it has on a wide screen. Desktop
+   is past this query and unchanged. */
+@media (max-width:1280px){
+  .ly-canvas{height:calc(var(--u)*17)}
+}
+
 .ly-meters{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*.6)}
 .ly-m{display:flex;align-items:center;gap:calc(var(--u)*.7)}
 .ly-m b{
@@ -1821,6 +1836,6 @@ body.reduced .ly-cue{display:none}
   .ly-toggles{margin-left:0;flex-wrap:wrap;gap:calc(var(--u)*.5)}
   .ly-bar{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*1)}
   .ly-meters{grid-template-columns:1fr;gap:calc(var(--u)*.6)}
-  .ly-canvas{height:calc(var(--u)*13)}
+  .ly-canvas{height:calc(var(--u)*20)}
 }
 
