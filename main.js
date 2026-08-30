@@ -145,7 +145,15 @@ function readScroll() {
   // unmeasured — reading a camera target from it would throw and take the
   // rest of boot with it. A resize brings us back.
   if (!pts.length) return;
-  const max = Math.max(1, track.offsetHeight - vh);
+  /* What the scroll is measured against depends on what is scrolling. The
+     camera reads its position from #track, the tall spacer that gives the
+     journey its length. Flat mode has no track — it is display:none with its
+     height cleared — so track.offsetHeight is 0 and this came out as
+     Math.max(1, -844) = 1, which put the progress rail at 100% on the very
+     first pixel of scroll. In flat mode the page itself is the track. */
+  const max = flat
+    ? Math.max(1, document.documentElement.scrollHeight - innerHeight)
+    : Math.max(1, track.offsetHeight - vh);
   const prev = progress;
   progress = clamp(scrollY / max, 0, 1);
   scrollVel = progress - prev;
