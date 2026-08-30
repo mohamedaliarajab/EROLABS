@@ -594,20 +594,42 @@ second. That is the intended behaviour, not a bug.
 
 ## Type
 
-Display is **Cormorant Garamond 300**. The cosmic ground already carries the
-futurism, so the type carries the opposite: editorial, calm, unhurried. The
-serif's cap-height is 0.85 of Sora's, so every display size is multiplied by
-1.18 — matching cap-height, not point size, is what preserves the scale a
-layout was built around.
+Display is **Sora**, 600 for section headlines and 700 for the hero. Weight is
+what gives it authority; the ground supplies the futurism, so the type brings
+order rather than competing. Sora's cap-height is 74/100px at EVERY weight, so
+weight can change without the scale moving — and Bold is only 3.9% wider than
+the Thin the layout was originally built around.
 
-Watch `.display`'s line-height. `split()` wraps every glyph in a `.char-w` with
-`overflow:hidden`, and Cormorant's ink spans 1.01em — 73% above the baseline
-and 28% below. At line-height 1.02 that left 0.6px of headroom and the next
-deep descender would have been sliced off inside the wrapper. It is 1.12.
+Two traps live in `.display`.
 
-**DM Sans 400** carries prose; **Geist Mono 400** carries every label, index and
-readout. Geist's advance width is identical to IBM Plex Mono's, so swapping
-them reflowed nothing. Poppins 600 is
+`split()` wraps every glyph in a `.char-w` inline-block, and adjacent
+inline-blocks are independent line-break opportunities — so the browser will
+break a line INSIDE a word, and did: "What's Nex / t.". `word-break` and
+`overflow-wrap` cannot help, because by the time the line breaker runs there is
+no word left to keep together, only a row of boxes. Each word's glyphs now sit
+in a `.word-g` with `white-space:nowrap`.
+
+And line-height: Sora's ink spans .95em, so 1.05 clears the `overflow:hidden`
+on those wrappers with 8.7px to spare at hero size. A serif with deeper
+descenders needs far more — Cormorant's 1.01em ink left 0.6px at the same
+line-height and would have sliced descenders off inside the wrapper.
+
+`#cases .xl` is declared much larger than every other title (7.2u vs 4.5u) so
+that it RENDERS the same. Case Studies holds more than the frame does, so
+`fitStops()` scales the whole stop to ~0.62; at an equal declared size the
+title came out at 45.6px against everyone else's 63px. The compensation is
+solved from measured (size, fit) pairs, not guessed, because size feeds back
+into fit — a bigger title makes the stop taller, which scales it down again.
+Re-solve it if that section's content changes.
+
+**Manrope 400** carries prose; **IBM Plex Mono 400** carries every label, index
+and readout, tracked .10em–.18em.
+
+One trap when changing tracking: `letter-spacing` in `em` computes to px at the
+element that declares it and then inherits as an ABSOLUTE length. The `(01)`
+index numbers are smaller `<em>`s inside their labels, so they kept the
+parent's pixel gap and measured 0.19–0.22em against a parent set to 0.16em.
+They restate the value explicitly. Poppins 600 is
 
 There are no cards anywhere. Structure comes from hairlines, mono labels and
 whitespace, so the black ground and the canvas stay the loudest things on

@@ -26,16 +26,17 @@ raised     #06070C   ink-2      #8F97A8   indigo  #3F5BFF
                      violet-ink #C36BFF   warn    #FF6B8A
 ```
 
-- **Cormorant Garamond 300** — every display headline. An editorial serif
-  against a cosmic ground: the environment already says future, so the type
-  says calm. Its cap-height is 0.85 of the sans it replaced, so display sizes
-  carry a x1.18 compensation to hold the scale the layout was built around.
-- **DM Sans 400** — all prose, at line-heights of 1.55–1.7. Reading text sits
-  at --ink-2 rather than --ink-3: the dim grey is right for a 9px label you
-  glance at and wrong for a sentence.
-- **Geist Mono 400** — every label, index, readout and HUD element, tracked
-  .12em–.22em. Its advance width is identical to the mono it replaced, so no
-  spaced label reflowed.
+- **Sora 600**, and **700** for the hero alone. Weight is the point: the cosmic
+  ground is already busy, so the display voice brings order by being solid
+  rather than delicate. Sora's cap-height is identical at every weight, so
+  presence changed without the scale moving.
+- **Manrope 400** — all prose, line-heights 1.55–1.7. Reading text sits at
+  --ink-2, not --ink-3: the dim grey is right for a 9px label you glance at and
+  wrong for a sentence.
+- **IBM Plex Mono 400** — every label, index, readout and HUD element, tracked
+  .10em–.18em.
+- **EB Garamond** — the hero's Yoruba entry alone, set as a dictionary entry.
+  It is quoted from another kind of document, not a fourth voice in the system.
 - **Poppins 600** — the wordmark alone, because it has to match the logo.
 
 One unit governs scale: `--u: min(1vw, 1.72vh)`, so every section fits both
