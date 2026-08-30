@@ -32,10 +32,24 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 const lerp  = (a, b, t) => a + (b - a) * t;
 const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+/* Two different ideas used to share one flag. `reduced` meant both "do not
+   animate" and "lay this out statically", which is why a phone could not have
+   one without the other. They are separate now:
+
+     reduced — no animation. Only ever from prefers-reduced-motion.
+     flat    — no camera: the stops stack and the page scrolls down normally.
+
+   A phone gets `flat` alone, so it keeps the starfield, the glows, the film
+   morphs and the type reveals — the mood is not the route. Someone who asked
+   for reduced motion gets both. Desktop matches neither, so every rule and
+   branch below is invisible to it. */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch   = matchMedia('(hover: none)').matches;
+const FLAT_AT = 900;
+let   flat    = reduced || innerWidth < FLAT_AT;
 if (touch) document.body.classList.add('is-touch');
 if (reduced) document.body.classList.add('reduced');
+if (flat) document.body.classList.add('flat');
 
 /* ── geometry ──────────────────────────────────────────────────── */
 const stops = $$('.stop');
@@ -69,7 +83,7 @@ function measure() {
   });
   fitStops();
   flowLayout();
-  if (!reduced) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
+  if (!flat) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
   buildRoute();
   dress();
   field.resize();
@@ -79,7 +93,9 @@ function measure() {
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
 function fitStops() {
-  if (reduced) { stops.forEach(s => s.style.removeProperty('--fit')); return; }
+  // Nothing is fitted to a single screen in flat mode — a section is allowed
+  // to be taller than the phone and simply scroll, which is the whole point.
+  if (flat) { stops.forEach(s => s.style.removeProperty('--fit')); return; }
   for (const s of stops) {
     s.style.setProperty('--fit', 1);
     const h = s.offsetHeight;
@@ -1093,7 +1109,7 @@ function writeMelt(el, t, urgent) {
 
 const viewportEl = $('#viewport');
 function melt(t, dt) {
-  if (reduced || !meltDisp) return;
+  if (reduced || touch || flat || !meltDisp) return;   // idle == reading, on a phone
   /* rAF is suspended while the tab is hidden, so on return `t - lastActive`
      can be minutes. Treat a long frame gap as coming back to the page and
      restart the countdown, rather than snapping straight to a deep melt. */
@@ -2126,8 +2142,20 @@ function tick(t) {
   // proximity → reveal, and cull what's far away
   let heroD = 0, best = 0;
   for (let i = 0; i < N; i++) {
-    const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
-    const d = dists[i] = Math.hypot(dx, dy);
+    let d;
+    if (flat) {
+      /* No camera to measure against, so a stop's distance is how far its
+         middle sits from the middle of the screen, counted in screens. Same
+         units as the camera metric, which is what lets `live`, the sector
+         readout, the mast fade and the per-section updates below all carry on
+         working without knowing which mode they are in. */
+      const r = stops[i].getBoundingClientRect();
+      d = Math.abs(r.top + r.height / 2 - vh / 2) / vh;
+    } else {
+      const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
+      d = Math.hypot(dx, dy);
+    }
+    dists[i] = d;
     if (i === 0) heroD = d;
     if (d < dists[best]) best = i;
     stops[i].classList.toggle('live', d < 1.05);
@@ -2135,9 +2163,15 @@ function tick(t) {
        strength during a leg and the screen reads as several sections piled on
        each other — which is exactly what "mixed up" looks like. Full at a
        third of a viewport, gone by four fifths, so a leg is a crossfade
-       between two sections and never a pile of four. */
-    stops[i].style.opacity = clamp(1.65 - d * 2.05, 0, 1).toFixed(3);
-    stops[i].classList.toggle('hidden', d > 1.4);
+       between two sections and never a pile of four.
+
+       Flat mode wants none of it: the sections are stacked in normal flow and
+       you are meant to scroll past them, so fading the one above out as you
+       read the one below would just be losing content. */
+    if (!flat) {
+      stops[i].style.opacity = clamp(1.65 - d * 2.05, 0, 1).toFixed(3);
+      stops[i].classList.toggle('hidden', d > 1.4);
+    }
   }
   /* Hysteresis, and it matters more than it looks. The camera lerps toward
      its target and never exactly arrives, so if you stop scrolling roughly

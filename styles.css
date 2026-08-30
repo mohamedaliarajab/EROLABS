@@ -1075,7 +1075,21 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 
 /* ── mobile ────────────────────────────────────────────────────── */
 @media (max-width:900px){
-  :root{--u:min(2.7vw,1.5vh)}
+  /* The unit is rebased, not inherited. min(2.7vw,1.5vh) put body copy at 9.9px
+     and labels at 7.4px on a 390px phone — the display sizes were fine, the
+     reading sizes were not, and the brief asks that body copy never be hard to
+     read. A clamp holds it between 13 and 17px so a small phone stays legible
+     and a large one does not inflate.
+
+     Raising --u lifts everything, so the display multipliers come down to
+     compensate: the headline was already the right size and does not need to
+     grow with the body text. */
+  :root{--u:clamp(13px,4.1vw,17px)}
+  .xxl{font-size:calc(var(--u)*3.4)}
+  .xl{font-size:calc(var(--u)*2.6)}
+  /* flat mode does not scale a stop to the frame, so the compensation that
+     desktop needs for #cases would just make it oversized here */
+  #cases .xl{font-size:calc(var(--u)*2.6)}
   .nav-links,.nav-cta{display:none}
   .vol-slider{display:none}
   .nav-right{gap:0}
@@ -1089,8 +1103,8 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
   .nav.open .nav-links a{color:var(--ink)}
   .pole{left:0}
   .stop{width:86vw}
-  .xxl{font-size:calc(var(--u)*5.4)}
-  .xl{font-size:calc(var(--u)*4)}
+  /* the mobile display sizes live at the top of this block, next to the --u
+     they depend on — these were the old ones, tuned for the old unit */
   .hero-wrap{grid-template-columns:1fr;gap:calc(var(--u)*2.4)}
   .pole{height:calc(var(--u)*18)}
   .orbit-in{font-size:calc(var(--u)*.78)}
@@ -1113,14 +1127,18 @@ body.reduced .cfilm-ring::before,body.reduced .cfilm,body.reduced .cfilm:hover{a
 
 /* ── reduced motion: the same site, told as a plain scroll ─────── */
 body.reduced{cursor:auto}
-body.reduced #viewport{position:relative;inset:auto;overflow:visible;z-index:2}
-body.reduced .layer{position:relative;inset:auto;transform:none!important}
-body.reduced .layer-bg,body.reduced .layer-fg{display:none}
-body.reduced .stop{
+/* ── flat mode: no camera, the page just scrolls ──────────────────────
+   Everything here is layout, and it is keyed on .flat rather than .reduced so
+   a phone can have the stacked page while keeping its motion. Desktop matches
+   neither class, so none of it is ever evaluated there. */
+body.flat #viewport{position:relative;inset:auto;overflow:visible;z-index:2}
+body.flat .layer{position:relative;inset:auto;transform:none!important}
+body.flat .layer-bg,body.flat .layer-fg{display:none}
+body.flat .stop{
   position:relative;top:auto;left:auto;transform:none!important;visibility:visible!important;
-  margin:0 auto;padding:14vh 0;width:min(1080px,88vw);
+  opacity:1;margin:0 auto;padding:12vh 0;width:min(1080px,88vw);
 }
-body.reduced #track{display:none}
+body.flat #track{display:none}
 body.reduced .cursor,body.reduced #grain{display:none}
 body.reduced [data-split] .char,body.reduced [data-split] .word{transform:none;opacity:1}
 body.reduced .case-step{opacity:1;transform:none}
@@ -1135,15 +1153,15 @@ body.still #loader{display:none}
 body.still .nav,body.still .hud{opacity:1;transform:none;transition:none}
 
 /* the mast at rest — reduced motion gets a static column, not a spinner */
-body.reduced .pole{height:auto;perspective:none;display:flex;flex-direction:column;gap:16px}
-body.reduced .pole-line,body.reduced .pole-cap,body.reduced .pole-hint{display:none}
-body.reduced .pole-stage{position:static;width:auto;height:auto;display:flex;flex-direction:column;gap:14px}
-body.reduced .orbit{position:static;transform:none!important;opacity:1!important}
-body.reduced .orbit-in{transform:none}
+body.flat .pole{height:auto;perspective:none;display:flex;flex-direction:column;gap:16px}
+body.flat .pole-line,body.flat .pole-cap,body.flat .pole-hint{display:none}
+body.flat .pole-stage{position:static;width:auto;height:auto;display:flex;flex-direction:column;gap:14px}
+body.flat .orbit{position:static;transform:none!important;opacity:1!important}
+body.flat .orbit-in{transform:none}
 
-body.reduced .nav-links{opacity:1;pointer-events:auto;transform:none}
+body.flat .nav-links{opacity:1;pointer-events:auto;transform:none}
 
-body.reduced .stop.melting{filter:none}
+body.reduced .stop.melting,body.flat .stop.melting{filter:none}
 
 body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{animation:none}
 
