@@ -698,14 +698,14 @@ body.ready .hud{opacity:1}
 /* Declared larger so it RENDERS the same. Case Studies carries more than the
    frame holds, so fitStops() scales the whole stop to ~0.72 — at the same
    declared size as every other title it came out at 45.6px against their 63px.
-   6.75u pre-compensates for that scale. Re-solve it whenever this stop's
+   5.86u pre-compensates for that scale. Re-solve it whenever this stop's
    content changes — the film's ratio, the line count, anything — because size
    feeds back into fit. Solved from two measured (size, fit)
    pairs rather than guessed, because the size feeds back into the fit: a bigger
    title makes the stop taller, which scales it down again. The cost is that the
    rest of this stop renders ~5% smaller, which is invisible; the title being
    two-thirds the size of every other one was not. */
-#cases .xl{font-size:calc(var(--u)*6.75)}
+#cases .xl{font-size:calc(var(--u)*5.86)}
 
 .case{margin-top:calc(var(--u)*1.1);padding-top:calc(var(--u)*1);border-top:1px solid var(--line-2)}
 .case-brief{position:relative}
