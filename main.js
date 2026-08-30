@@ -2120,6 +2120,23 @@ function nav() {
     const max = track.offsetHeight - vh;
     scrollTo({ top: (i / (N - 1)) * max, behavior: 'smooth' });
   }));
+  /* Phones: the header is a top-of-page thing, and this is the way back to it.
+     The class is toggled only when the threshold is actually crossed, so a
+     scroll costs one comparison per frame's worth of events and nothing else.
+     Only the phone media query reads .scrolled, so this is inert everywhere
+     else — a tablet and a desktop toggle a class nobody styles. */
+  const toTop = $('#toTop');
+  toTop?.addEventListener('click', () => {
+    scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+  });
+  let atTop = true;
+  addEventListener('scroll', () => {
+    const now = scrollY <= 40;
+    if (now === atTop) return;
+    atTop = now;
+    document.body.classList.toggle('scrolled', !now);
+  }, { passive: true });
+
   burger.addEventListener('click', () => {
     const open = navEl.classList.toggle('open');
     burger.setAttribute('aria-expanded', String(open));

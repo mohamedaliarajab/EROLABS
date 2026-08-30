@@ -464,6 +464,40 @@ body.is-touch .vol-slider{cursor:pointer}
 .nav-burger[aria-expanded="true"] i:nth-child(1){transform:translateY(3.5px) rotate(45deg)}
 .nav-burger[aria-expanded="true"] i:nth-child(2){width:20px;transform:translateY(-3.5px) rotate(-45deg)}
 
+/* ── phones: the header is a top-of-page thing ───────────────────────
+   Fixed and full width, it sat over section copy the whole way down. On a
+   phone it now leaves as soon as you move and comes back when you return to
+   the top, and the burger is replaced by a way back up — a menu that scrolls
+   to five stops is less use here than the one control you actually want.
+
+   Scoped to the same query the mode uses, so it cannot reach a tablet (which
+   keeps the camera and the mast) or a desktop. */
+.to-top{display:none}
+@media (max-width:700px), (max-height:520px){
+  .nav-burger{display:none}
+
+  body.flat .nav{transition:opacity .35s var(--ease),transform .35s var(--ease)}
+  body.flat.scrolled .nav{opacity:0;transform:translateY(-110%);pointer-events:none}
+
+  body.flat .to-top{
+    display:inline-flex;align-items:center;gap:calc(var(--u)*.45);
+    position:fixed;right:calc(var(--u)*1.1);bottom:calc(var(--u)*1.4);z-index:30;
+    padding:calc(var(--u)*.62) calc(var(--u)*1.05);
+    border-radius:999px;border:1px solid rgba(255,255,255,.22);
+    background:rgba(6,8,16,.72);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.56);
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);
+    opacity:0;transform:translateY(10px);pointer-events:none;
+    transition:opacity .35s var(--ease),transform .35s var(--ease),
+               color .3s,border-color .3s,background .3s;
+  }
+  body.flat .to-top svg{width:calc(var(--u)*.8);height:calc(var(--u)*.8);flex:none}
+  /* it arrives exactly as the header leaves */
+  body.flat.scrolled .to-top{opacity:1;transform:none;pointer-events:auto}
+  body.flat .to-top:active{color:#fff;border-color:var(--violet);background:rgba(166,37,238,.3)}
+}
+
 /* ── HUD ───────────────────────────────────────────────────────── */
 .hud{
   position:fixed;bottom:26px;z-index:20;display:flex;flex-direction:column;gap:5px;
@@ -1141,7 +1175,8 @@ body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
   .nav-links,.nav-cta{display:none}
   .vol-slider{display:none}
   .nav-right{gap:0}
-  .nav-burger{display:flex}
+  /* the burger is gone on phones — the header hides on scroll and .to-top is
+     the control that replaces it. See the phone header block above. */
   .nav.open .nav-links{
     display:flex;flex-direction:column;gap:26px;
     position:fixed;inset:0;background:rgba(1,2,5,.97);z-index:-1;

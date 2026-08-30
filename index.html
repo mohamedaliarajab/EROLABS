@@ -121,6 +121,13 @@
   <button class="nav-burger" id="burger" aria-label="Menu" aria-expanded="false"><i></i><i></i></button>
 </header>
 
+<!-- phones only: the header leaves as soon as you scroll, so this is the way
+     back to it. Tablets keep the camera and the mast, and never see it. -->
+<button class="to-top" id="toTop" aria-label="Back to top">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V6M6 12l6-6 6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span>Top</span>
+</button>
+
 <!-- ─────────────────────────── HUD ─────────────────────────── -->
 <div class="hud hud-l" aria-hidden="true">
   <span class="hud-k">SECTOR</span>
