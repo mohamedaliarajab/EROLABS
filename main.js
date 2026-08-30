@@ -45,12 +45,24 @@ const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
    branch below is invisible to it. */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch   = matchMedia('(hover: none)').matches;
-/* Width alone was not enough. A Pro Max in landscape is 932x430 — wide enough
-   to miss a width-only test, and 430px of height is nowhere near what a camera
-   moving a full screen per leg needs. Measured, it was landing on the desktop
-   path with 7px body copy. Short viewports are flat whatever their width. */
-const FLAT_AT = 900, FLAT_SHORT = 520;
-const isFlat = () => reduced || innerWidth < FLAT_AT || innerHeight < FLAT_SHORT;
+/* ONE source of truth for the mode, and it is the same query the stylesheet
+   uses. This used to be a `flat` boolean recomputed inside a resize handler
+   that diffed innerWidth — and resize does not fire reliably when a device is
+   switched in devtools, so CSS would flip to the phone layout while JS still
+   believed it was a desktop. The camera kept running and positioning stops
+   absolutely while the stylesheet had already put them in flow: sections piled
+   on top of each other, and #track kept a stale 5328px height.
+
+   matchMedia's change event fires on device switches, rotation and window
+   resizes alike. Because the query text is identical to the stylesheet's,
+   the two can no longer disagree.
+
+   700px, not 900: phones go flat, tablets keep the journey. A Pro Max is 430
+   wide and an iPad mini is 744, so the gap is comfortable. The height clause
+   catches landscape phones, where there is not enough room for a camera that
+   travels a screen per leg. */
+const FLAT_MQ = matchMedia('(max-width:700px), (max-height:520px)');
+const isFlat  = () => reduced || FLAT_MQ.matches;
 let   flat    = isFlat();
 if (touch) document.body.classList.add('is-touch');
 if (reduced) document.body.classList.add('reduced');
@@ -88,7 +100,10 @@ function measure() {
   });
   fitStops();
   flowLayout();
-  if (!flat) track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
+  // and it is cleared on the way into flat mode — left behind, a stale desktop
+  // height keeps the page scrollable far past its content
+  if (flat) track.style.removeProperty('height');
+  else track.style.height = ((N - 1) * LEG * vh + vh) + 'px';
   buildRoute();
   dress();
   field.resize();
@@ -143,6 +158,14 @@ const layers = [
 let routeSvg = null, routePath = null, routeTrail = null, routePulse = null, routeLen = 0;
 
 function buildRoute() {
+  /* The route is the camera's path, and it is sized to the whole world — 1102px
+     across on a 390px phone. It lives in .layer-mid, which flat mode has to keep
+     visible because the stops are in it, and body.flat #viewport turns off the
+     overflow:hidden that was containing it. So on a phone it escaped and made
+     the document twice the width of the screen: the page slid sideways and the
+     content left the frame. Nothing to draw when there is no camera. */
+  if (flat) { if (routeSvg) routeSvg.style.display = 'none'; return; }
+  if (routeSvg) routeSvg.style.removeProperty('display');
   const pad = Math.max(vw, vh) * .55;
   const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
   const minX = Math.min(...xs) - pad, minY = Math.min(...ys) - pad;
@@ -2272,6 +2295,42 @@ function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
   audioRig(); auroraRig(); layersRig(); enquiry(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
+
+  /* Mode comes from the media query, not from measuring the window. Size
+     changes still need a re-measure, and iOS fires resize continuously while
+     its URL bar collapses — each one re-running flowLayout, buildRoute, dress
+     and an O(n^2) node-field rebuild mid-scroll — so a height-only change
+     smaller than the bar is ignored. */
+  const applyMode = () => {
+    const now = isFlat();
+    if (now === flat) return;
+    flat = now;
+    document.body.classList.toggle('flat', flat);
+    // whatever the other mode wrote on the stops has to go, or a section
+    // arrives in flat mode still faded out from wherever the camera left it
+    stops.forEach(x => { x.style.removeProperty('opacity'); x.classList.remove('hidden'); });
+    measure();
+  };
+  FLAT_MQ.addEventListener('change', applyMode);
+  matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', applyMode);
+
+  let rw = innerWidth, rh = innerHeight, rt = null;
+  addEventListener('resize', () => {
+    const widthMoved   = Math.abs(innerWidth - rw) > 1;
+    const heightJumped = Math.abs(innerHeight - rh) > 120;
+    if (!widthMoved && !heightJumped) return;
+    rw = innerWidth; rh = innerHeight;
+    clearTimeout(rt);
+    rt = setTimeout(() => { applyMode(); measure(); }, 120);
+  });
+
+  /* Reconcile before the first measure. `flat` is latched when the script
+     parses, and at that moment the viewport is not always final — a phone is
+     still settling its URL bar, an iframe may not be laid out yet. The media
+     query flips before boot() can attach a listener, so that first change event
+     is missed and the wrong mode sticks for the life of the page. Asking again
+     here costs nothing and closes the window. */
+  applyMode();
   measure();
   /* iOS fires resize continuously while the URL bar collapses, and every one of
      them used to re-run the whole measure pipeline mid-scroll — flowLayout,
@@ -2283,26 +2342,7 @@ function boot() {
      switches mode live, and clears the inline opacity and .hidden that the
      camera path leaves on the stops — otherwise a section could arrive in flat
      mode still faded out from wherever the camera had been. */
-  let rw = innerWidth, rh = innerHeight, rt = null;
-  addEventListener('resize', () => {
-    const widthMoved  = Math.abs(innerWidth - rw) > 1;
-    const heightJumped = Math.abs(innerHeight - rh) > 120;
-    if (!widthMoved && !heightJumped) return;
-    rw = innerWidth; rh = innerHeight;
-    clearTimeout(rt);
-    rt = setTimeout(() => {
-      const nowFlat = isFlat();
-      if (nowFlat !== flat) {
-        flat = nowFlat;
-        document.body.classList.toggle('flat', flat);
-        if (flat) stops.forEach(x => {
-          x.style.removeProperty('opacity');
-          x.classList.remove('hidden');
-        });
-      }
-      measure();
-    }, 120);
-  });
+
 
   if (reduced) {
     stops.forEach(s => s.classList.add('live'));
