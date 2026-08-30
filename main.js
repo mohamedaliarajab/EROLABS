@@ -45,8 +45,13 @@ const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
    branch below is invisible to it. */
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const touch   = matchMedia('(hover: none)').matches;
-const FLAT_AT = 900;
-let   flat    = reduced || innerWidth < FLAT_AT;
+/* Width alone was not enough. A Pro Max in landscape is 932x430 — wide enough
+   to miss a width-only test, and 430px of height is nowhere near what a camera
+   moving a full screen per leg needs. Measured, it was landing on the desktop
+   path with 7px body copy. Short viewports are flat whatever their width. */
+const FLAT_AT = 900, FLAT_SHORT = 520;
+const isFlat = () => reduced || innerWidth < FLAT_AT || innerHeight < FLAT_SHORT;
+let   flat    = isFlat();
 if (touch) document.body.classList.add('is-touch');
 if (reduced) document.body.classList.add('reduced');
 if (flat) document.body.classList.add('flat');
@@ -2069,7 +2074,15 @@ function nav() {
     e.preventDefault();
     const i = +el.dataset.goto;
     navEl.classList.remove('open'); burger.setAttribute('aria-expanded', 'false');
-    if (reduced) { stops[i].scrollIntoView({ behavior: 'smooth' }); return; }
+    /* Flat, not reduced. #track is display:none in flat mode and measure()
+       never gives it a height, so track.offsetHeight is 0 and `max` comes out
+       NEGATIVE — every menu item scrolled you to the top of the page instead
+       of to its section. This is the mast on the hero and the burger menu on
+       every phone and tablet, so it was the whole navigation. */
+    if (flat) {
+      stops[i].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+      return;
+    }
     const max = track.offsetHeight - vh;
     scrollTo({ top: (i / (N - 1)) * max, behavior: 'smooth' });
   }));
@@ -2278,7 +2291,7 @@ function boot() {
     rw = innerWidth; rh = innerHeight;
     clearTimeout(rt);
     rt = setTimeout(() => {
-      const nowFlat = reduced || innerWidth < FLAT_AT;
+      const nowFlat = isFlat();
       if (nowFlat !== flat) {
         flat = nowFlat;
         document.body.classList.toggle('flat', flat);
@@ -2293,8 +2306,24 @@ function boot() {
 
   if (reduced) {
     stops.forEach(s => s.classList.add('live'));
-    document.body.classList.add('ready', 'nav-bar');   // no mast to wait for
-    $('#loader').classList.add('done');
+    document.body.classList.add('nav-bar');            // no mast to wait for
+    /* The loader used to be skipped outright here, which is why it "does not
+       show" for anyone with Reduce Motion switched on — a common setting, and
+       one plenty of people leave on permanently. Whether the site makes sound
+       is not a motion preference, so the loader is shown; it just skips the
+       animated fill and goes straight to 100% and straight to the choice. */
+    const L = $('#loader');
+    $('#loaderBar').style.width = '100%';
+    $('#loaderCount').textContent = '100%';
+    L.classList.add('asks');
+    const go = withAudio => {
+      if (withAudio) audioEnable(true);
+      L.classList.add('done');
+      document.body.classList.add('ready');
+    };
+    $('#audioOn') ?.addEventListener('click', () => go(true));
+    $('#audioOff')?.addEventListener('click', () => go(false));
+    $('#audioOn') ?.focus({ preventScroll: true });
     $$('.stat').forEach(countUp);
     return;
   }

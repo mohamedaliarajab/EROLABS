@@ -1094,6 +1094,15 @@ body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
 }
 
 /* ── mobile ────────────────────────────────────────────────────── */
+/* Tablets and narrow windows: the camera journey is fine here, the unit is not.
+   min(1vw,1.72vh) is written for a wide desktop, so at 1024px it resolves to
+   10.2px and body copy lands at 9.6px — measured on iPad Pro portrait and on
+   both iPads in landscape. A floor and a ceiling keep this band readable
+   without touching the desktop scale above it. */
+@media (min-width:901px) and (max-width:1280px){
+  :root{--u:clamp(12px,1.35vw,14.5px)}
+}
+
 @media (max-width:900px){
   /* The unit is rebased, not inherited. min(2.7vw,1.5vh) put body copy at 9.9px
      and labels at 7.4px on a 390px phone — the display sizes were fine, the
