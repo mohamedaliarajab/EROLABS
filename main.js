@@ -1633,8 +1633,14 @@ function selects() {
 
      Order matters on the way out: removing the selected option would blank
      the field, so the tier goes back first. */
+  /* Two answers mean the budget is not a tier yet. "More than one" is a scope
+     that has to be scoped; "Not sure yet" is someone who cannot honestly pick a
+     service, and so cannot honestly pick a price either. Everyone else names a
+     tier — that question is the qualifier and it keeps its teeth. */
+  const OPEN = ['More than one', 'Not sure yet'];
+
   const sync = () => {
-    const many = service.sel.value === 'More than one';
+    const many = OPEN.includes(service.sel.value);
     if (many) {
       if (budget.sel.value && budget.sel.value !== AUTO) held = budget.sel.value;
       if (!autoOpt) { autoOpt = new Option(AUTO, AUTO); budget.sel.add(autoOpt); }
@@ -1958,6 +1964,9 @@ function cancelMinimize(timer, el, shell) {
    Because the lightbox lives at body level it is outside the world, which is
    what keeps a film crisp and running while the page behind it melts.      */
 let filmsLive = () => {};
+/* cases() owns which study is on show; the reading panel needs to move it
+   too, so that closing the panel leaves the page on what was being read. */
+let showCase = () => {};
 function films() {
   const box = $('#filmbox');
   if (!box) return;
@@ -2130,6 +2139,9 @@ function films() {
       if (c.dataset.hoverOnly !== undefined) return;      // hover decides that one
       const v = c.querySelector('video');
       if (!v) return;
+      // the case study that is not on show is display:none — playing it costs
+      // a decode nobody can see, and it competes with the one you can
+      if (c.closest('[hidden]')) { v.pause(); return; }
       c.closest('.stop')?.classList.contains('live')
         ? v.play().catch(() => {}) : v.pause();
     });
@@ -2152,13 +2164,19 @@ function films() {
    because the film is now something you watch in place — the expanded view is
    the option, not the only way to see it. */
 function caseFilm() {
-  const wrap = $('.cfilm');
-  if (!wrap) return;
+  /* Two case studies means two of these. This read $('.cfilm') and wired the
+     first one only, so the second study's player rendered but its play button,
+     seek bar and frost were dead. */
+  $$('.cfilm').forEach(caseFilmOne);
+}
+
+function caseFilmOne(wrap) {
   const v     = wrap.querySelector('video'),
         frost = $('.cfilm-frost', wrap),
         play  = $('.cf-play', wrap),
         seek  = $('.cf-seek', wrap),
         time  = $('.cf-time', wrap);
+  if (!v || !play || !seek || !time) return;
 
   /* The frame's shape is the stylesheet's call, not the file's. This used to
      write an inline aspect-ratio from the video's own 1920x1080 — which both
@@ -2215,6 +2233,70 @@ function caseFilm() {
   wrap.addEventListener('pointerleave', () => frost.style.setProperty('--r', '0px'));
 }
 
+/* ── the two case studies ──────────────────────────────────────────
+   Both live in the same stop and only one is ever in flow, so the section
+   costs what one study costs — which matters here more than anywhere: #cases
+   is the most compressed stop on the site, and anything that adds real height
+   pushes --fit toward its floor.
+
+   Three things have to be handed over on a swap, and each was a bug before it
+   was a line here:
+     · the outgoing film keeps playing and audibly nothing, but it keeps
+       decoding, so it is paused and rewound;
+     · countUp marks a figure done the first time it is asked, and it is asked
+       whenever the camera reaches this stop — including for the study that was
+       hidden at the time. Its numbers would sit at 0 for ever. The incoming
+       figures are un-marked and re-run;
+     · fitStops measured the section against whichever study was showing, so
+       the frame has to be re-measured after the swap, not before.            */
+function cases() {
+  const items = $$('.case-item');
+  if (items.length < 2) return;
+
+  const show = n => {
+    items.forEach(it => {
+      const on = it.dataset.case === String(n);
+      it.hidden = !on;
+      it.classList.toggle('swapped', on);
+      const v = it.querySelector('video');
+      if (v && !on) { v.pause(); v.currentTime = 0; }
+      if (on) {
+        // a figure that was counted while hidden never showed the count
+        $$('.stat', it).forEach(b => { delete b.dataset.done; if (b.dataset.count) b.textContent = '0'; });
+        $$('.stat', it).forEach(countUp);
+      }
+    });
+    fitStops();
+    /* filmsLive() alone did not start the incoming film: it is asked to play
+       an element that was display:none a moment earlier, and the play is
+       dropped. A tick later the element has a box and it takes. The direct
+       call is what actually starts it; filmsLive still runs so the outgoing
+       one is parked the same way the camera would park it. */
+    const start = () => {
+      const live = items.find(i => !i.hidden);
+      const v = live && live.querySelector('video');
+      if (v && live.closest('.stop')?.classList.contains('live')) v.play().catch(() => {});
+    };
+    /* Asked on the same tick, the first play of a film that has been
+       display:none since load is simply dropped — it has not been painted
+       yet, and play() resolves without the film ever starting. It takes on
+       every swap after that, which is what made it look intermittent. Asking
+       twice is idempotent and costs nothing: playing a playing film is a
+       no-op, and the second ask is the one that lands the first time. */
+    setTimeout(() => { filmsLive(); start(); }, 0);
+    setTimeout(start, 260);
+  };
+
+  showCase = show;
+
+  $$('.case-swap').forEach(btn => btn.addEventListener('click', e => {
+    /* the button sits inside .case-brief, whose own click opens the reading
+       panel — without this, switching studies also opened one */
+    e.stopPropagation();
+    show(+btn.dataset.swap);
+  }));
+}
+
 /* ── reading view ──────────────────────────────────────────────────
    Dwell on a dense block and it lifts out into a glass panel at 75% of the
    viewport, with everything behind it blurred. Closing counts as activity,
@@ -2233,14 +2315,13 @@ function reader() {
   const BLOCKS = '.case-brief';
   let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
-  const show = src => {
-    if (open) return;
-    minTimer = cancelMinimize(minTimer, glass, shell);
-    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
-    open = true; srcEl = src;
-    /* A block may name what it opens. The case brief is a summary of a much
-       longer study: the brief is what grows (flipFrom and readerVis still
-       measure and read `src`), but what the panel fills with is the study. */
+  const swapBtn = $('.reader-swap', shell);
+
+  /* A block may name what it opens. The case brief is a summary of a much
+     longer study: the brief is what grows (flipFrom and readerVis still
+     measure and read `src`), but what the panel fills with is the study.
+     Separate from show() because the panel can change study in place. */
+  const fill = src => {
     const target = src.dataset.read ? $(src.dataset.read) : src;
     const clone = (target || src).cloneNode(true);
     clone.removeAttribute('id');
@@ -2252,6 +2333,35 @@ function reader() {
     clone.querySelectorAll('.cat-media, canvas, video').forEach(n => n.remove());
     body.innerHTML = '';
     body.appendChild(clone);
+    body.scrollTop = 0;                          // a new study starts at its top
+
+    // the switcher means nothing on a block that is not a case study
+    const item = src.closest('.case-item');
+    if (!swapBtn) return;
+    swapBtn.hidden = !item;
+    if (!item) return;
+    const other = item.dataset.case === '1' ? '2' : '1';
+    swapBtn.dataset.to = other;
+    $('span', swapBtn).textContent = 'Case study ' + other;
+  };
+
+  swapBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    const n = swapBtn.dataset.to;
+    const next = $('.case-item[data-case="' + n + '"] .case-brief');
+    if (!next) return;
+    showCase(+n);        // the page behind moves too, so closing lands on it
+    srcEl = next;        // and the shrink returns to the block now on show
+    fill(next);
+    readerVis.start(next.dataset.vis);
+  });
+
+  const show = src => {
+    if (open) return;
+    minTimer = cancelMinimize(minTimer, glass, shell);
+    if (growTimer) { clearTimeout(growTimer); growTimer = null; }
+    open = true; srcEl = src;
+    fill(src);
 
     shell.classList.add('on');
     shell.setAttribute('aria-hidden', 'false');
@@ -2299,7 +2409,7 @@ function reader() {
       }, { passive: true });
     }
     el.addEventListener('click', e => {
-      if (e.target.closest('.cat-media')) return;
+      if (e.target.closest('.cat-media, .case-swap')) return;
       clearTimeout(dwell); show(el);
     });
   });
@@ -2322,8 +2432,12 @@ function cursor() {
     /* data-cue is an invitation with words on it, so it wins over the plain
        enlargement — otherwise a link inside the block would shrink the disc
        back mid-sentence. */
-    const cue = e.target.closest('[data-cue]');
-    if (label) label.textContent = cue ? cue.dataset.cue : '';
+    const el = e.target.closest('[data-cue]');
+    /* data-cue="" opts an element OUT of the disc — the swap button sits
+       inside the brief and would otherwise inherit "click to read more",
+       which is not what pressing it does. */
+    const cue = el && el.dataset.cue ? el.dataset.cue : '';
+    if (label) label.textContent = cue;
     c.classList.toggle('is-read', !!cue);
     c.classList.toggle('is-lg', !cue && !!e.target.closest('a,button,.proj,.fill,.pillar'));
   });
@@ -2372,7 +2486,7 @@ function nav() {
 }
 
 /* ── frame ─────────────────────────────────────────────────────── */
-const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / PROJECTS', '03 / CASE STUDIES', '04 / REACH'];
+const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / HOW WE WORK', '03 / CASE STUDIES', '04 / REACH'];
 const ARROWS  = ['↘', '↓', '←', '↘'];
 const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hudCoord'),
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
@@ -2550,7 +2664,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while

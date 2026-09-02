@@ -101,7 +101,7 @@
   </a>
   <nav class="nav-links" id="navLinks" aria-label="Sections">
     <a href="#about"   data-goto="1"><em>01</em> About Us</a>
-    <a href="#projects"    data-goto="2"><em>02</em> Projects</a>
+    <a href="#projects"    data-goto="2"><em>02</em> How We Work</a>
     <a href="#cases"   data-goto="3"><em>03</em> Case Studies</a>
     <a href="#reach"   data-goto="4"><em>04</em> Reach Us</a>
   </nav>
@@ -173,7 +173,7 @@
               <span class="orbit-in"><i class="star" aria-hidden="true"></i></span>
             </button>
             <button class="orbit" data-goto="1"><span class="orbit-in"><em>01</em>About Us</span></button>
-            <button class="orbit" data-goto="2"><span class="orbit-in"><em>02</em>Projects</span></button>
+            <button class="orbit" data-goto="2"><span class="orbit-in"><em>02</em>How We Work</span></button>
             <button class="orbit" data-goto="3"><span class="orbit-in"><em>03</em>Case Studies</span></button>
             <button class="orbit" data-goto="4"><span class="orbit-in"><em>04</em>Reach Us</span></button>
           </nav>
@@ -219,15 +219,15 @@
       </div>
     </section>
 
-    <!-- 02 · PROJECTS ──────────────────────────────────── -->
+    <!-- 02 · HOW WE WORK ─────────────────────────────────── -->
     <section class="stop" id="projects" data-stop="2" data-x="62" data-y="214">
       <span class="stop-num" aria-hidden="true">02</span>
       <header class="stop-head">
         <span class="idx">(02)</span>
-        <span class="stop-name">Projects</span>
+        <span class="stop-name">How We Work</span>
         <span class="stop-move">↓ straight down</span>
       </header>
-      <h2 class="display xl" data-split="char">Things We've<br>Brought to Life.</h2>
+      <h2 class="display xl" data-split="char">How We Work.</h2>
       <div class="proj-intro">
         <p data-split="word">Three ways we make work do itself. Most projects are one of them. The best ones are all three at once.</p>
       </div>
@@ -291,21 +291,24 @@
       </header>
       <h2 class="display xl" data-split="char">The Problem.<br>The Process.<br>The Result.</h2>
 
-      <div class="case">
-        <div class="case-brief" data-vis="climb" data-read="#caseFull" data-cue="Click to read more">
+    <div class="case">
+      <article class="case-item" data-case="1">
+        <div class="case-brief" data-vis="climb" data-read="#caseFull1" data-cue="Click to read more">
         <header class="case-head">
           <div class="case-who">
-            <h3 class="case-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Vantoreq Delmisar Bracondel Sturmvel</span><span class="sr-only">Company name withheld under NDA</span></h3>
+            <div class="case-id">
+              <span class="case-swap-wrap"><span class="case-swap-k">Press to switch between case studies</span><button class="case-swap" type="button" data-swap="2" data-cue="" aria-label="Show case study 2: architecture studio"><i class="eq-sel-ring" aria-hidden="true"></i><span>Case study 2</span></button></span>
+              <h3 class="case-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Vantoreq Delmisar Bracondel Sturmvel</span><span class="sr-only">Company name withheld under NDA</span></h3>
+              </div>
             <p class="case-meta">Freight logistics · Lagos · 2026 · 64 vehicles · 14 FMCG clients · ~1,200 port documents a month</p>
-          </div>
+            </div>
         </header>
 
         <p class="case-claim">Seven analysts spent half of every working day retyping port paperwork.
           That work is gone: <b>42 staff hours</b> back every week, data errors down from
           <b>8.2% to 0.2%</b>, and invoices that took <b>five days</b> to raise now go out the
           <b>same day</b> — releasing capital that had been sitting in completed, unbilled trips.</p>
-        </div>
-
+          </div>
 
         <div class="case-lower">
           <div class="case-data">
@@ -314,13 +317,12 @@
               <div class="fig"><b class="stat" data-count="42">0</b><i>staff hours back every week</i></div>
               <div class="fig"><b class="stat">0.2%</b><i>data errors, down from 8.2%</i></div>
               <div class="fig"><b class="stat" data-count="5">0</b><i>days cut from invoicing — now same-day</i></div>
-            </div>
+              </div>
 
-            </div>
-            <!-- the film, below the line and the width of it -->
-            <div class="cfilm cat-media" data-slot="case-company-a" data-expand-only
-                 data-cap="The workflow · the film">
-              <video src="media/case.mp4" poster="media/poster-case.jpg" muted loop playsinline preload="none"></video>
+              </div>
+            <div class="cfilm cat-media" data-slot="case-freight" data-expand-only
+                 data-cap="The freight workflow · the film">
+              <video src="media/case.mp4" poster="media/poster-case.jpg" muted loop playsinline preload="metadata"></video>
               <i class="cfilm-frost" aria-hidden="true"></i>
               <i class="cfilm-ring" aria-hidden="true"></i>
               <div class="cfilm-ctrl">
@@ -330,20 +332,71 @@
                 </button>
                 <input class="fb-seek cf-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
                 <span class="fb-time cf-time">0:00 / 0:00</span>
-              </div>
-              <button class="cfilm-expand" data-expand aria-label="Expand the workflow film">
+                </div>
+              <button class="cfilm-expand" data-expand aria-label="Expand the The freight workflow film">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span>Expand</span>
               </button>
+              </div>
             </div>
           </div>
-        </div>
+      </article>
+
+      <article class="case-item" data-case="2" hidden>
+        <div class="case-brief" data-vis="climb" data-read="#caseFull2" data-cue="Click to read more">
+        <header class="case-head">
+          <div class="case-who">
+            <div class="case-id">
+              <span class="case-swap-wrap"><span class="case-swap-k">Press to switch between case studies</span><button class="case-swap" type="button" data-swap="1" data-cue="" aria-label="Show case study 1: freight logistics"><i class="eq-sel-ring" aria-hidden="true"></i><span>Case study 1</span></button></span>
+              <h3 class="case-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Kalvindeq Orstamel Praxidon Velmoore</span><span class="sr-only">Company name withheld under NDA</span></h3>
+              </div>
+            <p class="case-meta">Architecture &amp; urban design · Lagos · 2026 · 28 developments · 18 senior staff · ~800 emails a week</p>
+            </div>
+        </header>
+
+        <p class="case-claim">Three people spent eighteen hours a week reading email and retyping it into project
+          trackers. Now the inbox runs the studio: <b>18 hours</b> back every week, rework from
+          missed client revisions down from <b>12% to zero</b>, and opening a project takes
+          <b>two minutes</b> instead of four and a half hours.</p>
+          </div>
+
+        <div class="case-lower">
+          <div class="case-data">
+            <div class="cd-bar">
+            <div class="case-figs" data-vis="climb">
+              <div class="fig"><b class="stat" data-count="18">0</b><i>hours back every week</i></div>
+              <div class="fig"><b class="stat">0%</b><i>design rework, down from 12%</i></div>
+              <div class="fig"><b class="stat">2 min</b><i>to open a project, from 4.5 hours</i></div>
+              </div>
+
+              </div>
+            <div class="cfilm cat-media" data-slot="case-studio" data-expand-only
+                 data-cap="The studio workflow · the film">
+              <video src="media/case-2.mp4" poster="media/poster-case-2.jpg" muted loop playsinline preload="metadata"></video>
+              <i class="cfilm-frost" aria-hidden="true"></i>
+              <i class="cfilm-ring" aria-hidden="true"></i>
+              <div class="cfilm-ctrl">
+                <button class="fb-play cf-play" aria-label="Pause">
+                  <svg class="fb-i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                  <svg class="fb-i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5l11 6.5-11 6.5z" fill="currentColor"/></svg>
+                </button>
+                <input class="fb-seek cf-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
+                <span class="fb-time cf-time">0:00 / 0:00</span>
+                </div>
+              <button class="cfilm-expand" data-expand aria-label="Expand the The studio workflow film">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Expand</span>
+              </button>
+              </div>
+            </div>
+          </div>
+      </article>
       </div>
 
       <!-- The full study. Hidden, so it costs the section no height and no
            --fit; reader() clones it when .case-brief is clicked, because that
            block carries data-read="#caseFull". -->
-      <div class="cf" id="caseFull" hidden>
+      <div class="cf" id="caseFull1" hidden>
         <header class="cf-doc">
           <span>Ẹ̀rọ Labs · Enterprise infrastructure audit</span>
           <span>Ref. SYSTEM-RECON-LOG-2026-NGA · Restricted</span>
@@ -434,6 +487,94 @@
 
         <p class="cf-nda">Company name is blurred due to an NDA.</p>
       </div>
+
+      <div class="cf" id="caseFull2" hidden>
+        <header class="cf-doc">
+          <span>Ẹ̀rọ Labs · Enterprise infrastructure audit</span>
+          <span>Ref. SYSTEM-RECON-ARC-2026-NGA · Restricted</span>
+        </header>
+        <p class="cf-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Kalvindeq Orstamel Praxidon Velmoore</span><span class="sr-only">Company name withheld under NDA</span></p>
+        <h3>Email-driven workflow engine &amp; operations hub</h3>
+        <p class="cf-lede">A commercial architecture studio was running 28 developments out of an
+          email inbox, with three senior people spending eighteen hours a week reading it and
+          retyping what they found into project trackers. We made the inbox itself the engine:
+          mail arriving now opens the project, builds the timeline, assigns the work and reports
+          on it, with nobody in the middle.</p>
+
+        <div class="cf-figs">
+          <div class="cf-fig"><b>18</b><i>hours back every week</i></div>
+          <div class="cf-fig"><b>0%</b><i>design rework, down from 12%</i></div>
+          <div class="cf-fig"><b>2 min</b><i>to open a project, from 4.5 hours</i></div>
+        </div>
+
+        <div class="cf-sec" style="--i:1">
+          <span class="cs-k">1.0 · The system</span>
+          <ul class="cf-list">
+            <li><b>The business.</b> A high-end commercial architecture and urban design studio.</li>
+            <li><b>Where it operates.</b> Headquarters in Lekki Phase 1, Lagos, running projects
+              across Ikoyi, Eko Atlantic and international real-estate corridors.</li>
+            <li><b>Scale.</b> 28 commercial and premium residential developments at once, an
+              in-house team of 18 senior architects, structural engineers and interior designers,
+              and more than 50 specialist sub-contractors.</li>
+            <li><b>Mail volume.</b> Over 800 client revisions, regulatory approval notices,
+              structural briefs and new enquiries arriving in executive mailboxes every week.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:2">
+          <span class="cs-k">2.0 · Where it was leaking</span>
+          <ul class="cf-list">
+            <li><b>Eighteen hours a week on administration.</b> The Head of Architecture and two
+              project coordinators spent that time reading mail, updating trackers, making folders,
+              assigning tasks and writing status emails to stakeholders.</li>
+            <li><b>Work sat in inboxes.</b> Onboarding requests, design briefs and critical
+              structural feedback waited days before anyone moved them onto a project board.</li>
+            <li><b>12% rework, every design phase.</b> Architects kept working on superseded
+              drawings because a client's revision email had not been flagged in time. That meant
+              missed regulatory deadlines and constant executive micro-management just to find out
+              where anything stood.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:3">
+          <span class="cs-k">3.0 · What we built</span>
+          <p>A zero-touch command engine driven entirely by the mail the studio already sends and
+            receives.</p>
+          <ul class="cf-list">
+            <li><b>Projects open themselves.</b> The engine watches the main business inbox. A
+              signed proposal arriving extracts the client's details, creates the client record and
+              spins up a dedicated project workspace.</li>
+            <li><b>Timelines build themselves.</b> It reads the scope out of the onboarding thread,
+              lays out the design programme against the standard milestones — schematic design,
+              design development, construction documents — sets the dates, and sends the client
+              their onboarding brief.</li>
+            <li><b>Work assigns itself.</b> From the project type and its keywords, the hub finds
+              who is free, allocates the design tasks and emails each architect and engineer their
+              own responsibilities and links.</li>
+            <li><b>Leadership is told, not asked.</b> When staff reply to a milestone thread or
+              submit files, the engine reads the update and moves the timeline. The Head of
+              Architecture gets a weekly digest, and anything within 48 hours of slipping raises an
+              immediate warning to the team and to leadership.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:4">
+          <span class="cs-k">4.0 · What it returned — 45-day audit</span>
+          <ul class="cf-list">
+            <li><b>94% less administration.</b> Onboarding a client, building the timeline and
+              assigning the work went from 4.5 hours per project to under two minutes of background
+              processing.</li>
+            <li><b>Version-control errors gone.</b> Because workspaces, timelines and files stay
+              current straight from the mail, rework caused by missed client revisions fell from
+              12% to zero.</li>
+            <li><b>Eighteen hours a week back.</b> Time the Head of Architecture had spent chasing
+              staff for updates, returned — while clients report markedly higher satisfaction from
+              milestone notifications that now arrive without fail.</li>
+          </ul>
+        </div>
+
+        <p class="cf-nda">Company name is blurred due to an NDA.</p>
+      </div>
     </section>
 
     <!-- 04 · REACH US ──────────────────────────────────── -->
@@ -485,15 +626,16 @@
                 <option>Website</option>
                 <option>Branding</option>
                 <option>More than one</option>
+                <option>Not sure yet</option>
               </select>
             </div>
             <div class="eq-field eq-sel">
               <span class="eq-k" id="eqkBudget">Budget</span>
               <select name="budget" required aria-labelledby="eqkBudget">
                 <option value="" disabled selected>Select a tier</option>
-                <option>Tier A: 1.5M – 3.5M</option>
-                <option>Tier B: 3.5M – 7.5M</option>
-                <option>Tier C: 7.5M +</option>
+                <option>Tier A: ₦1.5M – 3.5M</option>
+                <option>Tier B: ₦3.5M – 7.5M</option>
+                <option>Tier C: ₦7.5M +</option>
               </select>
             </div>
           </div>
@@ -572,6 +714,13 @@
     <div class="reader-head">
       <button class="reader-x" aria-label="Close reading view">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <!-- Only shown when the panel is holding a case study: it moves to the
+           other one in place, so the studies can be compared without closing. -->
+      <button class="reader-swap" type="button" data-to="2" hidden>
+        <i class="eq-sel-ring" aria-hidden="true"></i>
+        <span>Case study 2</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
     <div class="reader-body" id="readerBody"></div>
