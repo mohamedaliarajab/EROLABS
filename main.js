@@ -2048,11 +2048,73 @@ function films() {
     v.loop = false;
     v.currentTime = 0;                    // expanded, it starts from the top
     v.play().catch(() => {});
+    /* Moving a video in the DOM interrupts it, and the play asked on the same
+       tick is dropped before the frame has been painted. Asking once more is
+       idempotent — playing a playing film is a no-op. */
+    setTimeout(() => { if (current === v) v.play().catch(() => {}); }, 260);
     if (!tick) tick = requestAnimationFrame(paint);
+    paintSwap();
     growTimer = flipFrom(frame, card);
     wake();
     x.focus({ preventScroll: true });
   };
+
+  const swapBtn = $('#fbSwap');
+
+  /* The switcher only means anything on a case-study film. */
+  const paintSwap = () => {
+    if (!swapBtn) return;
+    const item = home && home.closest('.case-item');
+    swapBtn.hidden = !item;
+    if (!item) return;
+    const other = item.dataset.case === '1' ? '2' : '1';
+    swapBtn.dataset.to = other;
+    $('span', swapBtn).textContent = 'Case study ' + other;
+  };
+
+  /* Change which film is in the frame, without the close-and-reopen flight.
+     show() cannot do this — it returns early when the box is already open,
+     and the whole point here is that it stays open. The film that is leaving
+     is handed straight back to its card rather than going through hide(),
+     which would shrink the frame onto it. */
+  const swapFilm = card => {
+    if (!open || !card || card === home) return;
+    const v = card.querySelector('video');
+    if (!v) return;
+    if (current && home) {
+      current.pause();
+      current.loop = true;                 // back to wallpaper
+      current.currentTime = 0;
+      if (!home.contains(current)) home.insertBefore(current, home.firstChild);
+      home.classList.remove('lifted');
+      home.style.removeProperty('background-image');
+    }
+    current = v; home = card;
+    cap.textContent = card.dataset.cap || '';
+    const poster = v.getAttribute('poster');
+    if (poster) card.style.backgroundImage = `url("${poster}")`;
+    card.classList.add('lifted');
+    slot.appendChild(v);
+    v.loop = false;
+    v.currentTime = 0;
+    v.play().catch(() => {});
+    /* Same trap as the swap on the page: this film's card was display:none
+       until a moment ago, so the first play is dropped before it is painted.
+       Asking again once it has a box is idempotent. */
+    setTimeout(() => { if (current === v) v.play().catch(() => {}); }, 260);
+    if (!tick) tick = requestAnimationFrame(paint);
+    paintSwap();
+    wake();
+  };
+
+  swapBtn?.addEventListener('click', e => {
+    e.stopPropagation();
+    const n = swapBtn.dataset.to;
+    const card = $('.case-item[data-case="' + n + '"] .cfilm');
+    if (!card) return;
+    showCase(+n);          // the page behind follows, so closing lands on it
+    swapFilm(card);
+  });
 
   const hide = () => {
     if (!open) return;
@@ -2060,6 +2122,7 @@ function films() {
     box.setAttribute('aria-hidden', 'true');
     box.classList.add('closing');
     document.body.classList.remove('filming');
+    if (swapBtn) swapBtn.hidden = true;
     clearMelt();                          // closing counts as activity
     wake();
     const v = current, card = home;
@@ -2316,6 +2379,68 @@ function reader() {
   let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
   const swapBtn = $('.reader-swap', shell);
+  const rail = $('.reader-rail', shell), thumb = $('.reader-thumb', shell);
+
+  /* The rail is a sibling of the body, not a child: a child of a scrolling
+     box scrolls with it, and this has to stay put. So its box is copied from
+     the body's whenever the content changes. */
+  let liveTimer = null;
+  const paintRail = () => {
+    if (!rail || !thumb) return;
+    rail.style.top = body.offsetTop + 'px';
+    rail.style.height = body.offsetHeight + 'px';
+    const h = body.clientHeight, sh = body.scrollHeight;
+    if (sh <= h + 2) { rail.classList.add('idle'); return; }
+    rail.classList.remove('idle');
+    /* Capped, not just floored: proportional height on a short study makes a
+       long bar, and this is meant to read as an oval riding the scroll rather
+       than as a scrollbar. */
+    const th = Math.min(Math.max(h * (h / sh), 26), 64);
+    thumb.style.height = th + 'px';
+    thumb.style.transform = 'translateY(' + (body.scrollTop / (sh - h)) * (h - th) + 'px)';
+  };
+
+  /* Take hold of it, or press the track to jump. `offset` is where in the
+     thumb the finger went down, so it does not snap its top to the cursor. */
+  const scrollFromY = (clientY, offset) => {
+    const r = rail.getBoundingClientRect(), th = thumb.offsetHeight;
+    const travel = r.height - th, span = body.scrollHeight - body.clientHeight;
+    if (travel <= 0 || span <= 0) return;
+    const top = clamp(clientY - r.top - offset, 0, travel);
+    body.scrollTop = (top / travel) * span;
+  };
+  let dragOff = -1;
+  thumb?.addEventListener('pointerdown', e => {
+    e.preventDefault(); e.stopPropagation();
+    dragOff = e.clientY - thumb.getBoundingClientRect().top;
+    thumb.setPointerCapture(e.pointerId);
+    rail.classList.add('live', 'grabbing');
+  });
+  thumb?.addEventListener('pointermove', e => {
+    if (dragOff >= 0) scrollFromY(e.clientY, dragOff);
+  });
+  const endDrag = e => {
+    if (dragOff < 0) return;
+    dragOff = -1;
+    try { thumb.releasePointerCapture(e.pointerId); } catch (_) {}
+    rail.classList.remove('grabbing');
+  };
+  thumb?.addEventListener('pointerup', endDrag);
+  thumb?.addEventListener('pointercancel', endDrag);
+  // pressing the track puts the oval where you pressed
+  rail?.addEventListener('pointerdown', e => {
+    if (e.target === thumb) return;
+    e.preventDefault();
+    scrollFromY(e.clientY, thumb.offsetHeight / 2);
+  });
+  body.addEventListener('scroll', () => {
+    paintRail();
+    rail?.classList.add('live');
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(() => rail?.classList.remove('live'), 480);
+  }, { passive: true });
+  addEventListener('resize', paintRail);
+
 
   /* A block may name what it opens. The case brief is a summary of a much
      longer study: the brief is what grows (flipFrom and readerVis still
@@ -2334,6 +2459,7 @@ function reader() {
     body.innerHTML = '';
     body.appendChild(clone);
     body.scrollTop = 0;                          // a new study starts at its top
+    setTimeout(paintRail, 0);                    // its height decides the thumb
 
     // the switcher means nothing on a block that is not a case study
     const item = src.closest('.case-item');
