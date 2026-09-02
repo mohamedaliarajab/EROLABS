@@ -8,11 +8,153 @@ behaves read, in this order:
 2. `README.md` — how it is built, and why each mechanism is the way it is.
 3. This file — what is done, what is pending, and what will bite you.
 
-> **`README.md` has one stale passage.** It says the enquiry email is
-> `hello@erolabs.studio` in two places. That is no longer true — see
-> *Constraints* below. Everything else in it is current.
+> **`README.md` has two stale passages.** It says the enquiry email is
+> `hello@erolabs.studio` (it is not — see *Constraints*), and it refers to a
+> `composer()` function and a `mailto:` link on the last page. Neither exists;
+> the function is `enquiry()`. Everything else in it is current.
 
 ---
+
+## Next session: three changes planned
+
+These are the reason this session exists. Everything below this block is
+background; read this part first.
+
+> **Before touching anything:** tag the current state so there is a way back —
+> `git tag -a pre-edits -m "before case study / video / reach edits"`.
+> Desktop is frozen (see *Constraints*); every one of these edits is content,
+> not layout, so nothing here should need a CSS change outside the sections named.
+
+---
+
+### 1 · The case study — stop 03, `#cases`
+
+All markup is `index.html:285–341`. Nothing else references it.
+
+| Piece | Line | Note |
+|---|---|---|
+| Headline | 292 | `The Problem.` / `The Process.` / `The Result.` — `data-split="char"` animates per glyph |
+| Client name | 298 | **Must stay "Company A"** |
+| Meta line | 299 | sector · city · year · buildings · staff · vendors · work orders |
+| The claim | 303–305 | the three headline numbers in prose |
+| Figure 1 | 313 | `data-count="39"` — **counts up from 0** |
+| Figure 2 | 314 | `data-count="7"` — counts up |
+| Figure 3 | 315 | `0.3%` is **literal text, no `data-count`** — it does not animate |
+| The film | 320–337 | see §2 |
+
+**Two traps here.**
+
+The count-up is driven by `data-count`; the element's text content is just the
+`0` placeholder. If you write a new number into the text but leave `data-count`
+at the old value, it will animate back to the old number. Change both, or drop
+`data-count` to make it literal like figure 3.
+
+`#cases .xl` is `5.86u` in `styles.css`, not the usual `4.5u`. That is deliberate
+pre-compensation for this stop's `--fit` — it was solved from two measured
+`(size, fit)` pairs because size feeds back into fit. If the headline changes
+length, the fit changes; re-check the section does not shrink, and do not
+"tidy" that value to match the others.
+
+**Claims accuracy.** The figures are *modelled, not measured*. The badge that
+said so was removed on request, so nothing on the page currently qualifies them.
+If the numbers are being revised anyway, this is the moment to decide whether
+the badge comes back.
+
+JS: `caseFilm()` at `main.js:1944` drives the inline player only — it does not
+touch the copy or the figures.
+
+---
+
+### 2 · Swapping one video
+
+Each film is referenced in **exactly one place**, so a swap is a one-line edit
+plus two files.
+
+| Slot | File | Poster | Referenced at |
+|---|---|---|---|
+| Projects · Intelligence | `media/intelligence.mp4` | `poster-intelligence.jpg` | `index.html:243` |
+| Projects · Automation | `media/automation.mp4` | `poster-automation.jpg` | `index.html:257` |
+| Projects · Design | `media/design.mp4` | `poster-design.jpg` | `index.html:271` |
+| Case study · Company A | `media/case.mp4` | `poster-case.jpg` | `index.html:322` |
+
+**Format to match:** renders **16:9 landscape**, posters are **1280×720 JPEG,
+~50–60 KB**, files are **13–14 MB**.
+
+> `mdls` reports these as `1080x1920` portrait. Ignore that — it is the stored
+> dimension plus a rotation flag. The rendered aspect is 16:9, which is why the
+> posters are landscape.
+
+**Keep the same filename** and the swap is a pure file replacement with no code
+edit at all. If the name changes, update the one `src=` line and the `poster=`
+beside it.
+
+**Generating the poster** — there is no ffmpeg on this machine (see *Environment
+limits*), but this pipeline is tested and works:
+
+```bash
+qlmanage -t -s 1600 -o /tmp media/case.mp4
+sips -s format jpeg -s formatOptions 80 -z 720 1280 /tmp/case.mp4.png --out media/poster-case.jpg
+```
+
+That produced a 1280×720 / 56 KB JPEG against the existing 52 KB — a match.
+`qlmanage` takes the frame Quick Look would show, so if you need a specific
+frame, export it from QuickTime instead and run only the `sips` line.
+
+**Compress before adding, not after.** There is no working encoder here, so
+whatever you drop in ships at that size. Aim for ≤14 MB to stay in family.
+
+**Size warning:** every video added to git is permanent — a swap does not
+replace the old one, it adds ~14 MB on top of it. `.git` is already 99 MB and
+the upload here measured 32 KB/s, so that push will be slow. If you are going
+to iterate on films at all, resolve the Git LFS question first (see
+*Outstanding*).
+
+---
+
+### 3 · Rectifications to the last page — stop 04, `#reach`
+
+Markup is `index.html:344–411`.
+
+| Piece | Line |
+|---|---|
+| Headline — `Got a Problem` / `Worth Solving?` | 351 |
+| Lede paragraph | 352 |
+| Form opens | 357 |
+| Field labels — Company / Email / Phone | 362, 366, 370 |
+| "We are currently facing a problem of" | 376 |
+| "What we'd really like is for" | 380 |
+| Send button | 385 |
+| Helper note under the button | 389 |
+| Success message block | 393 |
+| Social links — **all three are `href="#"`** | 403 |
+| Footer wordmark / copyright | 407, 408 |
+
+JS: `enquiry()` at `main.js:1364`; endpoint built at `main.js:26` from
+`ENQUIRY_EMAIL` on line 25.
+
+**Known-outstanding on this page**, in case the rectifications overlap:
+
+- The three social links are placeholders (`href="#"`).
+- FormSubmit delivery is **not activated** — until one enquiry is sent from the
+  live site and the confirmation link is clicked, nothing arrives.
+- The email address is deliberately **not displayed** here, by instruction. The
+  form is the only route.
+
+> **`README.md` is wrong about this page.** It refers to a `composer()` function
+> and a `mailto:` link. Neither exists — the function is `enquiry()`, and there
+> is no `mailto:` anywhere in the source. Do not follow the README here.
+
+---
+
+### When done
+
+```bash
+node build.mjs      # CSS guard runs here — do not bypass it
+python3 serve.py    # check at desktop width AND ≤700px
+```
+
+Confirm desktop is unchanged against `satisfied-4`, then tag the new approved
+state (`satisfied-5`) so there is a fresh restore point.
 
 ## Where things stand
 
