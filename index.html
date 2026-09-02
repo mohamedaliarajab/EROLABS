@@ -292,17 +292,18 @@
       <h2 class="display xl" data-split="char">The Problem.<br>The Process.<br>The Result.</h2>
 
       <div class="case">
-        <div class="case-brief" data-vis="climb">
+        <div class="case-brief" data-vis="climb" data-read="#caseFull" data-cue="Click to read more">
         <header class="case-head">
           <div class="case-who">
-            <h3>Company&nbsp;A</h3>
-            <p class="case-meta">Facility management · Lagos · 2026 · 38 buildings · 9 operations staff · 34 vendors · ~412 work orders a month</p>
+            <h3 class="case-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Vantoreq Delmisar Bracondel Sturmvel</span><span class="sr-only">Company name withheld under NDA</span></h3>
+            <p class="case-meta">Freight logistics · Lagos · 2026 · 64 vehicles · 14 FMCG clients · ~1,200 port documents a month</p>
           </div>
         </header>
 
-        <p class="case-claim">About <b>39 staff hours</b> back every week, record errors down to
-          <b>effectively none</b> — 0.3%, roughly one record a month — and the system paid back in
-          <b>seven months</b>.</p>
+        <p class="case-claim">Seven analysts spent half of every working day retyping port paperwork.
+          That work is gone: <b>42 staff hours</b> back every week, data errors down from
+          <b>8.2% to 0.2%</b>, and invoices that took <b>five days</b> to raise now go out the
+          <b>same day</b> — releasing capital that had been sitting in completed, unbilled trips.</p>
         </div>
 
 
@@ -310,15 +311,15 @@
           <div class="case-data">
             <div class="cd-bar">
             <div class="case-figs" data-vis="climb">
-              <div class="fig"><b class="stat" data-count="39">0</b><i>staff hours back every week</i></div>
-              <div class="fig"><b class="stat" data-count="7">0</b><i>months to pay back</i></div>
-              <div class="fig"><b class="stat">0.3%</b><i>errors — effectively none, from 7.4%</i></div>
+              <div class="fig"><b class="stat" data-count="42">0</b><i>staff hours back every week</i></div>
+              <div class="fig"><b class="stat">0.2%</b><i>data errors, down from 8.2%</i></div>
+              <div class="fig"><b class="stat" data-count="5">0</b><i>days cut from invoicing — now same-day</i></div>
             </div>
 
             </div>
             <!-- the film, below the line and the width of it -->
             <div class="cfilm cat-media" data-slot="case-company-a" data-expand-only
-                 data-cap="Company A · the film">
+                 data-cap="The workflow · the film">
               <video src="media/case.mp4" poster="media/poster-case.jpg" muted loop playsinline preload="none"></video>
               <i class="cfilm-frost" aria-hidden="true"></i>
               <i class="cfilm-ring" aria-hidden="true"></i>
@@ -330,13 +331,108 @@
                 <input class="fb-seek cf-seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Seek">
                 <span class="fb-time cf-time">0:00 / 0:00</span>
               </div>
-              <button class="cfilm-expand" data-expand aria-label="Expand the Company A film">
+              <button class="cfilm-expand" data-expand aria-label="Expand the workflow film">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5M15 4h5v5M15 20h5v-5M9 20H4v-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span>Expand</span>
               </button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- The full study. Hidden, so it costs the section no height and no
+           --fit; reader() clones it when .case-brief is clicked, because that
+           block carries data-read="#caseFull". -->
+      <div class="cf" id="caseFull" hidden>
+        <header class="cf-doc">
+          <span>Ẹ̀rọ Labs · Enterprise infrastructure audit</span>
+          <span>Ref. SYSTEM-RECON-LOG-2026-NGA · Restricted</span>
+        </header>
+        <!-- The string under the blur is deliberate nonsense: the blur is what is
+             seen, so it only has to carry word lengths and letter rhythm. A real
+             name here — the client's or a stand-in — would be readable to anyone
+             who opened the inspector, which is the whole point of the NDA. -->
+        <p class="cf-name"><span class="cn-k">Company:</span> <span class="redact" aria-hidden="true">Vantoreq Delmisar Bracondel Sturmvel</span><span class="sr-only">Company name withheld under NDA</span></p>
+        <h3>Core ingestion &amp; data syndication pipeline</h3>
+        <p class="cf-lede">A West African bulk freight and maritime supply chain consortium was
+          paying seven analysts to retype port paperwork. We replaced the retyping with a system
+          that reads the documents itself, checks them against three sources that had never spoken
+          to each other, and raises the invoice the same day.</p>
+
+        <div class="cf-figs">
+          <div class="cf-fig"><b>42</b><i>staff hours back every week</i></div>
+          <div class="cf-fig"><b>0.2%</b><i>data errors, down from 8.2%</i></div>
+          <div class="cf-fig"><b>Same day</b><i>invoicing, down from 5 days</i></div>
+        </div>
+
+        <div class="cf-sec" style="--i:1">
+          <span class="cs-k">1.0 · The system</span>
+          <ul class="cf-list">
+            <li><b>The business.</b> A trans-West African bulk freight logistics and maritime
+              supply chain consortium.</li>
+            <li><b>Where it operates.</b> Administrative and financial headquarters on Victoria
+              Island, Lagos. Marine operations and the high-volume intake desks sit at the port
+              complex in Apapa.</li>
+            <li><b>Scale.</b> 64 active heavy-duty haulage vehicles, and lead logistics partner to
+              14 Tier-1 FMCG multinationals.</li>
+            <li><b>Paper volume.</b> Around 1,200 multi-page documents every month — customs Single
+              Goods Declarations, terminal delivery orders, shipping line release notes, port gate
+              passes and driver waybills — each one indexed, validated and reconciled.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:2">
+          <span class="cs-k">2.0 · Where it was leaking</span>
+          <ul class="cf-list">
+            <li><b>Seven analysts on the wrong work.</b> A specialist tier of seven full-time
+              operations analysts was pulled off fleet management entirely, spending a combined
+              4.5 hours of every working day on manual verification and transcription.</li>
+            <li><b>The intake bottleneck.</b> Operators read unstructured text off physical
+              waybills, crumpled thermal slips and low-resolution phone photographs sent by drivers
+              over WhatsApp at port check-in, then keyed it line by line into isolated
+              spreadsheets.</li>
+            <li><b>An 8.2% error rate.</b> Typos, inverted tracking prefixes and missing container
+              seal numbers. Every one of them broke the automation downstream.</li>
+            <li><b>What it cost.</b> Tracking blind spots, incorrect driver mileage payouts, late
+              demurrage monitoring, and a four-to-five day lag before billing could be raised.
+              Millions in working capital sat locked up every week in completed trips that were
+              unbilled and unverified.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:3">
+          <span class="cs-k">3.0 · What we built</span>
+          <p>A zero-human-input workspace for document extraction, parameter isolation and
+            cross-system reconciliation.</p>
+          <ul class="cf-list">
+            <li><b>It reads what it is given.</b> A context-aware processor built into the master
+              operations desktop. Dispatchers drop in anything — low-contrast scans, skewed phone
+              photographs, native digital manifests — and it reads the text without manual
+              pre-processing.</li>
+            <li><b>It checks three systems that never spoke.</b> Container IDs and seal numbers
+              against the master customs manifest. Driver log sheets against automated fuel station
+              receipts, to isolate and flag financial over-allocation. Delivery timestamps against
+              signed client SLAs.</li>
+            <li><b>It only asks when something is wrong.</b> One dashboard instead of spreadsheets
+              built from scratch. Verified matches commit themselves; anomalies and outliers surface
+              in high-contrast telemetry for fast sign-off.</li>
+          </ul>
+        </div>
+
+        <div class="cf-sec" style="--i:4">
+          <span class="cs-k">4.0 · What it returned — 60-day audit</span>
+          <ul class="cf-list">
+            <li><b>Reclaimed capacity.</b> Manual data entry is gone. Work that took the operations
+              floor the whole morning now runs, validates and commits in under 15 minutes a day —
+              42 staff hours back every week.</li>
+            <li><b>Errors removed structurally.</b> Transcription discrepancies fell from 8.2% to a
+              stable 0.2%, taking billing friction and FMCG client disputes with them.</li>
+            <li><b>Cash in sooner.</b> The gap between delivery and invoice went from five business
+              days to same day — working capital freed, and the revenue pipeline closed.</li>
+          </ul>
+        </div>
+
+        <p class="cf-nda">Company name is blurred due to an NDA.</p>
       </div>
     </section>
 
@@ -374,19 +470,50 @@
 
           <label class="eq-field eq-wide">
             <span class="eq-k">We are currently facing a problem of</span>
-            <input name="problem" type="text" required placeholder="the thing taking too much time">
+            <input name="problem" type="text" required placeholder="Please explain">
           </label>
-          <label class="eq-field eq-wide">
-            <span class="eq-k">What we'd really like is for</span>
-            <input name="want" type="text" required placeholder="the outcome you want">
-          </label>
+          <!-- Two choosers. A real <select> is the source of truth, so FormData,
+               validation and a no-JS page all keep working; selects() paints a
+               listbox over it because a native popup is OS chrome and cannot be
+               made to match this page. -->
+          <div class="eq-grid eq-pair">
+            <div class="eq-field eq-sel">
+              <span class="eq-k" id="eqkService">Service</span>
+              <select name="service" required aria-labelledby="eqkService">
+                <option value="" disabled selected>Select a service</option>
+                <option>Automation</option>
+                <option>Website</option>
+                <option>Branding</option>
+                <option>More than one</option>
+              </select>
+            </div>
+            <div class="eq-field eq-sel">
+              <span class="eq-k" id="eqkBudget">Budget</span>
+              <select name="budget" required aria-labelledby="eqkBudget">
+                <option value="" disabled selected>Select a tier</option>
+                <option>Tier A: 1.5M – 3.5M</option>
+                <option>Tier B: 3.5M – 7.5M</option>
+                <option>Tier C: 7.5M +</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="eq-field eq-wide eq-sel eq-solo">
+            <span class="eq-k" id="eqkRequest">We request a</span>
+            <select name="request" required aria-labelledby="eqkRequest">
+              <option value="" disabled selected>Select one</option>
+              <option>Phone call</option>
+              <option>Meeting</option>
+              <option>Zoom meeting</option>
+            </select>
+          </div>
 
           <div class="eq-foot">
             <button class="btn-primary" type="submit" id="eqSend">
               <span>Send Enquiry</span>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <p class="eq-note" id="eqNote">Every field, so we can come back to you properly.</p>
+            <p class="eq-note" id="eqNote">All fields are required, so we can come back to you properly.</p>
           </div>
         </form>
 
@@ -405,7 +532,7 @@
         </div>
         <div class="foot-col foot-end">
           <span class="foot-k">Ẹ̀rọ Labs</span>
-          <p>Intelligence · Automation · Design<br>© 2026 — All rights reserved</p>
+          <p>Intelligence · Automation · Design<br>© 2026 — All rights reserved<br>Powered by Mohamed-Alie Rajab</p>
         </div>
       </footer>
     </section>
@@ -452,7 +579,7 @@
   </div>
 </div>
 
-<div class="cursor" id="cursor" aria-hidden="true"><i></i></div>
+<div class="cursor" id="cursor" aria-hidden="true"><i></i><span class="cur-t"></span></div>
 
 <script src="main.js"></script>
 </body>

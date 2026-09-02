@@ -1111,7 +1111,7 @@ function auroraRig() {
 
    Any cursor movement counts as being here, not just scroll or click — the
    melt is for a page that has genuinely been left alone. */
-const MELT_AFTER = 20000;
+const MELT_AFTER = 30000;      // half a minute of being left alone
 let lastActive = performance.now(), meltEl = null, meltT = 0, lastDispWrite = 0;
 const meltDisp = $('#meltDisp');
 
@@ -1364,7 +1364,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 function enquiry() {
   const stage = $('.eq-stage'), form = $('#enquiry'), note = $('#eqNote'), msg = $('#eqDoneMsg');
   if (!stage || !form) return;
-  const inputs = $$('input[required]', form);
+  // selects are required fields as much as the inputs are, and a <select>
+  // is not an <input> — leaving it out of this list let an empty chooser
+  // through the gate entirely.
+  const inputs = $$('input[required],select[required]', form);
   let timer = null, busy = false;
 
   // split the confirmation so it can arrive letter by letter
@@ -1409,7 +1412,7 @@ function enquiry() {
     stage.classList.remove('sent');
     form.reset();
     inputs.forEach(f => f.closest('.eq-field').classList.remove('invalid'));
-    setNote('Every field, so we can come back to you properly.', false);
+    setNote('All fields are required, so we can come back to you properly.', false);
     busy = false;
   };
 
@@ -1434,8 +1437,10 @@ function enquiry() {
         Company: v.company,
         Email: v.email,
         Phone: v.phone,
+        Service: v.service,
+        Budget: v.budget,
         'Problem they face': v.problem,
-        'What they want': v.want,
+        'They request': v.request,
         Sent: new Date().toLocaleString()
       };
 
@@ -1455,6 +1460,211 @@ function enquiry() {
     clearTimeout(timer);
     timer = setTimeout(reset, 5000);      // hand back a clean form
   });
+}
+
+/* ── the two choosers ──────────────────────────────────────────────
+   A native popup is drawn by the operating system, in the operating system's
+   colours, and no stylesheet reaches inside it. So the <select> keeps its
+   job — it is what FormData reads and what check() validates — and a listbox
+   is painted over the top of it.
+
+   Everything the browser was doing for free then has to be put back by hand:
+   keyboard, outside-click, aria state, and a flip upward when the panel would
+   run past the bottom of the frame. #viewport is overflow:hidden, so a panel
+   that overruns is cut off rather than scrolled to.
+
+   Type-ahead is deliberately not implemented — three options, and a wrong
+   guess about which letter starts which tier is worse than no shortcut. */
+function selects() {
+  const all = [];
+
+  $$('.eq-sel').forEach((wrap, w) => {
+    const sel = $('select', wrap);
+    if (!sel) return;
+    const opts = [...sel.options].filter(o => !o.disabled);
+    if (!opts.length) return;
+    const ph = sel.options[0].textContent;      // the placeholder's own words
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'eq-sel-btn';
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    const lab = sel.getAttribute('aria-labelledby');
+    if (lab) btn.setAttribute('aria-labelledby', lab);
+    const val = document.createElement('span');
+    val.className = 'eq-sel-val';
+    const caret = document.createElement('i');
+    caret.className = 'eq-sel-caret';
+    caret.setAttribute('aria-hidden', 'true');
+    /* the travelling outline. A real element rather than a pseudo because the
+       idiom needs two boxes — one masked to the rim, one spinning inside it —
+       and a pseudo-element cannot have a pseudo-element of its own. Same
+       construction as .reader-ring. */
+    const ring = document.createElement('i');
+    ring.className = 'eq-sel-ring';
+    ring.setAttribute('aria-hidden', 'true');
+    btn.append(ring, val, caret);
+
+    const menu = document.createElement('div');
+    menu.className = 'eq-sel-menu';
+    menu.setAttribute('role', 'listbox');
+    if (lab) menu.setAttribute('aria-labelledby', lab);
+    const items = opts.map((o, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';                        // never a submit — it is inside the form
+      b.className = 'eq-sel-opt';
+      b.id = 'eqOpt' + w + '-' + i;
+      b.setAttribute('role', 'option');
+      b.tabIndex = -1;
+      b.textContent = o.textContent;
+      b.dataset.v = o.value;
+      menu.appendChild(b);
+      return b;
+    });
+
+    wrap.append(btn, menu);
+    sel.tabIndex = -1;
+    sel.setAttribute('aria-hidden', 'true');
+    wrap.classList.add('on');
+
+    let cue = -1;
+    const isOpen = () => wrap.classList.contains('open');
+
+    const paint = () => {
+      const chosen = sel.value;
+      val.textContent = chosen || ph;
+      wrap.classList.toggle('empty', !chosen);
+      items.forEach(b => b.setAttribute('aria-selected', String(b.dataset.v === chosen)));
+    };
+
+    const markCue = i => {
+      cue = clamp(i, 0, items.length - 1);
+      items.forEach((b, n) => b.classList.toggle('cue', n === cue));
+      btn.setAttribute('aria-activedescendant', items[cue].id);
+    };
+
+    const close = back => {
+      if (!isOpen()) return;
+      wrap.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.removeAttribute('aria-activedescendant');
+      items.forEach(b => b.classList.remove('cue'));
+      cue = -1;
+      if (back) btn.focus();
+    };
+
+    const open = () => {
+      if (isOpen()) return;
+      all.forEach(s => { if (s.wrap !== wrap) s.close(false); });
+      /* The stop is scaled by --fit, so the panel's laid-out height is not its
+         height on screen. getBoundingClientRect is, and it reads correctly
+         while the panel is only visibility:hidden. */
+      const r = btn.getBoundingClientRect();
+      const h = menu.getBoundingClientRect().height;
+      wrap.classList.toggle('up', r.bottom + h + 24 > innerHeight);
+      wrap.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+      markCue(Math.max(0, items.findIndex(b => b.dataset.v === sel.value)));
+    };
+
+    const choose = i => {
+      const b = items[i];
+      if (!b) return;
+      sel.value = b.dataset.v;
+      paint();
+      /* the same events the native control fires, so the invalid-clearing
+         listener in enquiry() needs to know nothing about any of this */
+      sel.dispatchEvent(new Event('input',  { bubbles: true }));
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      close(true);
+    };
+
+    btn.addEventListener('click', () => isOpen() ? close(false) : open());
+    items.forEach((b, i) => b.addEventListener('click', () => choose(i)));
+
+    wrap.addEventListener('keydown', e => {
+      const on = isOpen();
+      switch (e.key) {
+        case 'Escape':    if (on) { e.preventDefault(); close(true); } break;
+        case 'Enter':
+        case ' ':         e.preventDefault(); on ? choose(cue) : open(); break;
+        case 'ArrowDown': e.preventDefault(); on ? markCue(cue + 1) : open(); break;
+        case 'ArrowUp':   e.preventDefault(); on ? markCue(cue - 1) : open(); break;
+        case 'Home':      if (on) { e.preventDefault(); markCue(0); } break;
+        case 'End':       if (on) { e.preventDefault(); markCue(items.length - 1); } break;
+        case 'Tab':       close(false); break;
+      }
+    });
+
+    paint();
+    all.push({ wrap, btn, sel, close, paint });
+  });
+
+  if (!all.length) return;
+  document.addEventListener('pointerdown', e => {
+    all.forEach(s => { if (!s.wrap.contains(e.target)) s.close(false); });
+  });
+
+  /* ── the one cross-field rule ───────────────────────────────────
+     More than one service is not a tier, it is a conversation. So the budget
+     is answered for them and held there — disabled, not merely unclickable,
+     or it would still be reachable by tab.
+
+     Going back to a single service hands the field over again with whatever
+     tier they had picked before, rather than making them find it twice. That
+     memory is cleared on reset, or a fresh form would come back carrying the
+     last person's answer. */
+  const service = all.find(s => s.sel.name === 'service');
+  const budget  = all.find(s => s.sel.name === 'budget');
+  if (!service || !budget) return;
+
+  const AUTO = 'To be discussed';
+  let held = '';                       // the last tier they chose themselves
+  let autoOpt = null;
+
+  /* The held answer is not one of the tiers, so it is not in the markup: the
+     option is made when it becomes the answer and taken away again when it
+     stops being one. Shipping it in the <select> instead would put it in the
+     native list — visible in the moment before this runs, and permanently
+     with no script — which is the one place a value nobody can choose has no
+     business being. It has to be a real option regardless, because a <select>
+     cannot hold a value it has no option for.
+
+     Order matters on the way out: removing the selected option would blank
+     the field, so the tier goes back first. */
+  const sync = () => {
+    const many = service.sel.value === 'More than one';
+    if (many) {
+      if (budget.sel.value && budget.sel.value !== AUTO) held = budget.sel.value;
+      if (!autoOpt) { autoOpt = new Option(AUTO, AUTO); budget.sel.add(autoOpt); }
+      budget.sel.value = AUTO;
+    } else {
+      if (budget.sel.value === AUTO) budget.sel.value = held;
+      if (autoOpt) { autoOpt.remove(); autoOpt = null; }
+    }
+    budget.close(false);
+    budget.wrap.classList.toggle('locked', many);
+    budget.btn.disabled = many;
+    // a held answer is a filled field: clear any flag it was carrying
+    if (many) budget.wrap.classList.remove('invalid');
+    budget.paint();
+  };
+
+  budget.sel.addEventListener('change', () => {
+    if (budget.sel.value !== AUTO) held = budget.sel.value;
+  });
+  service.sel.addEventListener('change', sync);
+  /* reset fires BEFORE the values go back, so the repaint waits a tick —
+     otherwise the button keeps showing the answer the form no longer holds */
+  const form = $('#enquiry');
+  if (form) form.addEventListener('reset', () => setTimeout(() => {
+    held = '';
+    if (autoOpt) { autoOpt.remove(); autoOpt = null; }
+    budget.wrap.classList.remove('locked');
+    budget.btn.disabled = false;
+    all.forEach(s => s.paint());
+  }, 0));
 }
 
 /* ── the strip that animates to match what is being read ───────────
@@ -2018,9 +2228,8 @@ function reader() {
         scrim = $('.reader-scrim', shell);
   /* The case study only. About and Projects each have their own plan for
      these blocks, so they are deliberately not part of the reading view. */
-  /* The brief only — the Company A header and the claim under it. The four
-     steps used to open too, and the tables, but the steps now say everything
-     they have to say on the page and the tables are gone. */
+  /* The brief only. It no longer shows itself in the panel either — it carries
+     data-read, so the panel fills with the full study instead. */
   const BLOCKS = '.case-brief';
   let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
@@ -2029,7 +2238,11 @@ function reader() {
     minTimer = cancelMinimize(minTimer, glass, shell);
     if (growTimer) { clearTimeout(growTimer); growTimer = null; }
     open = true; srcEl = src;
-    const clone = src.cloneNode(true);
+    /* A block may name what it opens. The case brief is a summary of a much
+       longer study: the brief is what grows (flipFrom and readerVis still
+       measure and read `src`), but what the panel fills with is the study. */
+    const target = src.dataset.read ? $(src.dataset.read) : src;
+    const clone = (target || src).cloneNode(true);
     clone.removeAttribute('id');
     clone.hidden = false;
     clone.classList.remove('readable');          // no hover affordance inside the panel
@@ -2073,7 +2286,7 @@ function reader() {
 
   $$(BLOCKS).forEach(el => {
     el.classList.add('readable');
-    if (!touch) {
+    if (!touch && !el.dataset.cue) {
       el.addEventListener('pointerenter', () => {
         if (open) return;
         clearTimeout(dwell);
@@ -2104,8 +2317,15 @@ function cursor() {
   addEventListener('pointermove', e => { tx = e.clientX; ty = e.clientY; }, { passive: true });
   (function loop() { x = lerp(x, tx, .2); y = lerp(y, ty, .2);
     c.style.transform = `translate(${x}px,${y}px)`; requestAnimationFrame(loop); })();
+  const label = $('.cur-t', c);
   document.addEventListener('pointerover', e => {
-    c.classList.toggle('is-lg', !!e.target.closest('a,button,.proj,.fill,.pillar'));
+    /* data-cue is an invitation with words on it, so it wins over the plain
+       enlargement — otherwise a link inside the block would shrink the disc
+       back mid-sentence. */
+    const cue = e.target.closest('[data-cue]');
+    if (label) label.textContent = cue ? cue.dataset.cue : '';
+    c.classList.toggle('is-read', !!cue);
+    c.classList.toggle('is-lg', !cue && !!e.target.closest('a,button,.proj,.fill,.pillar'));
   });
 }
 
@@ -2330,7 +2550,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); films(); cursor(); nav(); poleRig(); projFlow();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while

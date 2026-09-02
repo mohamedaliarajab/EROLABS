@@ -129,6 +129,39 @@ body.is-touch button,body.is-touch a{cursor:pointer}
   background:#fff;transition:transform .35s var(--ease),opacity .3s;
 }
 .cursor.is-lg i{transform:scale(4);opacity:.28}
+/* An invitation with words on it. difference blending is what keeps the small
+   dot visible over anything, but it would invert the label into illegibility,
+   so the read state drops it and pays for its own contrast: a solid white
+   disc with near-black type. The glow is sized pre-scale — a box-shadow on a
+   scaled element is multiplied by the scale. */
+.cursor.is-read{mix-blend-mode:normal}
+.cursor.is-read i{transform:scale(14.4);opacity:1;box-shadow:0 0 2.6px .35px rgba(195,107,255,.55)}
+.cur-t{
+  position:absolute;left:0;top:0;width:98px;
+  transform:translate(-50%,-50%) scale(.88);
+  font-family:var(--f-mono);font-weight:400;font-size:10px;line-height:1.55;
+  letter-spacing:.14em;text-transform:uppercase;text-align:center;color:#07070C;
+  opacity:0;pointer-events:none;
+  transition:opacity .28s var(--ease) .08s,transform .38s var(--ease);
+}
+.cursor.is-read .cur-t{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+
+/* ── the redacted name ─────────────────────────────────────────────
+   Real type, blurred past reading. A block of colour would only say "something
+   is hidden here"; a name you can see the shape of says a real client signed a
+   real NDA. The radius is in em so it tracks the heading through every
+   breakpoint — a fixed px blur turns legible the moment the type scales up.
+   The text is a stand-in, not the client's name, which appears nowhere. */
+.case-name,.cf-name{display:flex;align-items:baseline;flex-wrap:wrap;gap:.42em}
+.cn-k{color:var(--ink-3);font-weight:300}
+.redact{
+  display:inline-block;
+  filter:blur(.26em);
+  opacity:.92;
+  user-select:none;
+  -webkit-user-select:none;
+}
 body.is-touch .cursor{display:none}
 
 /* ── loader ─────────────────────────────────────────────────────────
@@ -1013,13 +1046,156 @@ body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
 .eq-field:focus-within .eq-k{color:var(--blue)}
 .eq-wide .eq-k{font-size:calc(var(--u)*.9);letter-spacing:.13em}
 
+/* ── the two choosers ──────────────────────────────────────────────
+   A real <select> stays in the form and is the source of truth, so FormData,
+   validation and a script-less page all keep working. What it cannot do is
+   look like this page: the popup is OS chrome, and no amount of CSS reaches
+   inside it. So selects() paints a listbox over the top and the native
+   control goes out of sight — it is only ever seen if the script does not
+   run, which is why it is still styled below.
+
+   These two are the only filled shapes in the form. Everything else is a
+   hairline with light travelling under it, so the pills are given the edge
+   and the glow instead — hence .eq-sel::before/::after being switched off:
+   a pill sitting on an underline reads as two controls stacked.
+
+   Placeholder type is white; the moment an answer exists it turns the same
+   violet as anything typed into the fields above, so a filled form is one
+   colour all the way down. */
+.eq-pair{grid-template-columns:repeat(2,1fr);margin-top:calc(var(--u)*1.5)}
+/* on its own row, but held to the width of one .eq-pair column so the three
+   pills line up down the left edge — 50% less half the 1.6u gap */
+.eq-solo{max-width:calc(50% - var(--u)*.8)}
+.eq-sel::before,.eq-sel::after{display:none}
+
+/* the no-JS fallback: still a pill, still legible, native popup and all */
+.eq-sel select{
+  display:block;width:100%;cursor:pointer;
+  -webkit-appearance:none;appearance:none;color-scheme:dark;
+  padding:calc(var(--u)*.86) calc(var(--u)*1.3);
+  border:1px solid rgba(166,37,238,.55);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.30),rgba(166,37,238,.14));
+  outline:none;
+  font-family:var(--f-text);font-weight:400;font-size:calc(var(--u)*1.24);color:#fff;
+}
+.eq-sel select option{background:#0C0616;color:var(--ink)}
+/* enhanced: still submitted, no longer seen or reachable by tab */
+.eq-sel.on select{position:absolute;left:0;bottom:0;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.eq-sel-btn{
+  /* the ring is inset:-1px against THIS box. Without a position here it
+     resolved against .eq-field instead and drew a capsule the size of the
+     label and the pill together — an outline visibly larger than the thing
+     it was outlining. */
+  position:relative;
+  display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u)*.9);
+  width:100%;padding:calc(var(--u)*.86) calc(var(--u)*1.3);
+  border:1px solid rgba(166,37,238,.55);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.30),rgba(166,37,238,.14));
+  box-shadow:0 0 calc(var(--u)*1.1) rgba(166,37,238,.26),inset 0 1px 0 rgba(255,255,255,.07);
+  font-family:var(--f-text);font-weight:400;font-size:calc(var(--u)*1.24);
+  color:#fff;text-align:left;cursor:pointer;
+  transition:color .3s,border-color .3s,background .3s,box-shadow .35s;
+}
+.eq-sel-btn:hover{border-color:rgba(166,37,238,.85);box-shadow:0 0 calc(var(--u)*1.7) rgba(166,37,238,.42)}
+
+/* the travelling outline — the same idiom as .reader-ring: a conic sweep
+   clipped to a 1px rim and spun with rotate(), so it needs no @property
+   support. The sweep runs white → blue → violet, the site's own gradient
+   made to travel. inset:-1px puts it over the resting border rather than
+   inside it, so the pill keeps one edge, not two. */
+.eq-sel-ring{
+  position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;z-index:0;
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;overflow:hidden;
+}
+.eq-sel-ring::before{
+  content:"";position:absolute;left:50%;top:50%;width:190%;aspect-ratio:1;translate:-50% -50%;
+  background:conic-gradient(transparent 0 42%,rgba(110,165,255,.45) 57%,#FFFFFF 71%,rgba(166,37,238,.95) 85%,transparent 96%);
+  filter:blur(.4px);animation:eqRingSpin 5.4s linear infinite;
+}
+@keyframes eqRingSpin{to{rotate:360deg}}
+/* it quickens under the hand and while the list is down */
+.eq-sel-btn:hover .eq-sel-ring::before,
+.eq-sel.open .eq-sel-ring::before{animation-duration:2.4s}
+.eq-sel.invalid .eq-sel-ring::before{
+  background:conic-gradient(transparent 0 46%,rgba(255,107,138,.45) 60%,#FFE2E8 74%,rgba(255,107,138,.9) 86%,transparent 96%);
+}
+/* the ring is a positioned box, so the label and caret have to be positioned
+   too or the sweep paints straight over the type */
+.eq-sel-val,.eq-sel-caret{position:relative;z-index:1}
+/* the pill's own glow is the focus indicator — the global ring would draw a
+   rectangle around a capsule */
+.eq-sel-btn:focus{outline:none}
+.eq-sel-btn:focus-visible{outline:none;border-color:var(--violet);box-shadow:0 0 calc(var(--u)*1.9) rgba(166,37,238,.5)}
+.eq-sel.open .eq-sel-btn{border-color:var(--violet);box-shadow:0 0 calc(var(--u)*2) rgba(166,37,238,.55)}
+.eq-sel:not(.empty) .eq-sel-btn{color:var(--violet-ink)}
+.eq-sel.open .eq-k{color:var(--violet-ink)}
+.eq-sel.invalid .eq-sel-btn{color:var(--warn);border-color:var(--warn);box-shadow:none}
+
+/* held by the service answer: still a filled field, plainly not one to press.
+   The travelling outline stops too — a light running around a control that
+   cannot be operated only reads as an invitation. */
+.eq-sel.locked .eq-sel-btn{
+  cursor:default;
+  border-color:rgba(166,37,238,.30);box-shadow:none;
+  background:linear-gradient(180deg,rgba(166,37,238,.17),rgba(166,37,238,.07));
+}
+.eq-sel.locked .eq-sel-caret{opacity:.22}
+.eq-sel.locked .eq-sel-ring::before{animation:none;background:none}
+
+/* currentColor, so the caret follows the value from white into violet */
+.eq-sel-caret{
+  flex:0 0 auto;width:calc(var(--u)*.58);height:calc(var(--u)*.58);
+  border-right:1px solid currentColor;border-bottom:1px solid currentColor;
+  transform:translateY(-28%) rotate(45deg);
+  transition:transform .35s var(--ease);
+}
+.eq-sel.open .eq-sel-caret{transform:translateY(12%) rotate(-135deg)}
+
+.eq-sel-menu{
+  position:absolute;left:0;right:0;top:calc(100% + var(--u)*.55);z-index:6;
+  padding:calc(var(--u)*.42);
+  background:linear-gradient(180deg,rgba(41,9,63,.97),rgba(19,4,31,.97));
+  -webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25);
+  border:1px solid rgba(166,37,238,.5);border-radius:calc(var(--u)*1.6);
+  box-shadow:0 calc(var(--u)*1.1) calc(var(--u)*2.4) rgba(0,0,0,.72),
+             0 0 calc(var(--u)*1.5) rgba(166,37,238,.28);
+  opacity:0;visibility:hidden;transform:translateY(calc(var(--u)*-.45));
+  transition:opacity .28s var(--ease),transform .28s var(--ease),visibility .28s;
+}
+.eq-sel.open .eq-sel-menu{opacity:1;visibility:visible;transform:none}
+/* flipped up when the panel would run past the bottom of the frame */
+.eq-sel.up .eq-sel-menu{top:auto;bottom:calc(100% + var(--u)*.55);transform:translateY(calc(var(--u)*.45))}
+.eq-sel.up.open .eq-sel-menu{transform:none}
+
+.eq-sel-opt{
+  position:relative;display:block;width:100%;
+  padding:calc(var(--u)*.7) calc(var(--u)*2) calc(var(--u)*.7) calc(var(--u)*1.2);
+  background:none;border:1px solid transparent;border-radius:999px;
+  font-family:var(--f-text);font-weight:400;font-size:calc(var(--u)*1.06);
+  color:#fff;text-align:left;cursor:pointer;white-space:nowrap;
+  transition:color .22s,background .22s,border-color .22s;
+}
+.eq-sel-opt + .eq-sel-opt{margin-top:calc(var(--u)*.24)}
+.eq-sel-opt:hover,.eq-sel-opt.cue{background:rgba(166,37,238,.42);border-color:rgba(195,107,255,.55)}
+.eq-sel-opt:focus-visible{outline:none}
+.eq-sel-opt[aria-selected="true"]{color:var(--violet-ink)}
+.eq-sel-opt[aria-selected="true"]::after{
+  content:"";position:absolute;right:calc(var(--u)*1.1);top:50%;
+  width:calc(var(--u)*.32);height:calc(var(--u)*.32);margin-top:calc(var(--u)*-.16);
+  border-radius:50%;background:var(--violet-ink);
+  box-shadow:0 0 calc(var(--u)*.55) rgba(195,107,255,.9);
+}
+
 /* an error says what is wrong, in a colour that is not the accent */
 .eq-field.invalid::before{background:var(--warn)}
 .eq-field.invalid::after{opacity:0}
 .eq-field.invalid .eq-k{color:var(--warn)}
 
 .eq-foot{display:flex;align-items:center;gap:calc(var(--u)*1.8);margin-top:calc(var(--u)*2)}
-.eq-note{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);letter-spacing:.13em;color:var(--ink-3);transition:color .3s}
+.eq-note{font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.82);letter-spacing:.11em;color:var(--ink-3);transition:color .3s}
 .eq-note.warn{color:var(--warn)}
 
 /* ── the confirmation ── */
@@ -1201,6 +1377,7 @@ body.is-touch .cfilm:hover{animation:cfilmGlow 9s ease-in-out infinite}
   .case-figs{gap:calc(var(--u)*1.4)}
   .case-track::before,.case-track::after{display:none}
   .eq-grid{grid-template-columns:1fr;gap:calc(var(--u)*1.4)}
+  .eq-solo{max-width:none}
   .eq-foot{flex-direction:column;align-items:flex-start;gap:calc(var(--u)*1.2)}
   .eq-done-msg{font-size:calc(var(--u)*2)}
   .foot{grid-template-columns:1fr;gap:calc(var(--u)*1.6)}
@@ -1353,6 +1530,64 @@ body.reduced .star{animation:none}
 }
 .reader-body p{font-size:clamp(15px,1.22vw,21px);line-height:1.72;color:var(--ink-2);max-width:68ch}
 .reader-body .case-brief{opacity:1!important;transform:none!important}
+
+/* ── the full case study ───────────────────────────────────────────
+   Only ever rendered inside the reading panel, so the p rules above it have
+   to be out-specified rather than fought. It arrives in bands: the figures
+   first, then each section, because a wall of text appearing at once reads
+   as a document dump and not as something built for the reader. */
+.cf-doc{
+  display:flex;flex-wrap:wrap;justify-content:space-between;gap:calc(var(--u)*.6);
+  padding-bottom:calc(var(--u)*.8);margin-bottom:calc(var(--u)*1);
+  border-bottom:1px solid var(--line-2);
+  font-family:var(--f-mono);font-size:clamp(9px,.72vw,11px);
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);
+}
+.reader-body .cf-lede{color:var(--ink-2);max-width:70ch}
+.cf-figs{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1.2);
+  margin:calc(var(--u)*1.4) 0;padding:calc(var(--u)*1.15) 0;
+  border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);
+}
+.cf-fig b{
+  display:block;font-family:var(--f-display);font-weight:200;line-height:1;
+  font-size:clamp(22px,2.5vw,42px);
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.cf-fig i{
+  display:block;margin-top:calc(var(--u)*.45);font-style:normal;
+  font-family:var(--f-mono);font-size:clamp(9px,.7vw,11px);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+}
+.cf-sec{margin-top:calc(var(--u)*1.7)}
+.cf-list{list-style:none;display:grid;gap:calc(var(--u)*.8);margin-top:calc(var(--u)*.8)}
+.cf-list li{
+  position:relative;padding-left:calc(var(--u)*1.2);
+  font-size:clamp(14px,1.08vw,18px);line-height:1.72;color:var(--ink-2);
+}
+.cf-list li::before{
+  content:"";position:absolute;left:0;top:.66em;
+  width:calc(var(--u)*.5);height:1px;background:var(--violet-ink);opacity:.75;
+}
+.cf-list b{color:var(--ink);font-weight:400}
+.reader-body .cf-nda{
+  margin-top:calc(var(--u)*1.9);padding-top:calc(var(--u)*.9);
+  border-top:1px solid var(--line-2);
+  font-family:var(--f-mono);font-size:clamp(10px,.76vw,12px);
+  letter-spacing:.13em;color:var(--ink-3);max-width:none;
+}
+@keyframes cfRise{to{opacity:1;transform:none}}
+.reader.on .reader-body .cf-figs,
+.reader.on .reader-body .cf-sec{
+  opacity:0;transform:translateY(calc(var(--u)*.7));
+  animation:cfRise .6s var(--ease) forwards;
+}
+.reader.on .reader-body .cf-figs{animation-delay:.10s}
+.reader.on .reader-body .cf-sec{animation-delay:calc(.12s + var(--i,0)*.08s)}
+/* Local, because everything above is declared after the phone block near the
+   top of the file — put there, this override loses on source order. Three
+   90px columns wrap "Same day" onto two lines and the labels stop lining up. */
+@media (max-width:700px){.cf-figs{grid-template-columns:1fr;gap:calc(var(--u)*1.1)}}
 
 /* a dense block invites the reading view */
 .readable{cursor:none}
