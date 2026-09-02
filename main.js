@@ -166,6 +166,68 @@ function readScroll() {
   cam.ty = lerp(pts[leg].y, pts[leg + 1].y, legT);
 }
 
+/* ── settling ──────────────────────────────────────────────────────
+   The camera target came straight off raw scroll position, so a flick handed
+   it a stop two legs away and the ride there was over before it could be
+   read — and because the lift is a function of leg progress, the zoom went
+   with it.
+
+   The first attempt at a fix was a timed tween on an in-out curve, and it
+   felt worse: an in-out curve starts at zero velocity, but the page is still
+   coasting when scrolling "stops", so it braked and then set off again. That
+   is the jerk.
+
+   There is no tween here at all. While the visitor is not touching it the
+   page is simply pulled toward the nearest stop every frame, and the strength
+   of that pull fades in over a third of a second — so it takes hold
+   underneath the momentum instead of interrupting it, and decays to nothing
+   as it arrives. Exponential, so it never overshoots and never has to stop.
+
+   A flick that overshot by two legs is pulled back to one — one gesture, one
+   page — while a deliberate scroll of three or more is left alone, because at
+   that distance it was the intent. Nothing runs on a phone: flat mode is an
+   ordinary scrolling page. */
+let fromLeg = -1, lastInput = 0, programmatic = 0;
+
+/* nav and back-to-top scroll on purpose and land where they mean to. Without
+   this the pull would read their smooth scroll as a gesture, take the leg
+   they SET OFF from as the anchor, and haul them back. */
+const seeking = () => performance.now() - programmatic < 1500;
+
+const destFor = () => {
+  const max = Math.max(1, track.offsetHeight - vh);
+  let idx = Math.round((scrollY / max) * (N - 1));
+  if (fromLeg >= 0 && Math.abs(idx - fromLeg) <= 2)
+    idx = clamp(idx, fromLeg - 1, fromLeg + 1);
+  return (clamp(idx, 0, N - 1) / (N - 1)) * max;
+};
+
+/* Real input only — never the scroll event, which the pull itself fires every
+   frame and would read as the visitor still scrolling. */
+['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach(ev =>
+  addEventListener(ev, () => {
+    const now = performance.now();
+    if (now - lastInput > 260) {                      // a pause: a new gesture
+      const max = Math.max(1, track.offsetHeight - vh);
+      fromLeg = Math.round((scrollY / max) * (N - 1));
+    }
+    lastInput = now;
+  }, { passive: true }));
+
+/* Called at the end of every frame, once the camera has been placed. */
+function settle(t) {
+  if (flat || reduced || !pts.length || seeking()) return;
+  const idle = t - lastInput;
+  if (idle < 90) return;                              // still their gesture
+  const gap = destFor() - scrollY;
+  if (Math.abs(gap) < .6) {
+    if (gap !== 0) { scrollTo(0, scrollY + gap); fromLeg = -1; lastActive = lastInput; }
+    return;
+  }
+  const ramp = clamp((idle - 90) / 320, 0, 1);        // the pull fades in
+  scrollTo(0, scrollY + gap * (.014 + .072 * easeInOut(ramp)));
+}
+
 /* ── layers ────────────────────────────────────────────────────── */
 const layers = [
   { el: $('#layerBg'),  d: DEPTH.bg  },
@@ -918,9 +980,27 @@ function audioRig() {
     btn.setAttribute('aria-label', on ? 'Mute' : 'Unmute');
   };
 
+  /* A page may not start audio without a gesture, and entering the site is no
+     longer one — there is no door to click any more. So the intent is kept and
+     retried on the first thing the visitor actually does. The control stays
+     muted until sound is genuinely playing, rather than claiming otherwise. */
+  const WAKE = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+  let armed = false;
+  const disarm = fn => WAKE.forEach(ev => removeEventListener(ev, fn));
+
   audioEnable = async v => {
     on = v;
-    if (on) { try { await el.play(); wireAnalyser(); } catch (e) { on = false; } }
+    if (on) {
+      try { await el.play(); wireAnalyser(); }
+      catch (e) {
+        on = false;
+        if (!armed) {
+          armed = true;
+          const go = () => { disarm(go); armed = false; audioEnable(true); };
+          WAKE.forEach(ev => addEventListener(ev, go, { passive: true }));
+        }
+      }
+    }
     else el.pause();
     apply(); showLevel(); paintState();
   };
@@ -2287,13 +2367,14 @@ function caseFilmOne(wrap) {
      throttled — a background tab, a hidden window — because every write to it
      lived inside the loop. */
   if (touch || reduced) return;
-  wrap.addEventListener('pointermove', e => {
+  const area = wrap;
+  area.addEventListener('pointermove', e => {
     const b = wrap.getBoundingClientRect();
     frost.style.setProperty('--mx', (e.clientX - b.left).toFixed(0) + 'px');
     frost.style.setProperty('--my', (e.clientY - b.top).toFixed(0) + 'px');
     frost.style.setProperty('--r', Math.min(b.width * .26, 250).toFixed(0) + 'px');
   }, { passive: true });
-  wrap.addEventListener('pointerleave', () => frost.style.setProperty('--r', '0px'));
+  area.addEventListener('pointerleave', () => frost.style.setProperty('--r', '0px'));
 }
 
 /* ── the two case studies ──────────────────────────────────────────
@@ -2586,6 +2667,7 @@ function nav() {
       return;
     }
     const max = track.offsetHeight - vh;
+    programmatic = performance.now();
     scrollTo({ top: (i / (N - 1)) * max, behavior: 'smooth' });
   }));
   /* Phones: the header is a top-of-page thing, and this is the way back to it.
@@ -2595,6 +2677,7 @@ function nav() {
      else — a tablet and a desktop toggle a class nobody styles. */
   const toTop = $('#toTop');
   toTop?.addEventListener('click', () => {
+    programmatic = performance.now();
     scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
   });
   let atTop = true;
@@ -2773,6 +2856,7 @@ function tick(t) {
   }
 
   melt(t, dt);
+  settle(t);
   auroraUpdate(meltT, t);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
@@ -2924,6 +3008,23 @@ function boot() {
     })(0);
   }
 
+  /* The world arrives: pulled back far enough to see all five stops and the
+     route, then flown into the hero. The class is removed on animationend,
+     and on a timer regardless — whatever happens, the world settles. */
+  const arrive = () => {
+    if (flat) return;
+    const vp = $('#viewport');
+    document.body.classList.add('arriving');
+    let off = false;
+    const end = () => {
+      if (off) return; off = true;
+      document.body.classList.remove('arriving');
+      vp.removeEventListener('animationend', end);
+    };
+    vp.addEventListener('animationend', end);
+    setTimeout(end, 3400);
+  };
+
   let entered = false;
   const enter = withAudio => {
     if (entered) return;
@@ -2936,6 +3037,7 @@ function boot() {
     document.body.classList.add('ready');
     stops[0].classList.add('live');
     box.classList.add('done');
+    arrive();
     setTimeout(() => { if (skyRaf) cancelAnimationFrame(skyRaf); }, 300);
   };
   $('#audioOn') ?.addEventListener('click', () => enter(true));
@@ -2948,8 +3050,11 @@ function boot() {
     num.textContent = Math.round(e * 100) + '%';
     bar.style.width = (e * 100) + '%';
     if (k < 1) return requestAnimationFrame(run);
-    box.classList.add('asks');                 // 100% — hand the choice over
-    $('#audioOn')?.focus({ preventScroll: true });
+    /* No question at the door. The aperture resolves and the world arrives;
+       sound lives in the nav, one click away, for anyone who wants it. The
+       first three seconds are the most attention a visitor will ever give
+       this page, and they are not spent on a permission dialog. */
+    setTimeout(() => enter(true), 380);
   })(t0);
 }
 
