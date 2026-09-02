@@ -43,6 +43,13 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* The UA stylesheet's [hidden]{display:none} is a plain author-level rule, so
+   ANY display declaration of ours beats it. .fb-swap and .reader-swap both set
+   display:inline-flex, which meant setting .hidden = true left the attribute
+   on and the button on screen — the case-study switcher was showing over the
+   category films in How We Work. Restated with !important so hiding an element
+   is hiding it, whatever else it is styled as. */
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{
   background:var(--bg);
