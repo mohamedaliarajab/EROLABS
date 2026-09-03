@@ -187,36 +187,69 @@ function readScroll() {
    page — while a deliberate scroll of three or more is left alone, because at
    that distance it was the intent. Nothing runs on a phone: flat mode is an
    ordinary scrolling page. */
-let fromLeg = -1, lastInput = 0, programmatic = 0;
+let fromLeg = -1, lastInput = 0, seekIdx = -1, seekAt = 0;
 
-/* nav and back-to-top scroll on purpose and land where they mean to. Without
-   this the pull would read their smooth scroll as a gesture, take the leg
-   they SET OFF from as the anchor, and haul them back. */
-const seeking = () => performance.now() - programmatic < 1500;
+const maxScroll = () => Math.max(1, track.offsetHeight - vh);
+const legAt = y => (y / maxScroll()) * (N - 1);
 
+/* Where a gesture should come to rest. The clamp is the one-gesture-one-page
+   rule: a flick that overshot by two legs is pulled back to one, while a
+   deliberate scroll of three or more is left alone. */
 const destFor = () => {
-  const max = Math.max(1, track.offsetHeight - vh);
-  let idx = Math.round((scrollY / max) * (N - 1));
+  let idx = Math.round(legAt(scrollY));
   if (fromLeg >= 0 && Math.abs(idx - fromLeg) <= 2)
     idx = clamp(idx, fromLeg - 1, fromLeg + 1);
-  return (clamp(idx, 0, N - 1) / (N - 1)) * max;
+  return (clamp(idx, 0, N - 1) / (N - 1)) * maxScroll();
 };
 
-/* Real input only — never the scroll event, which the pull itself fires every
-   frame and would read as the visitor still scrolling. */
-['wheel', 'touchmove', 'keydown', 'pointerdown'].forEach(ev =>
+/* Ask to be somewhere. This is what nav and the proof link use, and it
+   outranks the gesture rules entirely — pressing a menu item is not a scroll,
+   it is a destination, and it must not be clamped to one leg from wherever
+   you happened to be standing. */
+const seekStop = i => {
+  seekIdx = clamp(i | 0, 0, N - 1);
+  seekAt = performance.now();
+  fromLeg = -1;                      // a gesture anchor has no say in a seek
+};
+
+/* Scroll input only. pointerdown is NOT here: a click on a menu item fires
+   one, which used to arm the anchor at the stop being left — and the clamp
+   then forbade the destination. Every two-leg jump landed one short of where
+   it was asked to go, which is what made it look inconsistent rather than
+   simply broken. */
+['wheel', 'touchmove', 'keydown'].forEach(ev =>
   addEventListener(ev, () => {
     const now = performance.now();
-    if (now - lastInput > 260) {                      // a pause: a new gesture
-      const max = Math.max(1, track.offsetHeight - vh);
-      fromLeg = Math.round((scrollY / max) * (N - 1));
-    }
+    if (now - lastInput > 260) fromLeg = Math.round(legAt(scrollY));   // new gesture
     lastInput = now;
+    seekIdx = -1;                    // taking the wheel cancels a seek
   }, { passive: true }));
+
+/* A press anywhere stops the pull without arming anything — grabbing the
+   scrollbar should never be fought, but it is not a gesture with a leg of
+   origin either. */
+addEventListener('pointerdown', () => { lastInput = performance.now(); seekIdx = -1; }, { passive: true });
 
 /* Called at the end of every frame, once the camera has been placed. */
 function settle(t) {
-  if (flat || reduced || !pts.length || seeking()) return;
+  if (flat || reduced || !pts.length) return;
+
+  /* A seek drives itself rather than handing off to the browser's smooth
+     scroll. One code path, one easing, and nothing to fight: a native smooth
+     scroll and this pull would each be writing scroll position on the same
+     frames. */
+  if (seekIdx >= 0) {
+    const gap = (seekIdx / (N - 1)) * maxScroll() - scrollY;
+    if (Math.abs(gap) < .6) {
+      scrollTo(0, scrollY + gap);
+      seekIdx = -1; fromLeg = -1; lastActive = lastInput;
+      return;
+    }
+    const k = clamp((t - seekAt) / 260, 0, 1);
+    scrollTo(0, scrollY + gap * (.03 + .1 * easeInOut(k)));
+    return;
+  }
+
   const idle = t - lastInput;
   if (idle < 90) return;                              // still their gesture
   const gap = destFor() - scrollY;
@@ -935,17 +968,45 @@ function audioRig() {
 
   let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0, wired = false;
 
+  /* A page may not start audio without a gesture, and entering the site is no
+     longer one — there is no door to click any more. Both the play attempt and
+     the analyser wait on the first thing the visitor actually does. */
+  const WAKE = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
+
   /* One AnalyserNode on the bed, built the first time playback starts (it
      needs a gesture, and createMediaElementSource may only run once). fftSize
      128 is 64 bins; reading the lowest twelve each frame is a rounding error
      next to everything else on screen. */
+  let waitingForGesture = false;
   const wireAnalyser = () => {
     if (wired) return;
-    wired = true;
     try {
       const AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return;
+      if (!AC) { wired = true; return; }
       const ac = new AC();
+      /* createMediaElementSource DISCONNECTS the element from the speakers and
+         routes it into this graph. A context built outside a user gesture
+         starts suspended, and resume() cannot lift that on its own — so wiring
+         here played the bed into a dead graph: element running, currentTime
+         advancing, the control honestly showing unmuted, and silence. Which is
+         why muting and unmuting fixed it: the click was the gesture.
+
+         So the graph is only built once a context can actually run. Until
+         then the element stays on the default output, where it is audible. */
+      if (ac.state === 'suspended') {
+        ac.close();
+        if (!waitingForGesture) {
+          waitingForGesture = true;
+          const go = () => {
+            WAKE.forEach(ev => removeEventListener(ev, go));
+            waitingForGesture = false;
+            wireAnalyser();
+          };
+          WAKE.forEach(ev => addEventListener(ev, go, { passive: true }));
+        }
+        return;
+      }
+      wired = true;
       const an = ac.createAnalyser();
       an.fftSize = 128; an.smoothingTimeConstant = .82;
       ac.createMediaElementSource(el).connect(an);
@@ -958,7 +1019,7 @@ function audioRig() {
         for (let i = 0; i < 12; i++) sum += bins[i];
         return sum / (12 * 255);
       };
-    } catch (e) { /* no analyser: the aurora simply drifts without a beat */ }
+    } catch (e) { wired = true; /* no analyser: the aurora drifts without a beat */ }
   };
 
   const effective = () => clamp(base * boost, 0, 1);
@@ -980,25 +1041,42 @@ function audioRig() {
     btn.setAttribute('aria-label', on ? 'Mute' : 'Unmute');
   };
 
-  /* A page may not start audio without a gesture, and entering the site is no
-     longer one — there is no door to click any more. So the intent is kept and
-     retried on the first thing the visitor actually does. The control stays
-     muted until sound is genuinely playing, rather than claiming otherwise. */
-  const WAKE = ['pointerdown', 'keydown', 'wheel', 'touchstart'];
   let armed = false;
-  const disarm = fn => WAKE.forEach(ev => removeEventListener(ev, fn));
+
+  /* Unmuting an element that is already playing is governed by the same
+     policy as starting one, so this has to wait for a real activation.
+     A wheel is not one — Chrome counts pointerdown, keydown and touchstart,
+     and scrolling past on a trackpad counts for nothing. */
+  const ACTIVATE = ['pointerdown', 'keydown', 'touchstart'];
+  const armUnmute = () => {
+    if (armed) return;
+    armed = true;
+    const go = () => {
+      ACTIVATE.forEach(ev => removeEventListener(ev, go));
+      armed = false;
+      el.muted = false;
+      if (el.paused) el.play().catch(() => {});
+      wireAnalyser();                 // a context can run now, so build it
+      apply(); showLevel(); paintState();
+    };
+    ACTIVATE.forEach(ev => addEventListener(ev, go, { passive: true }));
+  };
 
   audioEnable = async v => {
     on = v;
     if (on) {
+      el.muted = false;
       try { await el.play(); wireAnalyser(); }
       catch (e) {
-        on = false;
-        if (!armed) {
-          armed = true;
-          const go = () => { disarm(go); armed = false; audioEnable(true); };
-          WAKE.forEach(ev => addEventListener(ev, go, { passive: true }));
-        }
+        /* No browser will start UNMUTED audio without a user activation, and
+           entering the site is no longer one — there is no door to click. But
+           muted autoplay is always allowed. So the bed starts muted and plays
+           from the moment the page opens; the first press or keystroke lifts
+           the mute. The sound is running the whole time, only its output is
+           waiting, which is why the control is right to read as on. */
+        el.muted = true;
+        try { await el.play(); armUnmute(); }
+        catch (e2) { on = false; el.muted = false; }
       }
     }
     else el.pause();
@@ -1012,6 +1090,8 @@ function audioRig() {
 
   btn.addEventListener('click', () => {
     takeControl();
+    el.muted = false;                 // this click IS the activation
+    armed = false;
     if (!on && base === 0) { base = .35; slider.value = 35; }        // unmuting from zero
     audioEnable(!on);
   });
@@ -2666,9 +2746,8 @@ function nav() {
       stops[i].scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
       return;
     }
-    const max = track.offsetHeight - vh;
-    programmatic = performance.now();
-    scrollTo({ top: (i / (N - 1)) * max, behavior: 'smooth' });
+    if (reduced) { scrollTo(0, (i / (N - 1)) * (track.offsetHeight - vh)); return; }
+    seekStop(i);
   }));
   /* Phones: the header is a top-of-page thing, and this is the way back to it.
      The class is toggled only when the threshold is actually crossed, so a
@@ -2677,8 +2756,8 @@ function nav() {
      else — a tablet and a desktop toggle a class nobody styles. */
   const toTop = $('#toTop');
   toTop?.addEventListener('click', () => {
-    programmatic = performance.now();
-    scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    if (flat || reduced) { scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' }); return; }
+    seekStop(0);
   });
   let atTop = true;
   addEventListener('scroll', () => {
