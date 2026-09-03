@@ -353,6 +353,20 @@ body.is-touch .cursor{display:none}
   transition:color .35s,border-color .35s,box-shadow .45s,transform .35s var(--ease);
 }
 .la-btn .la-wave{width:22px;height:16px;flex:none;opacity:.65;transition:opacity .35s}
+
+.la-btn.la-on{animation:floatGlow 4.2s ease-in-out infinite}
+@keyframes floatGlow{
+  0%,100%{box-shadow:0 0 26px rgba(30,144,255,.36),0 0 66px rgba(30,144,255,.14)}
+  34%    {box-shadow:0 0 34px rgba(166,37,238,.44),0 0 84px rgba(166,37,238,.18)}
+  67%    {box-shadow:0 0 30px rgba(226,238,255,.34),0 0 74px rgba(150,180,255,.14)}
+}
+.la-btn.la-on:hover,.la-btn.la-on:focus-visible{animation:floatGlowHot 2.4s ease-in-out infinite}
+@keyframes floatGlowHot{
+  0%,100%{box-shadow:0 0 40px rgba(30,144,255,.58),0 0 104px rgba(30,144,255,.22)}
+  34%    {box-shadow:0 0 50px rgba(166,37,238,.66),0 0 120px rgba(166,37,238,.26)}
+  67%    {box-shadow:0 0 44px rgba(226,238,255,.54),0 0 110px rgba(150,180,255,.22)}
+}
+body.reduced .la-btn.la-on{animation:none}
 /* the blue-to-violet edge, painted as a masked gradient ring */
 .la-btn::before{
   content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;

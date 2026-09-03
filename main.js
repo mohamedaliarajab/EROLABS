@@ -1047,7 +1047,7 @@ function audioRig() {
      policy as starting one, so this has to wait for a real activation.
      A wheel is not one — Chrome counts pointerdown, keydown and touchstart,
      and scrolling past on a trackpad counts for nothing. */
-  const ACTIVATE = ['pointerdown', 'keydown', 'touchstart'];
+  const ACTIVATE = ['pointerdown', 'keydown', 'touchstart', 'touchend', 'click'];
   const armUnmute = () => {
     if (armed) return;
     armed = true;
@@ -1099,6 +1099,11 @@ function audioRig() {
     takeControl();
     base = +slider.value / 100;
     slider.style.setProperty('--v', Math.round(base * 100));
+    /* Moving this IS the activation, so it lifts a waiting mute. Without
+       this the bed was already `on` and playing muted, so the branch below
+       fell through to a repaint and the sound never arrived — dragging the
+       volume did nothing at all. */
+    if (base > 0 && el.muted) { el.muted = false; armed = false; wireAnalyser(); }
     if (base > 0 && !on) audioEnable(true);
     else { apply(); paintState(); }
   });
@@ -3020,9 +3025,8 @@ function boot() {
       L.classList.add('done');
       document.body.classList.add('ready');
     };
-    $('#audioOn') ?.addEventListener('click', () => go(true));
-    $('#audioOff')?.addEventListener('click', () => go(false));
-    $('#audioOn') ?.focus({ preventScroll: true });
+    $('#audioOn')?.addEventListener('click', () => go(true));
+    $('#audioOn')?.focus({ preventScroll: true });
     $$('.stat').forEach(countUp);
     return;
   }
@@ -3119,8 +3123,7 @@ function boot() {
     arrive();
     setTimeout(() => { if (skyRaf) cancelAnimationFrame(skyRaf); }, 300);
   };
-  $('#audioOn') ?.addEventListener('click', () => enter(true));
-  $('#audioOff')?.addEventListener('click', () => enter(false));
+  $('#audioOn')?.addEventListener('click', () => enter(true));
 
   const t0 = performance.now(), DUR = 1700;
   (function run(now) {
@@ -3129,11 +3132,15 @@ function boot() {
     num.textContent = Math.round(e * 100) + '%';
     bar.style.width = (e * 100) + '%';
     if (k < 1) return requestAnimationFrame(run);
-    /* No question at the door. The aperture resolves and the world arrives;
-       sound lives in the nav, one click away, for anyone who wants it. The
-       first three seconds are the most attention a visitor will ever give
-       this page, and they are not spent on a permission dialog. */
-    setTimeout(() => enter(true), 380);
+    /* One door, and it is not a question. A first visit cannot have sound
+       without a user activation — no browser will start audible media on its
+       own until a site has earned engagement, which by definition it has not
+       on a first visit. This click IS that activation, so it is the only way
+       the bed can be playing when the world arrives. Muting afterwards is a
+       control in the nav, which is where a preference belongs rather than in
+       a dialog before anyone has seen anything. */
+    box.classList.add('asks');
+    $('#audioOn')?.focus({ preventScroll: true });
   })(t0);
 }
 
