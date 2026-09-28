@@ -2755,3 +2755,85 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
   .work-arr{width:calc(var(--u)*.85);height:calc(var(--u)*.85);opacity:.6}
   .chat-ico{width:calc(var(--u)*.9);height:calc(var(--u)*.9);opacity:.75}
 }
+
+/* ═══ the live site, inside this one ══════════════════════════════════
+   Opens over the reading panel a tile was picked from, so z-index sits above
+   it. The screenshot holds the frame until the site itself has loaded, and
+   the way out lives in the bar the whole time — a preview is a courtesy, not
+   a cage. */
+.site{position:fixed;inset:0;z-index:70}
+.site[hidden]{display:none!important}
+.site-scrim{
+  position:absolute;inset:0;background:rgba(3,2,7,.82);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  animation:siteIn .3s var(--ease) both;
+}
+.site-frame{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(1180px,92vw);height:min(760px,86vh);
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid rgba(255,255,255,.14);border-radius:calc(var(--u)*1.1);
+  background:linear-gradient(158deg,rgba(30,34,52,.9),rgba(9,10,18,.96));
+  box-shadow:0 50px 140px rgba(0,0,0,.76),0 0 60px rgba(90,120,255,.1);
+  animation:siteUp .42s var(--ease) both;
+}
+@keyframes siteIn{from{opacity:0}to{opacity:1}}
+@keyframes siteUp{from{opacity:0;transform:translate(-50%,-48%) scale(.985)}
+                  to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.site-ring{inset:-1px;padding:1px;z-index:3}
+.site-bar{
+  flex:none;display:flex;align-items:center;gap:calc(var(--u)*.9);
+  padding:calc(var(--u)*.72) calc(var(--u)*1);
+  border-bottom:1px solid var(--line-2);position:relative;z-index:2;
+}
+.site-dots{display:flex;gap:5px;flex:none}
+.site-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16)}
+.site-url{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.68);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.site-out{
+  flex:none;display:inline-flex;align-items:center;gap:calc(var(--u)*.4);
+  padding:calc(var(--u)*.42) calc(var(--u)*.9);
+  border:1px solid rgba(166,37,238,.5);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.26),rgba(166,37,238,.1));
+  font-family:var(--f-mono);font-size:calc(var(--u)*.64);letter-spacing:.14em;
+  text-transform:uppercase;color:#fff;text-decoration:none;
+  transition:border-color .3s,background .3s;
+}
+.site-out:hover{border-color:var(--violet);background:linear-gradient(180deg,rgba(166,37,238,.4),rgba(166,37,238,.18))}
+.site-out svg{width:calc(var(--u)*.8);height:calc(var(--u)*.8)}
+.site-x{
+  flex:none;width:calc(var(--u)*1.9);height:calc(var(--u)*1.9);
+  display:grid;place-items:center;border:0;background:none;
+  color:var(--ink-3);cursor:pointer;transition:color .3s;
+}
+.site-x:hover{color:#fff}
+.site-x svg{width:70%;height:70%}
+.site-stage{position:relative;flex:1;overflow:hidden;background:#06050b}
+.site-shot{
+  position:absolute;inset:0;background-size:cover;background-position:top center;
+  opacity:1;transition:opacity .5s var(--ease);
+}
+.site-shot.gone{opacity:0}
+/* rendered at desktop width and scaled to fit — a site squeezed into the box
+   would serve its phone layout, and the work would not be the work */
+.site-live{
+  position:absolute;width:1440px;height:900px;border:0;
+  transform-origin:0 0;opacity:0;transition:opacity .45s var(--ease);
+}
+.site-live.on{opacity:1}
+/* phone: the frame is the viewport's width, so the site serves its own phone
+   layout instead of a desktop render shrunk past legibility */
+.site-live.native{inset:0;width:100%;height:100%;transform:none}
+.site-note{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(30ch,80%);text-align:center;
+  font-family:var(--f-text);font-size:calc(var(--u)*.86);line-height:1.5;
+  color:var(--ink-2);text-shadow:0 2px 20px rgba(0,0,0,.9);
+}
+@media (max-width:700px){
+  .site-frame{width:100vw;height:100vh;border:0;border-radius:0}
+  .site-out span{display:none}
+}

@@ -3065,6 +3065,136 @@ function chat() {
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) show(false); });
 }
 
+/* ── the live site, inside this one ────────────────────────────────
+   A tile in Our Work used to be a door out of the site. It is a window now:
+   the work opens in a frame here, over the panel it was picked from.
+
+   The honest part of this is the fallback. A site can refuse to be shown
+   inside another one — X-Frame-Options, or frame-ancestors in a CSP — and a
+   great many do by default. There is no way to ask in advance and no way to
+   read the failure: a blocked frame and a slow one look identical from out
+   here. So the screenshot stays underneath until the frame actually loads,
+   the way out stays in the bar the whole time, and if nothing has loaded
+   after six seconds it says so plainly instead of leaving a blank rectangle.
+
+   The frame is rendered at desktop width and scaled down to fit, because a
+   site squeezed into a 900px box would serve its phone layout and the work
+   would not be the work. */
+const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 6000;
+function sitePreview() {
+  const box = $('#site'), frame = $('#siteFrame'), shot = $('#siteShot'),
+        stage = $('#siteStage'), urlEl = $('#siteUrl'), out = $('#siteOut'),
+        note = $('#siteNote');
+  if (!box || !frame) return;
+  let timer = 0, openedBy = null;
+
+  /* The stage is whatever the panel leaves us; the site inside it is always
+     1440 wide. One number reconciles them, and it is rewritten on resize. */
+  const fit = () => {
+    const r = stage.getBoundingClientRect();
+    if (!r.width) return;
+    /* On a phone the frame is the phone's width, at one to one. Scaling a
+       1440-wide desktop render down to fit 375px puts the whole site at a
+       quarter size and nobody can read a word of it — and worse, it shows the
+       desktop layout of a site whose phone layout is the thing worth seeing.
+       Let the frame be narrow and the site inside it answers accordingly. */
+    if (flat) {
+      frame.classList.add('native');
+      ['transform', 'left', 'top'].forEach(k => frame.style.removeProperty(k));
+      return;
+    }
+    frame.classList.remove('native');
+    const k = Math.min(r.width / SITE_W, r.height / SITE_H);
+    frame.style.transform = `scale(${k.toFixed(4)})`;
+    frame.style.left = ((r.width - SITE_W * k) / 2).toFixed(1) + 'px';
+    frame.style.top  = ((r.height - SITE_H * k) / 2).toFixed(1) + 'px';
+  };
+  addEventListener('resize', () => { if (!box.hidden) fit(); });
+
+  const close = () => {
+    if (box.hidden) return;
+    clearTimeout(timer);
+    box.hidden = true;
+    box.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('siting');
+    frame.src = 'about:blank';        // stop whatever it was running
+    frame.classList.remove('on');
+    openedBy?.focus({ preventScroll: true });
+    openedBy = null;
+  };
+
+  const open = a => {
+    const url = a.getAttribute('href');
+    if (!url || url === '#') return;
+    openedBy = a;
+    const bg = $('.work-shot', a)?.style.backgroundImage || '';
+    const name = $('.work-meta b', a)?.textContent || '';
+
+    shot.style.backgroundImage = bg;
+    shot.classList.remove('gone');
+    note.hidden = true;
+    frame.classList.remove('on');
+    urlEl.textContent = (name ? name + '  ·  ' : '') + url.replace(/^https?:\/\//, '');
+    out.href = url;
+
+    box.hidden = false;
+    box.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('siting');
+    /* Twice: once now, and once on the next frame. The panel is unhidden and
+       measured in the same breath, and its opening animation can hand back a
+       box that is not its final one — which leaves the site rendering at 1440
+       with the right-hand third of it outside the window. */
+    fit();
+    requestAnimationFrame(fit);
+    frame.src = url;
+
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (frame.classList.contains('on')) return;
+      note.hidden = false;
+      note.textContent = 'This one will not open inside another site — that is a setting on their end, not a fault here. Open it live instead.';
+    }, SITE_WAIT);
+  };
+
+  frame.addEventListener('load', () => {
+    if (frame.src === 'about:blank') return;
+    clearTimeout(timer);
+    fit();                       // and again now the frame has something in it
+    frame.classList.add('on');
+    shot.classList.add('gone');
+    note.hidden = true;
+  });
+
+  /* Delegated on the document: the work grid is CLONED into the reading panel
+     every time it opens, so anything bound to the markup in the page would be
+     left behind on the original. */
+  document.addEventListener('click', e => {
+    const a = e.target.closest('.work-item');
+    if (!a) return;
+    /* Declared, not detected — and that is not laziness. A frame that has been
+       refused and a frame that has loaded are IDENTICAL from out here: both
+       fire load, both throw SecurityError on contentWindow.location, both
+       report contentDocument null and length 0. Tested, not assumed. The
+       browser hides the difference on purpose, so guessing means showing an
+       empty rectangle to anyone whose site says no.
+
+       hasAttribute, not dataset: a valueless attribute reads back as the empty
+       string, which is falsy, and this exact mistake has already cost a day on
+       this site once.
+
+       A tile without the attribute keeps being an ordinary link and opens in a
+       new tab, which is what it did before any of this existed. */
+    if (!a.hasAttribute('data-frame')) return;
+    e.preventDefault();                 // the href stays, as the way out
+    e.stopPropagation();
+    open(a);
+  });
+
+  $('#siteX').addEventListener('click', close);
+  $('#siteScrim').addEventListener('click', close);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) close(); });
+}
+
 /* ── cursor ────────────────────────────────────────────────────── */
 function cursor() {
   const c = $('#cursor'); if (touch || reduced) return;
@@ -3352,7 +3482,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat(); sitePreview();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while

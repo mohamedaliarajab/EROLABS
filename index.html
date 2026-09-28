@@ -512,57 +512,67 @@
           <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="apps">Apps</button>
         </nav>
 
+        <!-- data-frame = this site allows being shown inside another one, so the
+             tile opens in the preview window rather than a new tab.
+
+             There is no way to test this from the page: a refused frame and a
+             loaded one look exactly the same to JavaScript. So it is declared
+             here, per project. Rule of thumb — sites we built and host: yes.
+             Wix, Squarespace, Shopify, most GitHub and Vercel defaults: no,
+             they send X-Frame-Options or frame-ancestors and the window would
+             come up empty. When in doubt, drop the attribute: the tile then
+             opens in a new tab, which always works. -->
         <div class="work-grid" data-show="websites">
-            <a class="work-item" data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-design.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Ẹ̀rọ Labs</b><i>Studio site · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-intelligence.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>HADI</b><i>Artist release page · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-case.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Freight intake</b><i>Document pipeline · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-case-2.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Studio operations</b><i>Email-driven hub · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-automation.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Studio CRM</b><i>Client dashboard · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-design.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Leadership telemetry</b><i>Weekly digest · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-intelligence.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Change Note</b><i>Staff notifier · 2026</i></span>
               <span class="work-go" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </span>
             </a>
-            <a class="work-item" data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
+            <a class="work-item" data-frame data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/poster-case.jpg')" aria-hidden="true"></i>
               <span class="work-meta"><b>Clearing platform</b><i>Logistics tooling · 2026</i></span>
               <span class="work-go" aria-hidden="true">
@@ -841,6 +851,34 @@
   </header>
   <div class="chat-log" id="chatLog"></div>
   <div class="chat-foot" id="chatFoot"></div>
+</div>
+
+<!-- ── the live site, shown inside this one ──────────────────────────
+     A tile used to be a door out. It is a window now: the work opens in a
+     frame here, with the screenshot underneath it until the site has loaded,
+     and the way out kept visible for anyone who wants the real thing. -->
+<div class="site" id="site" aria-hidden="true" hidden>
+  <div class="site-scrim" id="siteScrim"></div>
+  <div class="site-frame" role="dialog" aria-modal="true" aria-label="Live site">
+    <i class="cfilm-ring site-ring" aria-hidden="true"></i>
+    <header class="site-bar">
+      <span class="site-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span class="site-url" id="siteUrl"></span>
+      <a class="site-out" id="siteOut" target="_blank" rel="noopener noreferrer">Open live
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button class="site-x" id="siteX" type="button" aria-label="Close preview">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6 18 18M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <div class="site-stage" id="siteStage">
+      <i class="site-shot" id="siteShot" aria-hidden="true"></i>
+      <iframe class="site-live" id="siteFrame" title="Live site preview"
+              referrerpolicy="no-referrer"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+      <p class="site-note" id="siteNote" hidden></p>
+    </div>
+  </div>
 </div>
 
 <div class="cursor" id="cursor" aria-hidden="true"><i></i><span class="cur-t"></span></div>
