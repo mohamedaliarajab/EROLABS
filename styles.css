@@ -2564,19 +2564,6 @@ body.reduced .work-open,body.reduced .work-dot{animation:none}
 .work-item:hover .work-go,.work-item:focus-visible .work-go{opacity:1;transform:none}
 
 @media (max-width:700px){
-  /* A vertical pill pinned to the middle of the left edge stood squarely on
-     top of the hero paragraph — fixed chrome on a 375px screen has nowhere to
-     hide. Both launchers move to the bottom corners instead, one row above
-     the telemetry, and take a backdrop blur so whatever scrolls behind them
-     stays legible as itself rather than bleeding through. */
-  .work-open{
-    top:auto;bottom:78px;left:14px;transform:none;
-    flex-direction:row;gap:calc(var(--u)*.62);
-    padding:calc(var(--u)*.78) calc(var(--u)*1.2);
-  }
-  .work-label{writing-mode:horizontal-tb;transform:none}
-  .work-dot{width:5px;height:5px}
-  .work-open,.chat-open{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
   .work-grid{grid-template-columns:1fr}
 }
 
@@ -2611,9 +2598,15 @@ body.reduced .chat-open{animation:none}
    floating over a page that had given way. They take it now, on their own
    vars so nothing leaks into the panels.
 
-   Filter and transform only. Opacity is spoken for: body.reading and
-   body.filming hide both of these, and those rules sit above this one. */
-body.melting .work-open,body.melting .chat-open,
+   The open Ask us panel is in here too. It is the one panel that melts: it
+   is a form someone is filling rather than a document someone is reading, and
+   anything they do to it — a keystroke, a scroll, a tap — wakes it instantly.
+   The reading view and the film frame stay out, because thirty still seconds
+   is an ordinary thing to spend on a paragraph.
+
+   Filter only. Opacity is spoken for: body.reading and body.filming hide the
+   two launchers, and those rules sit above this one. */
+body.melting .work-open,body.melting .chat-open,body.melting .chat,
 body.melting .nav,body.melting .hud,body.melting .progress-rail{
   filter:blur(var(--cblur,0px))
          saturate(calc(1 - var(--cmelt,0) * .6))
@@ -2716,4 +2709,38 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
 @media (max-width:700px){
   .chat-open{right:14px;bottom:78px}
   .chat{right:10px;left:10px;bottom:10px;width:auto;max-height:78vh}
+}
+
+/* ── the launchers on a phone ──────────────────────────────────────
+   The desktop pill is loud deliberately: it has an empty gutter to itself and
+   has to be found. A 375px screen has no gutter — fixed chrome there stands
+   on the type — so a glowing violet banner in each bottom corner reads as two
+   adverts stapled over the page.
+
+   They drop to the register of the telemetry they sit beside instead: hairline
+   outline, near-black fill, no pulsing glow, no travelling rim, type at the
+   HUD's size and letterspacing. Present, findable, and quiet — which is what
+   the brief asked for in the first place. They keep a 40px tap target and the
+   backdrop blur, so whatever scrolls under them stays legible as itself. */
+@media (max-width:700px){
+  .work-open,.chat-open{
+    bottom:72px;min-height:40px;
+    padding:calc(var(--u)*.6) calc(var(--u)*1);
+    gap:calc(var(--u)*.55);
+    border-color:rgba(166,37,238,.34);
+    background:rgba(8,6,14,.58);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    animation:none;                       /* the glow is the loud part */
+  }
+  .work-open{top:auto;left:12px;transform:none;flex-direction:row}
+  .chat-open{right:12px}
+  .work-open .work-ring,.chat-open .chat-ring{display:none}
+  .work-label{
+    writing-mode:horizontal-tb;transform:none;
+    font-size:calc(var(--u)*.62);letter-spacing:.2em;color:var(--ink-2);
+  }
+  .chat-open{font-size:calc(var(--u)*.62);letter-spacing:.2em;color:var(--ink-2)}
+  .work-dot{width:4px;height:4px;box-shadow:0 0 6px rgba(255,255,255,.7)}
+  .work-arr{width:calc(var(--u)*.85);height:calc(var(--u)*.85);opacity:.6}
+  .chat-ico{width:calc(var(--u)*.9);height:calc(var(--u)*.9);opacity:.75}
 }
