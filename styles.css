@@ -2708,7 +2708,15 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
 
 @media (max-width:700px){
   .chat-open{right:14px;bottom:78px}
-  .chat{right:10px;left:10px;bottom:10px;width:auto;max-height:78vh}
+  /* Two thirds of the blur radius, and a heavier tint to make up for it. The
+     panel covers most of a phone, and the cost of frosting it is paid per
+     frame for as long as it is open. */
+  .chat{
+    right:10px;left:10px;bottom:10px;width:auto;max-height:78vh;
+    -webkit-backdrop-filter:blur(18px) saturate(1.5);backdrop-filter:blur(18px) saturate(1.5);
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,0) 62%),
+               linear-gradient(158deg,rgba(40,45,68,.86),rgba(10,12,20,.95));
+  }
 }
 
 /* ── the launchers on a phone ──────────────────────────────────────
@@ -2728,8 +2736,11 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
     padding:calc(var(--u)*.6) calc(var(--u)*1);
     gap:calc(var(--u)*.55);
     border-color:rgba(166,37,238,.34);
-    background:rgba(8,6,14,.58);
-    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+    /* Opaque, not frosted. A backdrop-filter on fixed chrome makes the phone
+       re-blur whatever is scrolling underneath it on every single frame, for
+       the whole length of the page — a permanent tax to soften two small
+       rectangles. A near-solid fill reads the same and costs nothing. */
+    background:rgba(7,5,12,.92);
     animation:none;                       /* the glow is the loud part */
   }
   .work-open{top:auto;left:12px;transform:none;flex-direction:row}

@@ -120,6 +120,7 @@ function measure() {
   field.resize();
   galaxy.size();
   sky.size();
+  dropFlatMids();
 }
 
 /* Nothing may overflow the frame: scale any stop that outgrows it. */
@@ -1376,6 +1377,11 @@ function melt(t, dt) {
     return;
   }
   meltT += dt;                                // no latch: it keeps going
+  /* The blur is re-rasterised on every write, and it grows by a fraction of a
+     pixel per frame. Twenty writes a second is indistinguishable from sixty
+     and costs a third as much — which matters here, because unlike everything
+     else on this page the melt runs for as long as the phone is left alone. */
+  if (flat && fno % 3) return;
   writeMelt(el, t, false);
 }
 
@@ -3135,6 +3141,31 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
 let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1;
 const dists = [];
 
+/* Frame counter, for the work a phone does not need done sixty times a second.
+   See the foot of tick(). */
+let fno = 0;
+
+/* Where each stop sits in the document, in flat mode.
+   This used to be five getBoundingClientRect() calls per frame — three hundred
+   a second, each one a forced synchronous layout, and all five taken straight
+   after the loop above has written transforms to the parallax layers. That is
+   the textbook way to make a phone stutter while doing nothing.
+
+   The positions only change when the page reflows, so they are cached and
+   refreshed twice a second: twelve reads a second instead of three hundred,
+   and still self-healing if a font or an image lands late and moves things. */
+let flatMid = [], flatMidAt = -1e9;
+const flatMids = t => {
+  if (flatMid.length === N && t - flatMidAt < 400) return flatMid;
+  flatMidAt = t;
+  flatMid = stops.map(el => {
+    const r = el.getBoundingClientRect();
+    return r.top + scrollY + r.height / 2;
+  });
+  return flatMid;
+};
+const dropFlatMids = () => { flatMidAt = -1e9; };
+
 /* Off the hero, the mast is gone and nothing says the wordmark is the way
    back. So on each new arrival a star shoots along a rail beneath it. */
 function flashWordmark() {
@@ -3186,6 +3217,7 @@ const numGlow = (() => {
 
 function tick(t) {
   const dt = lastTick ? Math.min(64, t - lastTick) : 16; lastTick = t;
+  fno++;
   readScroll();
   cam.x = lerp(cam.x, cam.tx, .09);
   cam.y = lerp(cam.y, cam.ty, .09);
@@ -3194,6 +3226,7 @@ function tick(t) {
     L.el.style.transform = `translate3d(${-cam.x * L.d}px,${-cam.y * L.d}px,0)`;
 
   // proximity → reveal, and cull what's far away
+  const mids = flat ? flatMids(t) : null;
   let heroD = 0, best = 0;
   for (let i = 0; i < N; i++) {
     let d;
@@ -3203,8 +3236,7 @@ function tick(t) {
          units as the camera metric, which is what lets `live`, the sector
          readout, the mast fade and the per-section updates below all carry on
          working without knowing which mode they are in. */
-      const r = stops[i].getBoundingClientRect();
-      d = Math.abs(r.top + r.height / 2 - vh / 2) / vh;
+      d = Math.abs(mids[i] - (scrollY + vh / 2)) / vh;
     } else {
       const dx = (pts[i].x - cam.x) / vw, dy = (pts[i].y - cam.y) / vh;
       d = Math.hypot(dx, dy);
@@ -3288,16 +3320,31 @@ function tick(t) {
 
   melt(t, dt);
   settle(t);
-  auroraUpdate(meltT, t);
+  if (!flat || fno % 3 === 0) auroraUpdate(meltT, t);
   // 7% louder for every second the section is left to melt; back on scroll
   audioRamp(1 + Math.min(meltT / 1000, 72) * .07, dt);
-  poleUpdate(t, dt, heroD);
+  /* The mast is a static column in flat mode — body.flat .orbit pins every
+     transform with !important — so everything poleUpdate writes there is
+     thrown away before it is painted. */
+  if (!flat) poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
   layersUpdate(t, dt, near === 1 && nearD < 1.2);
   numGlow();
-  sky.draw(t, heroD);
-  galaxy.draw(t, heroD);
-  field.draw(t);
+
+  /* Four full-screen canvases, repainted every frame. On a desktop they are
+     riding a camera that moves continuously, so every frame is a new picture
+     and the cost is the point. In flat mode there is no camera: the field's
+     nodes are pinned to it and cannot move at all, and the sky, the galaxy
+     and the aurora only breathe. Repainting roughly four million pixels sixty
+     times a second to animate a twinkle is most of a phone's frame budget
+     spent on a picture that is all but identical to the last one.
+
+     So on a phone they run on a third of the frames — twenty a second, which
+     is more than a drifting gradient or a blinking star needs — and the field,
+     which is the most expensive and the least alive of them, on a sixth. */
+  const slow = flat && (fno % 3);
+  if (!slow) { sky.draw(t, heroD); galaxy.draw(t, heroD); }
+  if (!flat || fno % 6 === 0) field.draw(t);
   requestAnimationFrame(tick);
 }
 
