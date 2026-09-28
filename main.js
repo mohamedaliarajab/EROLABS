@@ -1288,6 +1288,8 @@ function clearMelt() {
   if (!meltEl) return;
   meltEl.classList.remove('melting');
   ['--melt', '--blur', '--sag', '--sagY'].forEach(v => meltEl.style.removeProperty(v));
+  document.body.classList.remove('melting');
+  ['--cmelt', '--cblur'].forEach(v => document.body.style.removeProperty(v));
   meltEl = null; meltT = 0;
   meltDisp.setAttribute('scale', '0');
 }
@@ -1316,6 +1318,24 @@ function writeMelt(el, t, urgent) {
   el.style.setProperty('--sag',  sag.toFixed(1) + 'px');
   el.style.setProperty('--sagY', (1 + 1.2 * soft).toFixed(3));
 
+  /* The chrome — marker, launcher, wordmark, telemetry, the rail — is fixed at
+     body level, which is the whole reason it used to ride out the melt while
+     the page gave way beneath it. It takes the melt now, under its own names:
+     --melt and --blur would inherit down into the reading panel and drip the
+     very thing someone is reading.
+
+     No sag for the chrome. The page can afford to drip off the bottom because
+     there is more of it; a top bar sliding 300px down just parks itself in
+     the middle of the screen, and a launcher that leaves the frame cannot be
+     found by the person it is there for. */
+  const b = document.body;
+  b.classList.add('melting');
+  b.style.setProperty('--cmelt', ramp.toFixed(3));
+  b.style.setProperty('--cblur', (1.6 * ramp + 5 * soft).toFixed(2) + 'px');
+
+  /* No turbulence map on a phone or a pad — see melt(). */
+  if (flat) return;
+
   /* The transform above is composited and free. The displacement map is not
      — it re-rasterises the whole section — so it is written at ~15fps, and
      not at all once the section has dripped past the bottom of the frame
@@ -1329,15 +1349,22 @@ function writeMelt(el, t, urgent) {
 
 const viewportEl = $('#viewport');
 function melt(t, dt) {
-  if (reduced || touch || flat || !meltDisp) return;   // idle == reading, on a phone
+  if (reduced || !meltDisp) return;
   /* rAF is suspended while the tab is hidden, so on return `t - lastActive`
      can be minutes. Treat a long frame gap as coming back to the page and
      restart the countdown, rather than snapping straight to a deep melt. */
   if (dt > 500) { lastActive = t; meltT = 0; }
   /* The whole screen melts, not whichever section happens to be nearest —
      the effect is the page giving way, and the page is all of it. Panels and
-     films sit above the world at body level and are never touched. */
-  const el = viewportEl;
+     films sit above the world at body level and are never touched.
+
+     Flat mode is the exception, and has to be. There #viewport IS the
+     document — every stop stacked in normal flow — so filtering it would
+     rasterise the entire page at once for a blur that only ever shows one
+     screen of it, and its translateY sag would shove the page down and move
+     the scroll out from under a reading thumb. The section in view melts
+     instead: one screen's worth, bounded, and it looks the same. */
+  const el = flat ? (stops[nearIdx] || viewportEl) : viewportEl;
   if (meltEl && meltEl !== el) clearMelt();
 
   if (t - lastActive < MELT_AFTER) {
@@ -2541,7 +2568,7 @@ function reader() {
      these blocks, so they are deliberately not part of the reading view. */
   /* The brief only. It no longer shows itself in the panel either — it carries
      data-read, so the panel fills with the full study instead. */
-  const BLOCKS = '.case-brief';
+  const BLOCKS = '.case-brief, .work-open';
   let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
   const swapBtn = $('.reader-swap', shell);
@@ -2637,6 +2664,22 @@ function reader() {
     $('span', swapBtn).textContent = 'Case study ' + other;
   };
 
+  /* Category switching inside the panel. Delegated, because fill() clones
+     whatever it is showing — a listener bound to the markup in the page would
+     be left behind on the original every time the panel opens. */
+  body.addEventListener('click', e => {
+    const tab = e.target.closest('.work-tab');
+    if (!tab) return;
+    e.stopPropagation();
+    $$('.work-tab', body).forEach(t => {
+      const on = t === tab;
+      t.classList.toggle('on', on);
+      t.setAttribute('aria-selected', String(on));
+    });
+    const grid = $('.work-grid', body);
+    if (grid) grid.dataset.show = tab.dataset.cat;
+  });
+
   swapBtn?.addEventListener('click', e => {
     e.stopPropagation();
     const n = swapBtn.dataset.to;
@@ -2710,6 +2753,310 @@ function reader() {
   x.addEventListener('click', hide);
   scrim.addEventListener('click', hide);
   addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+}
+
+/* ── ask us ────────────────────────────────────────────────────────
+   A fixed set of questions matched to fixed answers. There is no model here
+   and no API key, which is the point: a bot that can invent a price is a
+   liability on a site selling seven-figure engagements. The questions live in
+   one array; editing them is editing this list.
+
+   An answer with `a: null` is not shown. Three of them are unanswered because
+   they are commitments only the studio can make — support terms, what each
+   tier actually buys, and whether work happens outside Lagos. Fill the string
+   in and the question appears. */
+const ASK = [
+  { q: 'What do you actually do?',
+    a: 'We build the systems that do your admin. If your team spends hours copying, pasting, forwarding, chasing and re-typing between tools, we replace that with something that does it by itself — and tells you when something needs a person.' },
+
+  { q: 'Does this mean we let people go?',
+    a: 'It has not in the work we have done. In both builds the people doing the manual work went back to the work they were hired for — the freight team to fleet management, the studio’s coordinators to projects instead of chasing updates. What goes away is the retyping, not the role.' },
+
+  { q: 'Do we have to change our tools?',
+    a: 'No — that is the point. We build the relay between the tools you already pay for. Email, spreadsheets, whatever your team already opens: the system works with those rather than replacing them.' },
+
+  { q: 'How long does it take?',
+    a: 'A single workflow is usually live within a few weeks. Both of our documented builds were stable and measured inside 45 to 60 days.' },
+
+  { q: 'Who have you built this for?',
+    a: 'A freight logistics and maritime consortium, and a commercial architecture studio — both in Lagos, both under NDA, so the names are withheld. The numbers and the systems are in the Case Studies section of this site.' },
+
+  /* ── awaiting the studio's own answers ──
+     Each of these is a commitment, not a description. Write the answer and it
+     appears in the list; leave it null and it stays out. */
+  { q: 'What does it cost?',                 a: null },
+  { q: 'What happens when something breaks?', a: null },
+  { q: 'Do you work outside Lagos?',          a: null }
+];
+
+/* How long the panel waits before it speaks again, and before it gives up.
+   The nudge is a prompt, not a nag: it fires once after an answer and is
+   cancelled the moment the visitor does anything. */
+const ASK_NUDGE_MS = 15000;
+const ASK_CLOSE_MS = 120000;
+
+function chat() {
+  const box = $('#chat'), openBtn = $('#chatOpen'), closeBtn = $('#chatX'),
+        log = $('#chatLog'), foot = $('#chatFoot');
+  if (!box || !openBtn) return;
+
+  const asked = [];                 // the transcript, in order
+  let gated = false, sent = false, who = null, note = null;
+  let nudgeT = null, idleT = null;
+
+  const el = (tag, cls, text) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
+  const scroll = () => { log.scrollTop = log.scrollHeight; };
+
+  const say = (side, text) => {
+    const row = el('div', 'chat-row ' + side);
+    row.appendChild(el('p', 'chat-msg', text));
+    log.appendChild(row);
+    scroll();
+  };
+
+  /* ── the clocks ───────────────────────────────────────────────────
+     Anything the visitor does resets both. Two minutes of nothing closes the
+     panel and posts what was said: an abandoned conversation is still a lead,
+     and the questions they opened say what they were weighing even when they
+     never typed a word. */
+  const stopClocks = () => { clearTimeout(nudgeT); clearTimeout(idleT); nudgeT = idleT = null; };
+  const alive = () => {
+    clearTimeout(nudgeT); nudgeT = null;
+    clearTimeout(idleT);
+    idleT = setTimeout(giveUp, ASK_CLOSE_MS);
+  };
+  const nudgeSoon = () => {
+    clearTimeout(nudgeT);
+    nudgeT = setTimeout(() => {
+      if (sent || box.hidden) return;
+      say('them', 'Is there anything else we can assist you with?');
+    }, ASK_NUDGE_MS);
+  };
+
+  const giveUp = async () => {
+    if (sent || box.hidden) return;
+    stopClocks();
+    /* Nothing to send if they never said who they were — there would be no
+       one to reply to. */
+    if (gated) {
+      const ref = await post('', true);
+      say('them', ref
+        ? 'We will close this for now. We have your details and will come back to you — your reference is ' + ref + '.'
+        : 'We will close this for now. Do come back to us.');
+    } else {
+      say('them', 'We will close this for now. Do come back when it suits you.');
+    }
+    foot.innerHTML = '';
+    setTimeout(() => show(false), 2600);
+  };
+
+  /* ── the question pills ── */
+  /* A question that has been answered drops out of the list, so what is left
+     is only what is still unread. The last option is always their own words —
+     it sits in the list rather than under it, because it is a choice like the
+     others, not an afterthought. */
+  const pills = () => {
+    foot.innerHTML = '';
+    const live = ASK.filter(x => x.a && !asked.includes(x.q));
+    const wrap = el('div', 'chat-pills');
+    live.forEach(x => {
+      const b = el('button', 'chat-pill', x.q);
+      b.type = 'button';
+      b.addEventListener('click', () => pick(x));
+      wrap.appendChild(b);
+    });
+    const own = el('button', 'chat-pill chat-pill-own',
+      live.length ? 'Something else — let me write it' : 'Tell us what you need');
+    own.type = 'button';
+    own.addEventListener('click', () => { alive(); freeText('Tell us what you need.'); });
+    wrap.appendChild(own);
+    foot.appendChild(wrap);
+  };
+
+  const pick = x => {
+    alive();
+    asked.push(x.q);
+    say('me', x.q);
+    setTimeout(() => {
+      say('them', x.a);
+      pills();
+      nudgeSoon();                  // a beat of quiet, then an offer
+    }, 340);
+  };
+
+  /* ── who is asking ── */
+  const FIELDS = [
+    { k: 'name',    label: 'Your name',   type: 'text',  auto: 'name' },
+    { k: 'company', label: 'Company',     type: 'text',  auto: 'organization' },
+    { k: 'email',   label: 'Email',       type: 'email', auto: 'email' },
+    { k: 'phone',   label: 'Phone',       type: 'tel',   auto: 'tel' }
+  ];
+
+  const gate = () => {
+    foot.innerHTML = '';
+    const form = el('form', 'chat-form');
+    FIELDS.forEach(f => {
+      const lab = el('label', 'chat-field');
+      lab.appendChild(el('span', 'chat-fk', f.label));
+      const i = document.createElement('input');
+      i.type = f.type; i.name = f.k; i.required = true; i.autocomplete = f.auto;
+      i.addEventListener('input', alive);
+      lab.appendChild(i);
+      form.appendChild(lab);
+    });
+    note = el('p', 'chat-note', 'All four, so we can come back to you.');
+    const send = el('button', 'chat-send', 'Start');
+    send.type = 'submit';
+    form.appendChild(send); form.appendChild(note);
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      alive();
+      const v = {};
+      new FormData(form).forEach((val, k) => { v[k] = String(val).trim(); });
+      const missing = FIELDS.find(f => !v[f.k]);
+      if (missing) { warn(missing.label + ' is needed before we can start.'); return; }
+      if (!EMAIL_RE.test(v.email)) { warn('That email address does not look right.'); return; }
+      who = v; gated = true;
+      say('me', v.name + ' · ' + v.company);
+      setTimeout(() => {
+        say('them', 'Thank you, ' + v.name.split(' ')[0] + '. What can we help with?');
+        pills();
+      }, 320);
+    });
+    foot.appendChild(form);
+    form.querySelector('input')?.focus({ preventScroll: true });
+  };
+
+  const warn = text => { if (!note) return; note.textContent = text; note.classList.add('warn'); };
+
+  /* ── free text ── */
+  const freeText = prompt => {
+    foot.innerHTML = '';
+    /* The way out sits above the box, not under it. Someone who picks
+       "something else" and then thinks better of it should see the way back
+       before they start writing — under the Send button it is found only by
+       people who have already typed the paragraph they wanted to avoid.
+
+       Hidden once every prepared question has been read, because then there
+       is nothing to go back to. */
+    if (ASK.some(x => x.a && !asked.includes(x.q))) {
+      const back = el('button', 'chat-more chat-back', '← Back to the questions');
+      back.type = 'button';
+      back.addEventListener('click', () => { alive(); pills(); });
+      foot.appendChild(back);
+    }
+    const form = el('form', 'chat-form');
+    const lab = el('label', 'chat-field');
+    lab.appendChild(el('span', 'chat-fk', prompt));
+    const ta = document.createElement('textarea');
+    ta.rows = 3; ta.name = 'message'; ta.required = true;
+    ta.placeholder = 'What is taking too much time?';
+    ta.addEventListener('input', alive);
+    lab.appendChild(ta);
+    form.appendChild(lab);
+    note = el('p', 'chat-note', 'It comes straight to us.');
+    const send = el('button', 'chat-send', 'Send');
+    send.type = 'submit';
+    form.appendChild(send); form.appendChild(note);
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      alive();
+      const msg = ta.value.trim();
+      if (!msg) { warn('Tell us what you need first.'); return; }
+      send.disabled = true;
+      note.classList.remove('warn'); note.textContent = 'Sending…';
+      say('me', msg);
+      const ref = await post(msg, false);
+      if (!ref) { send.disabled = false; warn('That did not send. Please try again in a moment.'); return; }
+      stopClocks();
+      foot.innerHTML = '';
+      say('them', 'Thank you — we will get back to you in the next 24 hours. Your reference is ' + ref + '.');
+      foot.appendChild(el('p', 'chat-done', 'Reference ' + ref));
+    });
+    foot.appendChild(form);
+    ta.focus({ preventScroll: true });
+  };
+
+  /* ── what gets sent ──
+     One shape, three ways out: they press send, the clock runs out, or the
+     tab goes away. The subject says which, so an unfinished one is obvious in
+     the inbox without opening it. */
+  const makeRef = () => 'ASK-' + new Date().toISOString().slice(5, 10).replace('-', '') + '-' +
+                        String(Math.floor(Math.random() * 9000) + 1000);
+
+  const bodyFor = (msg, ref, how) => JSON.stringify({
+    _subject: 'Ẹ̀rọ Labs — ' + (how === 'sent' ? 'Question' : 'Unfinished') + ' ' + ref +
+              ' — ' + (who ? who.company : 'unknown'),
+    _template: 'table',
+    _captcha: 'false',
+    Reference: ref,
+    Status: how === 'sent'   ? 'Sent by them'
+          : how === 'closed' ? 'Closed the tab before sending'
+          :                    'Left without sending — closed after two minutes',
+    Name: who ? who.name : '',
+    Company: who ? who.company : '',
+    Email: who ? who.email : '',
+    Phone: who ? who.phone : '',
+    'They read': asked.length ? asked.join('  ·  ') : '(none)',
+    'In their words': msg || '(nothing written)',
+    Sent: new Date().toLocaleString()
+  });
+
+  /* Returns the reference, or null if it did not go. */
+  const post = async (msg, auto) => {
+    if (sent) return null;
+    const ref = makeRef();
+    try {
+      const res = await fetch(ENQUIRY_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: bodyFor(msg, ref, auto ? 'timeout' : 'sent')
+      });
+      if (!res.ok) throw new Error(res.status);
+    } catch (err) { return null; }
+    sent = true;
+    return ref;
+  };
+
+  /* The tab is going away. A fetch would be killed mid-flight, so this hands
+     the payload to the browser to deliver after the page is gone.
+
+     pagehide, not visibilitychange: hiding fires every time someone switches
+     tab, and sending on that would fill the inbox with duplicates of people
+     who simply looked away and came back. The cost is that a few mobile
+     closes are missed — better than that. */
+  const onGone = () => {
+    if (sent || !gated || !navigator.sendBeacon) return;
+    try {
+      const blob = new Blob([bodyFor('', makeRef(), 'closed')], { type: 'application/json' });
+      if (navigator.sendBeacon(ENQUIRY_ENDPOINT, blob)) sent = true;
+    } catch (e) { /* nothing useful to do on the way out */ }
+  };
+  addEventListener('pagehide', onGone);
+
+  /* ── open and close ── */
+  const start = () => {
+    if (log.children.length) return;
+    say('them', 'Hello. Before we start — who are we speaking to?');
+    gate();
+  };
+  const show = on => {
+    box.hidden = !on;
+    document.body.classList.toggle('asking', on);
+    openBtn.setAttribute('aria-expanded', String(on));
+    if (on) { start(); scroll(); alive(); }
+    else stopClocks();
+  };
+  openBtn.addEventListener('click', () => show(box.hidden));
+  closeBtn.addEventListener('click', () => show(false));
+  box.addEventListener('pointerdown', alive);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) show(false); });
 }
 
 /* ── cursor ────────────────────────────────────────────────────── */
@@ -2958,7 +3305,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while

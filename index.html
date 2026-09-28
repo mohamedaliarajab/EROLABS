@@ -133,6 +133,18 @@
   <span class="hud-k">VECTOR</span>
   <span class="hud-v"><b id="hudArrow">↓</b> <span id="hudCoord">X+000 Y+000</span></span>
 </div>
+<!-- Not in the menu, by instruction — but not hidden either. A vertical pill
+     on the left edge, fixed, so it stands on the hero and on every stop alike.
+     data-cue makes it click-only and gives the cursor its label; data-read is
+     what the reading panel fills from. -->
+<button class="work-open" id="workOpen" type="button"
+        data-read="#ourWork" data-cue="See our work" data-vis="route"
+        aria-label="Our work">
+  <i class="cfilm-ring work-ring" aria-hidden="true"></i>
+  <i class="work-dot" aria-hidden="true"></i>
+  <span class="work-label">Our Work</span>
+  <svg class="work-arr" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
 <div class="progress-rail" aria-hidden="true">
   <i id="progressFill"></i>
   <span class="progress-head" id="progressHead"><b class="progress-pct" id="progressPct">0%</b></span>
@@ -481,6 +493,87 @@
         <p class="cf-nda">Company name is blurred due to an NDA.</p>
       </div>
 
+      <!-- Our Work. Hidden, so it costs no stop any height; the reading panel
+           clones it. PLACEHOLDERS: the thumbnails point at existing posters and
+           every href is example.com — swap media/ paths and links per item. -->
+      <div class="cf work" id="ourWork" hidden>
+        <header class="cf-doc">
+          <span>Ẹ̀rọ Labs · Selected work</span>
+          <span>Websites · Automation · Dashboards · Apps</span>
+        </header>
+        <h3>Our Work</h3>
+        <p class="cf-lede">Systems we have built and the businesses running on them.
+          Open any of them to see the work itself.</p>
+
+        <nav class="work-tabs" role="tablist" aria-label="Categories">
+          <button class="work-tab on" type="button" role="tab" aria-selected="true"  data-cat="websites">Websites</button>
+          <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="automation">Automation</button>
+          <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="dashboards">Dashboards</button>
+          <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="apps">Apps</button>
+        </nav>
+
+        <div class="work-grid" data-show="websites">
+            <a class="work-item" data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-design.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Ẹ̀rọ Labs</b><i>Studio site · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="websites" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-intelligence.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>HADI</b><i>Artist release page · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-case.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Freight intake</b><i>Document pipeline · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="automation" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-case-2.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Studio operations</b><i>Email-driven hub · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-automation.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Studio CRM</b><i>Client dashboard · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="dashboards" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-design.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Leadership telemetry</b><i>Weekly digest · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-intelligence.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Change Note</b><i>Staff notifier · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <a class="work-item" data-cat="apps" href="https://example.com" target="_blank" rel="noopener noreferrer">
+              <i class="work-shot" style="background-image:url('media/poster-case.jpg')" aria-hidden="true"></i>
+              <span class="work-meta"><b>Clearing platform</b><i>Logistics tooling · 2026</i></span>
+              <span class="work-go" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+        </div>
+
+        <p class="cf-nda">Links open in a new tab.</p>
+      </div>
+
       <div class="cf" id="caseFull2" hidden>
         <header class="cf-doc">
           <span>Ẹ̀rọ Labs · Enterprise infrastructure audit</span>
@@ -727,6 +820,27 @@
     <i class="reader-rail" aria-hidden="true"><i class="reader-thumb"></i></i>
     <div class="reader-stage"><canvas class="reader-vis" id="readerVis" aria-hidden="true"></canvas></div>
   </div>
+</div>
+
+<!-- ── ask us ──────────────────────────────────────────────────────
+     A fixed set of questions matched to fixed answers. No model, no key, no
+     endpoint of its own — the questions live in main.js and the send reuses
+     the enquiry form's path. Nothing here can invent a price. -->
+<button class="chat-open" id="chatOpen" type="button" aria-label="Ask us a question" aria-expanded="false">
+  <i class="cfilm-ring chat-ring" aria-hidden="true"></i>
+  <svg class="chat-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.6 7.1L4 20l1-4.2A8 8 0 1 1 20 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+  <span>Ask us</span>
+</button>
+
+<div class="chat" id="chat" role="dialog" aria-modal="false" aria-label="Ask us" hidden>
+  <header class="chat-head">
+    <span class="chat-k">Ẹ̀rọ Labs · Ask us</span>
+    <button class="chat-x" id="chatX" type="button" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    </button>
+  </header>
+  <div class="chat-log" id="chatLog"></div>
+  <div class="chat-foot" id="chatFoot"></div>
 </div>
 
 <div class="cursor" id="cursor" aria-hidden="true"><i></i><span class="cur-t"></span></div>

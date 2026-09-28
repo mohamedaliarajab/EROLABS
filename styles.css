@@ -1567,7 +1567,16 @@ body.flat .orbit-in{transform:none}
 
 body.flat .nav-links{opacity:1;pointer-events:auto;transform:none}
 
-body.reduced .stop.melting,body.flat .stop.melting{filter:none}
+body.reduced .stop.melting{filter:none}
+/* Phones and pads melt too, and it is the stop in view that melts — see the
+   note in melt(). No displacement map: the turbulence is the expensive half
+   of the effect and it is the half a phone cannot afford. Blur, drained
+   colour and a dimming are the same idea at a price it can pay. */
+body.flat .stop.melting{
+  filter:blur(var(--blur,0px))
+         saturate(calc(1 - var(--melt,0) * .55))
+         brightness(calc(1 - var(--melt,0) * .22));
+}
 
 body.reduced .wordmark.shoot .wm-trail,body.reduced .wordmark.shoot .wm-trail i{animation:none}
 
@@ -2408,4 +2417,303 @@ body.arriving .stop,body.mapping .stop{opacity:1!important;visibility:visible!im
 }
 .case-swap .eq-sel-ring::before,.reader-swap .eq-sel-ring::before,.fb-swap .eq-sel-ring::before{
   background:conic-gradient(transparent 0 46%,rgba(255,255,255,.3) 62%,#FFFFFF 74%,rgba(255,255,255,.3) 86%,transparent 96%);
+}
+
+
+/* ═══ Our Work ════════════════════════════════════════════════════════
+   Not in the menu, by instruction. The way in is a third HUD item, centred
+   between the sector and vector readouts — fixed chrome, so it is on the hero
+   and on every stop without being announced. It reads as telemetry until it
+   is hovered, which is the whole point of putting it there.
+
+   The panel itself is the reading view: .work-open carries data-read, so it
+   inherits the glass, the travelling ring, the scroll rail, the grow-from-
+   source morph and Escape/scrim/✕ without a line of new machinery. */
+/* ── the way in ────────────────────────────────────────────────────
+   A vertical pill standing on the left edge, fixed, so it is on the hero and
+   on every stop alike. It carries the two things the rest of the site uses to
+   say "this can be pressed": the travelling light on the rim, and a glow that
+   walks blue, violet and white. Loud enough to be found, quiet enough not to
+   argue with the headline it stands beside. */
+.work-open{
+  /* centred in the gutter rather than hugging the edge: the stop is
+     min(1080px,84vw) and centred, so the gutter is (100vw - that)/2 and its
+     middle is half of that again */
+  position:fixed;top:50%;z-index:21;
+  left:calc((100vw - min(1080px,84vw)) / 4);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*.85);
+  padding:calc(var(--u)*1.6) calc(var(--u)*.78);
+  border:1px solid rgba(166,37,238,.55);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.26),rgba(166,37,238,.1));
+  color:#fff;cursor:pointer;
+  transform:translate(-50%,-50%);
+  opacity:0;transition:border-color .35s,background .35s;
+  animation:workGlow 4.6s ease-in-out infinite;
+}
+/* No fade. Both a transition and an animation park on their start value if
+   they are never stepped, and that start value is invisible — which is the
+   worst possible failure for the one element meant to be found. It simply
+   appears with the rest of the chrome. The glow gives it all the life it
+   needs, and if THAT is ever suspended the pill is still there. */
+body.ready .work-open{opacity:1}
+/* the panel and the film frame both take the whole screen; this would sit on top */
+body.reading .work-open,body.filming .work-open{opacity:0;pointer-events:none}
+
+@keyframes workGlow{
+  0%,100%{box-shadow:0 0 22px rgba(30,144,255,.34),0 0 60px rgba(30,144,255,.14)}
+  34%    {box-shadow:0 0 30px rgba(166,37,238,.46),0 0 78px rgba(166,37,238,.2)}
+  67%    {box-shadow:0 0 26px rgba(226,238,255,.34),0 0 66px rgba(150,180,255,.14)}
+}
+.work-open:hover{border-color:rgba(166,37,238,.9);background:linear-gradient(180deg,rgba(166,37,238,.36),rgba(166,37,238,.16))}
+.work-open:hover{animation-duration:2.3s}
+.work-open:focus-visible{outline:none;border-color:var(--violet)}
+
+/* reads bottom-to-top, the way a spine does */
+.work-label{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.74);
+  letter-spacing:.34em;text-transform:uppercase;line-height:1;
+  position:relative;z-index:1;
+}
+.work-dot{
+  width:6px;height:6px;border-radius:50%;background:#fff;position:relative;z-index:1;
+  box-shadow:0 0 10px rgba(255,255,255,.9);
+  animation:workPing 2.6s ease-in-out infinite;
+}
+@keyframes workPing{0%,100%{opacity:.4;transform:scale(.72)}50%{opacity:1;transform:scale(1)}}
+.work-arr{
+  width:calc(var(--u)*1);height:calc(var(--u)*1);position:relative;z-index:1;
+  opacity:.75;transition:transform .4s var(--ease),opacity .35s;
+}
+.work-open:hover .work-arr{transform:translateX(3px);opacity:1}
+/* the same travelling rim the films and the choosers carry */
+.work-open .work-ring{inset:-1px;padding:1px;z-index:0}
+.work-open .work-ring::before{animation-duration:6.4s}
+body.reduced .work-open,body.reduced .work-dot{animation:none}
+
+/* ── the categories ── */
+.work-tabs{
+  display:flex;flex-wrap:wrap;gap:calc(var(--u)*.5);
+  margin:calc(var(--u)*1.5) 0 calc(var(--u)*.4);
+  padding-bottom:calc(var(--u)*1.1);border-bottom:1px solid var(--line-2);
+}
+.work-tab{
+  padding:calc(var(--u)*.5) calc(var(--u)*1.15);
+  border:1px solid rgba(255,255,255,.14);border-radius:999px;background:none;
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.68);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;
+  transition:color .3s,border-color .3s,background .3s;
+}
+.work-tab:hover{color:var(--ink-2);border-color:rgba(255,255,255,.3)}
+.work-tab.on{
+  color:#fff;border-color:rgba(166,37,238,.6);
+  background:linear-gradient(180deg,rgba(166,37,238,.3),rgba(166,37,238,.14));
+}
+.work-tab:focus-visible{outline:none;border-color:var(--violet)}
+
+/* ── the shelf ── */
+/* Filtering by attribute rather than by class: one write to data-show moves
+   the whole grid, and a cloned panel needs no re-wiring to stay correct. */
+.work-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.5)}
+.work-grid .work-item{display:none}
+.work-grid[data-show="websites"]  .work-item[data-cat="websites"],
+.work-grid[data-show="automation"] .work-item[data-cat="automation"],
+.work-grid[data-show="dashboards"] .work-item[data-cat="dashboards"],
+.work-grid[data-show="apps"]       .work-item[data-cat="apps"]{
+  display:block;animation:workIn .45s var(--ease) both;
+}
+@keyframes workIn{from{opacity:0;transform:translateY(calc(var(--u)*.6))}to{opacity:1;transform:none}}
+
+.work-item{
+  position:relative;text-decoration:none;border-radius:calc(var(--u)*.6);
+  overflow:hidden;isolation:isolate;border:1px solid var(--line);
+  background:#04050A;transition:border-color .35s,transform .45s var(--ease);
+}
+.work-item:hover{border-color:rgba(255,255,255,.26);transform:translateY(-3px)}
+.work-item:focus-visible{outline:none;border-color:var(--violet)}
+.work-shot{
+  display:block;width:100%;aspect-ratio:16/10;
+  background-size:cover;background-position:center;
+  filter:saturate(.75) brightness(.72);transition:filter .5s,transform .8s var(--ease);
+}
+.work-item:hover .work-shot{filter:saturate(1) brightness(.92);transform:scale(1.04)}
+.work-meta{
+  display:block;padding:calc(var(--u)*.85) calc(var(--u)*1);
+  border-top:1px solid var(--line-2);
+}
+.work-meta b{
+  display:block;font-family:var(--f-text);font-weight:400;
+  font-size:calc(var(--u)*1);color:var(--ink);letter-spacing:0;
+}
+.work-meta i{
+  display:block;margin-top:calc(var(--u)*.22);font-style:normal;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.66);
+  letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);
+}
+.work-go{
+  position:absolute;top:calc(var(--u)*.7);right:calc(var(--u)*.7);
+  width:calc(var(--u)*1.8);height:calc(var(--u)*1.8);
+  display:grid;place-items:center;border-radius:999px;
+  background:rgba(6,3,11,.72);border:1px solid rgba(255,255,255,.18);
+  color:var(--ink);opacity:0;transform:translateY(-4px);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  transition:opacity .35s,transform .35s var(--ease);
+}
+.work-go svg{width:52%;height:52%}
+.work-item:hover .work-go,.work-item:focus-visible .work-go{opacity:1;transform:none}
+
+@media (max-width:700px){
+  /* A vertical pill pinned to the middle of the left edge stood squarely on
+     top of the hero paragraph — fixed chrome on a 375px screen has nowhere to
+     hide. Both launchers move to the bottom corners instead, one row above
+     the telemetry, and take a backdrop blur so whatever scrolls behind them
+     stays legible as itself rather than bleeding through. */
+  .work-open{
+    top:auto;bottom:78px;left:14px;transform:none;
+    flex-direction:row;gap:calc(var(--u)*.62);
+    padding:calc(var(--u)*.78) calc(var(--u)*1.2);
+  }
+  .work-label{writing-mode:horizontal-tb;transform:none}
+  .work-dot{width:5px;height:5px}
+  .work-open,.chat-open{-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .work-grid{grid-template-columns:1fr}
+}
+
+
+/* ═══ ask us ══════════════════════════════════════════════════════════
+   The launcher sits opposite the work marker, and the panel wears the same
+   glass the reading view does — so a visitor meets one surface, not two. */
+.chat-open{
+  position:fixed;right:clamp(16px,2.4vw,34px);bottom:clamp(74px,8vh,104px);z-index:24;
+  display:inline-flex;align-items:center;gap:calc(var(--u)*.62);
+  padding:calc(var(--u)*.78) calc(var(--u)*1.35);
+  border:1px solid rgba(166,37,238,.55);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.26),rgba(166,37,238,.1));
+  color:#fff;cursor:pointer;opacity:0;
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.7);
+  letter-spacing:.16em;text-transform:uppercase;
+  transition:border-color .35s,background .35s;
+  animation:workGlow 4.6s ease-in-out infinite;
+}
+body.ready .chat-open{opacity:1}
+body.reading .chat-open,body.filming .chat-open,body.asking .chat-open{opacity:0;pointer-events:none}
+.chat-open span,.chat-ico{position:relative;z-index:1}
+.chat-ico{width:calc(var(--u)*1.05);height:calc(var(--u)*1.05)}
+.chat-open:hover{border-color:rgba(166,37,238,.9);background:linear-gradient(180deg,rgba(166,37,238,.36),rgba(166,37,238,.16))}
+.chat-open .chat-ring{inset:-1px;padding:1px;z-index:0}
+.chat-open .chat-ring::before{animation-duration:6.4s}
+body.reduced .chat-open{animation:none}
+
+/* ── the chrome melts with everything else ──────────────────────────
+   These two are fixed at body level, outside #viewport, which is exactly why
+   they used to sail through the idle melt untouched — two crisp buttons
+   floating over a page that had given way. They take it now, on their own
+   vars so nothing leaks into the panels.
+
+   Filter and transform only. Opacity is spoken for: body.reading and
+   body.filming hide both of these, and those rules sit above this one. */
+body.melting .work-open,body.melting .chat-open,
+body.melting .nav,body.melting .hud,body.melting .progress-rail{
+  filter:blur(var(--cblur,0px))
+         saturate(calc(1 - var(--cmelt,0) * .6))
+         brightness(calc(1 - var(--cmelt,0) * .45));
+}
+
+.chat{
+  position:fixed;right:clamp(16px,2.4vw,34px);bottom:clamp(74px,8vh,104px);z-index:25;
+  width:min(380px,calc(100vw - 32px));max-height:min(620px,calc(100vh - 140px));
+  display:flex;flex-direction:column;border-radius:calc(var(--u)*1.1);overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,0) 62%),
+             linear-gradient(158deg,rgba(44,49,74,.72),rgba(12,14,24,.88));
+  -webkit-backdrop-filter:blur(30px) saturate(1.7);backdrop-filter:blur(30px) saturate(1.7);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 40px 110px rgba(0,0,0,.7),0 0 50px rgba(90,120,255,.1),inset 0 1px 0 rgba(255,255,255,.26);
+  animation:chatIn .42s var(--ease) both;
+}
+@keyframes chatIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+.chat-head{
+  display:flex;align-items:center;justify-content:space-between;flex:none;
+  padding:calc(var(--u)*.95) calc(var(--u)*1.1);border-bottom:1px solid var(--line-2);
+}
+.chat-k{font-family:var(--f-mono);font-size:calc(var(--u)*.66);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink-2)}
+.chat-x{background:none;border:0;color:var(--ink-3);cursor:pointer;padding:2px;transition:color .3s}
+.chat-x svg{width:calc(var(--u)*1.1);height:calc(var(--u)*1.1);display:block}
+.chat-x:hover{color:var(--ink)}
+
+.chat-log{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:calc(var(--u)*1.1);display:flex;flex-direction:column;gap:calc(var(--u)*.7);
+  scrollbar-width:none}
+.chat-log::-webkit-scrollbar{width:0}
+.chat-row{display:flex}
+.chat-row.them{justify-content:flex-start}
+.chat-row.me{justify-content:flex-end}
+.chat-msg{
+  max-width:86%;padding:calc(var(--u)*.72) calc(var(--u)*.95);
+  border-radius:calc(var(--u)*.85);font-size:calc(var(--u)*.86);line-height:1.6;
+  animation:chatPop .34s var(--ease) both;
+}
+@keyframes chatPop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.them .chat-msg{background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);color:var(--ink)}
+.me .chat-msg{background:linear-gradient(180deg,rgba(166,37,238,.34),rgba(166,37,238,.18));
+  border:1px solid rgba(166,37,238,.5);color:#fff}
+
+.chat-foot{flex:none;padding:calc(var(--u)*.9) calc(var(--u)*1.1) calc(var(--u)*1.1);
+  border-top:1px solid var(--line-2);max-height:46%;overflow-y:auto;scrollbar-width:none}
+.chat-foot::-webkit-scrollbar{width:0}
+.chat-pills{display:flex;flex-direction:column;gap:calc(var(--u)*.45)}
+.chat-pill{
+  text-align:left;padding:calc(var(--u)*.6) calc(var(--u)*.95);
+  border:1px solid rgba(255,255,255,.14);border-radius:999px;background:none;
+  font-family:var(--f-text);font-size:calc(var(--u)*.8);color:var(--ink-2);cursor:pointer;
+  transition:color .28s,border-color .28s,background .28s;
+}
+.chat-pill:hover{color:#fff;border-color:rgba(166,37,238,.6);background:rgba(166,37,238,.12)}
+/* The last option is their own words. Dashed, because it is the open one —
+   it belongs in the list, but it is not a prepared answer. */
+.chat-pill-own{
+  margin-top:calc(var(--u)*.35);border-style:dashed;
+  border-color:rgba(166,37,238,.45);color:var(--vink,var(--violet-ink));
+}
+.chat-pill-own::before{content:'+ ';opacity:.7}
+.chat-pill-own:hover{border-style:solid}
+.chat-more{
+  margin-top:calc(var(--u)*.55);background:none;border:0;cursor:pointer;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.64);letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-3);transition:color .3s;
+}
+.chat-more:hover{color:var(--vink,var(--violet-ink))}
+/* the same link, but leading the panel rather than trailing it */
+.chat-back{display:block;margin:0 0 calc(var(--u)*.75);color:var(--ink-2)}
+
+.chat-form{display:flex;flex-direction:column;gap:calc(var(--u)*.6)}
+.chat-field{display:block}
+.chat-fk{display:block;font-family:var(--f-mono);font-size:calc(var(--u)*.6);
+  letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin-bottom:calc(var(--u)*.3)}
+.chat-field input,.chat-field textarea{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+  border-radius:calc(var(--u)*.5);padding:calc(var(--u)*.55) calc(var(--u)*.7);
+  font-family:var(--f-text);font-size:calc(var(--u)*.84);color:var(--violet-ink);
+  outline:none;resize:vertical;transition:border-color .3s,background .3s;
+}
+.chat-field input:focus,.chat-field textarea:focus{border-color:rgba(166,37,238,.65);background:rgba(255,255,255,.06)}
+.chat-send{
+  margin-top:calc(var(--u)*.2);padding:calc(var(--u)*.62) calc(var(--u)*1.2);
+  border:1px solid rgba(166,37,238,.6);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.34),rgba(166,37,238,.16));
+  font-family:var(--f-mono);font-size:calc(var(--u)*.68);letter-spacing:.15em;
+  text-transform:uppercase;color:#fff;cursor:pointer;transition:border-color .3s,background .3s;
+}
+.chat-send:hover{border-color:var(--violet);background:linear-gradient(180deg,rgba(166,37,238,.46),rgba(166,37,238,.22))}
+.chat-send:disabled{opacity:.5;cursor:default}
+.chat-note{font-family:var(--f-mono);font-size:calc(var(--u)*.6);letter-spacing:.11em;
+  color:var(--ink-3);transition:color .3s}
+.chat-note.warn{color:var(--warn)}
+.chat-done{font-family:var(--f-mono);font-size:calc(var(--u)*.68);letter-spacing:.15em;
+  text-transform:uppercase;color:var(--violet-ink);text-align:center}
+
+@media (max-width:700px){
+  .chat-open{right:14px;bottom:78px}
+  .chat{right:10px;left:10px;bottom:10px;width:auto;max-height:78vh}
 }
