@@ -2899,3 +2899,19 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
 .site-back:hover{color:#fff;border-color:rgba(166,37,238,.7);background:rgba(166,37,238,.12)}
 .site-back svg{width:calc(var(--u)*.9);height:calc(var(--u)*.9)}
 @media (max-width:700px){.site-back span{display:none}}
+
+/* Shown only while the frame is cold, and gone the moment the site paints —
+   a standing notice would tell every visitor to expect a problem before they
+   have had one. It states what is happening and stops there: no apology, and
+   not the word lag, which names a fault where there is only a process. */
+.site-hint{
+  display:none;flex:none;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.62);letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);white-space:nowrap;
+}
+.site.busy .site-hint{display:inline}
+@media (max-width:700px){
+  /* the bar cannot hold both; while it is loading, that is the thing to say */
+  .site.busy .site-url{display:none}
+  .site-hint{white-space:normal;font-size:calc(var(--u)*.58)}
+}

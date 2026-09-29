@@ -3207,7 +3207,7 @@ function sitePreview() {
          saying nothing. The refusal wording belongs to the path above, where
          it is known for a fact. */
       note.hidden = false;
-      note.textContent = 'Still loading — this one is heavy.';
+      note.textContent = 'Still loading the live site.';
     }, SITE_WAIT);
   };
 
