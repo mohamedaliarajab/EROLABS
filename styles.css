@@ -2516,16 +2516,31 @@ body.reduced .work-open,body.reduced .work-dot{animation:none}
 /* Filtering by attribute rather than by class: one write to data-show moves
    the whole grid, and a cloned panel needs no re-wiring to stay correct. */
 .work-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*1.2);margin-top:calc(var(--u)*1.5)}
-.work-grid .work-item{display:none}
+.work-grid .work-item,.work-grid .work-soon{display:none}
 .work-grid[data-show="websites"]  .work-item[data-cat="websites"],
 .work-grid[data-show="automation"] .work-item[data-cat="automation"],
 .work-grid[data-show="dashboards"] .work-item[data-cat="dashboards"],
 .work-grid[data-show="apps"]       .work-item[data-cat="apps"]{
   display:block;animation:workIn .45s var(--ease) both;
 }
+/* the categories still to be filled */
+.work-grid[data-show="automation"] .work-soon[data-cat="automation"],
+.work-grid[data-show="dashboards"] .work-soon[data-cat="dashboards"],
+.work-grid[data-show="apps"]       .work-soon[data-cat="apps"]{
+  display:grid;animation:workIn .45s var(--ease) both;
+}
+.work-soon{
+  grid-column:1 / -1;place-items:center;min-height:calc(var(--u)*11);
+  border:1px dashed rgba(255,255,255,.16);border-radius:calc(var(--u)*.6);
+  font-family:var(--f-mono);font-size:calc(var(--u)*.8);letter-spacing:.24em;
+  text-transform:uppercase;color:var(--ink-3);
+}
 @keyframes workIn{from{opacity:0;transform:translateY(calc(var(--u)*.6))}to{opacity:1;transform:none}}
 
 .work-item{
+  /* a button now, not a link: nothing to hover, nothing to copy */
+  display:block;width:100%;text-align:left;font:inherit;color:inherit;
+  -webkit-appearance:none;appearance:none;padding:0;cursor:pointer;
   position:relative;text-decoration:none;border-radius:calc(var(--u)*.6);
   overflow:hidden;isolation:isolate;border:1px solid var(--line);
   background:#04050A;transition:border-color .35s,transform .45s var(--ease);
@@ -2534,7 +2549,7 @@ body.reduced .work-open,body.reduced .work-dot{animation:none}
 .work-item:focus-visible{outline:none;border-color:var(--violet)}
 .work-shot{
   display:block;width:100%;aspect-ratio:16/10;
-  background-size:cover;background-position:center;
+  background-size:cover;background-position:center center;
   filter:saturate(.75) brightness(.72);transition:filter .5s,transform .8s var(--ease);
 }
 .work-item:hover .work-shot{filter:saturate(1) brightness(.92);transform:scale(1.04)}
@@ -2813,7 +2828,7 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
 .site-x svg{width:70%;height:70%}
 .site-stage{position:relative;flex:1;overflow:hidden;background:#06050b}
 .site-shot{
-  position:absolute;inset:0;background-size:cover;background-position:top center;
+  position:absolute;inset:0;background-size:cover;background-position:center center;
   opacity:1;transition:opacity .5s var(--ease);
 }
 .site-shot.gone{opacity:0}

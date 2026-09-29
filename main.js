@@ -962,12 +962,14 @@ function layersRig() {
    being handed off, not a decorative loop. Lanes are evenly spaced rather
    than pinned to DOM rows, so the substrate keeps running whatever the
    section above it is made of. Only animates while Projects is on screen. */
-let audioEnable = () => {}, audioRamp = () => {};
+let audioEnable = () => {}, audioRamp = () => {}, audioDuck = () => {};
 function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
   if (!el || !wrap) return;
 
   let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0, wired = false;
+  /* Ducking, for when another site is playing inside ours. */
+  let duck = 1, duckTo = 1;
 
   /* A page may not start audio without a gesture, and entering the site is no
      longer one — there is no door to click any more. Both the play attempt and
@@ -1023,7 +1025,7 @@ function audioRig() {
     } catch (e) { wired = true; /* no analyser: the aurora drifts without a beat */ }
   };
 
-  const effective = () => clamp(base * boost, 0, 1);
+  const effective = () => clamp(base * boost * duck, 0, 1);
   const apply = () => { el.volume = effective(); };
 
   /* The slider shows the volume you can actually hear, not the setting
@@ -1109,8 +1111,18 @@ function audioRig() {
     else { apply(); paintState(); }
   });
 
+  /* Some of the sites shown in the preview have music of their own, and two
+     beds at once is just noise. The bed drops to a tenth while a site is open
+     and comes back when it closes — a fade rather than a cut, so it reads as
+     making room rather than as a fault. */
+  audioDuck = down => { duckTo = down ? .1 : 1; };
+
   audioRamp = (target, dt) => {
     if (!on) { boost = 1; return; }
+    if (Math.abs(duckTo - duck) > .002) {
+      duck += (duckTo - duck) * (1 - Math.pow(.86, dt / 16));
+      apply(); showLevel();
+    }
     if (performance.now() - lastTouch < 1200) { boost = 1; apply(); return; }
     boost += (target - boost) * (1 - Math.pow(.90, dt / 16));
     apply(); showLevel();
@@ -3083,8 +3095,7 @@ function chat() {
 const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 6000;
 function sitePreview() {
   const box = $('#site'), frame = $('#siteFrame'), shot = $('#siteShot'),
-        stage = $('#siteStage'), urlEl = $('#siteUrl'), out = $('#siteOut'),
-        note = $('#siteNote');
+        stage = $('#siteStage'), urlEl = $('#siteUrl'), note = $('#siteNote');
   if (!box || !frame) return;
   let timer = 0, openedBy = null;
 
@@ -3119,13 +3130,19 @@ function sitePreview() {
     document.body.classList.remove('siting');
     frame.src = 'about:blank';        // stop whatever it was running
     frame.classList.remove('on');
+    audioDuck(false);                 // and the bed comes back up
     openedBy?.focus({ preventScroll: true });
     openedBy = null;
   };
 
   const open = a => {
-    const url = a.getAttribute('href');
-    if (!url || url === '#') return;
+    /* The address lives in a data attribute and never in an href, so there is
+       no link to hover, no status bar, and nothing under "copy link address".
+       Worth saying plainly: this is not secrecy. The browser has to be told
+       where to go, so anyone who opens developer tools can read it. What it
+       does is stop the address being handed out by accident. */
+    const url = a.dataset.site;
+    if (!url) return;
     openedBy = a;
     const bg = $('.work-shot', a)?.style.backgroundImage || '';
     const name = $('.work-meta b', a)?.textContent || '';
@@ -3134,12 +3151,22 @@ function sitePreview() {
     shot.classList.remove('gone');
     note.hidden = true;
     frame.classList.remove('on');
-    urlEl.textContent = (name ? name + '  ·  ' : '') + url.replace(/^https?:\/\//, '');
-    out.href = url;
+    urlEl.textContent = name;          // the project, not the address
+    audioDuck(true);
 
     box.hidden = false;
     box.setAttribute('aria-hidden', 'false');
     document.body.classList.add('siting');
+
+    /* A site that refuses to be framed still opens — as the screenshot, at
+       full size, with a line saying why. Better than a dead tile, and better
+       than a black rectangle. */
+    if (!a.hasAttribute('data-frame')) {
+      fit();
+      note.hidden = false;
+      note.textContent = 'This one cannot be shown inside another site — a security setting on its own end. What you are looking at is a screenshot.';
+      return;
+    }
     /* Twice: once now, and once on the next frame. The panel is unhidden and
        measured in the same breath, and its opening animation can hand back a
        box that is not its final one — which leaves the site rendering at 1440
@@ -3184,8 +3211,8 @@ function sitePreview() {
 
        A tile without the attribute keeps being an ordinary link and opens in a
        new tab, which is what it did before any of this existed. */
-    if (!a.hasAttribute('data-frame')) return;
-    e.preventDefault();                 // the href stays, as the way out
+    if (!a.dataset.site) return;
+    e.preventDefault();
     e.stopPropagation();
     open(a);
   });
