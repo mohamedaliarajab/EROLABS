@@ -3092,12 +3092,13 @@ function chat() {
    The frame is rendered at desktop width and scaled down to fit, because a
    site squeezed into a 900px box would serve its phone layout and the work
    would not be the work. */
-const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 6000;
+const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 14000;
 function sitePreview() {
   const box = $('#site'), frame = $('#siteFrame'), shot = $('#siteShot'),
-        stage = $('#siteStage'), urlEl = $('#siteUrl'), note = $('#siteNote');
+        stage = $('#siteStage'), urlEl = $('#siteUrl'), note = $('#siteNote'),
+        load = $('#siteLoad'), prevB = $('#sitePrev'), nextB = $('#siteNext');
   if (!box || !frame) return;
-  let timer = 0, openedBy = null;
+  let timer = 0, openedBy = null, list = [], cur = 0;
 
   /* The stage is whatever the panel leaves us; the site inside it is always
      1440 wide. One number reconciles them, and it is rewritten on resize. */
@@ -3126,6 +3127,7 @@ function sitePreview() {
     if (box.hidden) return;
     clearTimeout(timer);
     box.hidden = true;
+    box.classList.remove('busy');
     box.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('siting');
     frame.src = 'about:blank';        // stop whatever it was running
@@ -3135,7 +3137,24 @@ function sitePreview() {
     openedBy = null;
   };
 
+  /* Left and right move through the projects in the category that is on
+     show, so the window is a way through the work rather than one thing at a
+     time. It wraps, and it hides itself when there is only one to see. */
+  const step = d => {
+    if (list.length < 2) return;
+    cur = (cur + d + list.length) % list.length;
+    show(list[cur]);
+  };
+
   const open = a => {
+    const grid = a.closest('.work-grid');
+    const cat = a.dataset.cat;
+    list = grid ? $$('.work-item[data-site][data-cat="' + cat + '"]', grid) : [a];
+    cur = Math.max(0, list.indexOf(a));
+    show(a);
+  };
+
+  const show = a => {
     /* The address lives in a data attribute and never in an href, so there is
        no link to hover, no status bar, and nothing under "copy link address".
        Worth saying plainly: this is not secrecy. The browser has to be told
@@ -3157,12 +3176,15 @@ function sitePreview() {
     box.hidden = false;
     box.setAttribute('aria-hidden', 'false');
     document.body.classList.add('siting');
+    const many = list.length > 1;
+    prevB.hidden = nextB.hidden = !many;
 
     /* A site that refuses to be framed still opens — as the screenshot, at
        full size, with a line saying why. Better than a dead tile, and better
        than a black rectangle. */
     if (!a.hasAttribute('data-frame')) {
       fit();
+      box.classList.remove('busy');
       note.hidden = false;
       note.textContent = 'This one cannot be shown inside another site — a security setting on its own end. What you are looking at is a screenshot.';
       return;
@@ -3175,17 +3197,24 @@ function sitePreview() {
     requestAnimationFrame(fit);
     frame.src = url;
 
+    box.classList.add('busy');
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (frame.classList.contains('on')) return;
+      /* Not "it refused" — a declared site that has not painted yet is far
+         more likely to be a heavy one on a slow connection, and telling
+         someone their site is blocked when it is merely loading is worse than
+         saying nothing. The refusal wording belongs to the path above, where
+         it is known for a fact. */
       note.hidden = false;
-      note.textContent = 'This one will not open inside another site — that is a setting on their end, not a fault here. Open it live instead.';
+      note.textContent = 'Still loading — this one is heavy.';
     }, SITE_WAIT);
   };
 
   frame.addEventListener('load', () => {
     if (frame.src === 'about:blank') return;
     clearTimeout(timer);
+    box.classList.remove('busy');
     fit();                       // and again now the frame has something in it
     frame.classList.add('on');
     shot.classList.add('gone');
@@ -3217,6 +3246,29 @@ function sitePreview() {
     open(a);
   });
 
+  /* Hovering a tile is most of a decision. Warming the connection there means
+     the click pays for the page and not for the handshake as well. no-cors
+     because we want nothing back — only the socket left open behind it. */
+  let warmed = new Set();
+  document.addEventListener('pointerenter', e => {
+    const a = e.target instanceof Element ? e.target.closest?.('.work-item[data-site]') : null;
+    if (!a || warmed.has(a.dataset.site)) return;
+    warmed.add(a.dataset.site);
+    fetch(a.dataset.site, { mode: 'no-cors', credentials: 'omit' }).catch(() => {});
+  }, true);
+
+  prevB.addEventListener('click', e => { e.stopPropagation(); step(-1); });
+  nextB.addEventListener('click', e => { e.stopPropagation(); step(1); });
+  addEventListener('keydown', e => {
+    if (box.hidden) return;
+    if (e.key === 'ArrowLeft')  step(-1);
+    if (e.key === 'ArrowRight') step(1);
+  });
+
+  /* The way back to the grid. It is the same action as the ✕ — the panel it
+     came from is still open underneath — but it says where it goes, which
+     the ✕ does not. */
+  $('#siteBack').addEventListener('click', close);
   $('#siteX').addEventListener('click', close);
   $('#siteScrim').addEventListener('click', close);
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) close(); });
