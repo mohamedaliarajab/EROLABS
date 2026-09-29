@@ -3092,13 +3092,14 @@ function chat() {
    The frame is rendered at desktop width and scaled down to fit, because a
    site squeezed into a 900px box would serve its phone layout and the work
    would not be the work. */
-const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 14000;
+const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 14000, SITE_MIN = 900;
 function sitePreview() {
   const box = $('#site'), frame = $('#siteFrame'), shot = $('#siteShot'),
         stage = $('#siteStage'), urlEl = $('#siteUrl'), note = $('#siteNote'),
         load = $('#siteLoad'), prevB = $('#sitePrev'), nextB = $('#siteNext');
   if (!box || !frame) return;
-  let timer = 0, openedBy = null, list = [], cur = 0;
+  let timer = 0, openedBy = null, list = [], cur = 0, busyFrom = 0, settleT = 0;
+  const warmed = new Set();
 
   /* The stage is whatever the panel leaves us; the site inside it is always
      1440 wide. One number reconciles them, and it is rewritten on resize. */
@@ -3126,6 +3127,7 @@ function sitePreview() {
   const close = () => {
     if (box.hidden) return;
     clearTimeout(timer);
+    clearTimeout(settleT);
     box.hidden = true;
     box.classList.remove('busy');
     box.setAttribute('aria-hidden', 'true');
@@ -3198,6 +3200,7 @@ function sitePreview() {
     frame.src = url;
 
     box.classList.add('busy');
+    busyFrom = performance.now();
     clearTimeout(timer);
     timer = setTimeout(() => {
       if (frame.classList.contains('on')) return;
@@ -3211,15 +3214,52 @@ function sitePreview() {
     }, SITE_WAIT);
   };
 
-  frame.addEventListener('load', () => {
-    if (frame.src === 'about:blank') return;
+  /* Two reasons this is not just "clear it on load".
+
+     One: switching sites fires a load event for the document on its way OUT,
+     which arrives within a few milliseconds of setting src and would clear the
+     line before the new site had started. Anything that fast is not a site
+     arriving over a network.
+
+     Two: a line that flashes for 200ms has not been read by anyone. It stays
+     up for most of a second whatever happens, so every site — including the
+     ones reached with the arrows — actually says what it is doing. */
+  const settled = () => {
+    clearTimeout(settleT);
+    const left = SITE_MIN - (performance.now() - busyFrom);
+    if (left > 0) { settleT = setTimeout(settled, left); return; }
     clearTimeout(timer);
     box.classList.remove('busy');
     fit();                       // and again now the frame has something in it
     frame.classList.add('on');
     shot.classList.add('gone');
     note.hidden = true;
+    warmNeighbours();
+  };
+
+  frame.addEventListener('load', () => {
+    if (frame.src === 'about:blank') return;
+    if (performance.now() - busyFrom < 120) return;   // the outgoing document
+    settled();
   });
+
+  /* Once someone is looking at one project they are a keypress away from the
+     next and the one before. Fetching their HTML now means the arrow pays for
+     rendering and not for the round trip as well.
+
+     Only the documents, and only with fetch — not hidden iframes holding whole
+     sites open. Several of these have music, and a site kept alive out of
+     sight is a site that can still be heard. */
+  const warmNeighbours = () => {
+    if (list.length < 2) return;
+    [cur + 1, cur - 1].forEach(i => {
+      const t = list[(i + list.length) % list.length];
+      const u = t && t.dataset.site;
+      if (!u || warmed.has('doc:' + u)) return;
+      warmed.add('doc:' + u);
+      fetch(u, { mode: 'no-cors', credentials: 'omit' }).catch(() => {});
+    });
+  };
 
   /* Delegated on the document: the work grid is CLONED into the reading panel
      every time it opens, so anything bound to the markup in the page would be
@@ -3249,7 +3289,6 @@ function sitePreview() {
   /* Hovering a tile is most of a decision. Warming the connection there means
      the click pays for the page and not for the handshake as well. no-cors
      because we want nothing back — only the socket left open behind it. */
-  let warmed = new Set();
   document.addEventListener('pointerenter', e => {
     const a = e.target instanceof Element ? e.target.closest?.('.work-item[data-site]') : null;
     if (!a || warmed.has(a.dataset.site)) return;
