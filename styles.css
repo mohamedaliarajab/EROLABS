@@ -2905,13 +2905,58 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
    have had one. It states what is happening and stops there: no apology, and
    not the word lag, which names a fault where there is only a process. */
 .site-hint{
-  display:none;flex:none;
-  font-family:var(--f-mono);font-size:calc(var(--u)*.62);letter-spacing:.1em;
-  text-transform:uppercase;color:var(--ink-3);white-space:nowrap;
+  display:none;flex:none;position:relative;
+  padding-bottom:calc(var(--u)*.42);
+  font-family:var(--f-mono);font-size:calc(var(--u)*.72);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink);white-space:nowrap;
 }
-.site.busy .site-hint{display:inline}
+.site.busy .site-hint{display:inline-block}
+/* The rail it runs on, and the light that runs. Told once in words and once in
+   movement: the words say what is happening, the line says it has not stopped.
+   White, because everything else in this window is violet and blue, and this
+   one thing should not read as decoration. */
+.site-hint::after{
+  content:'';position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:rgba(255,255,255,.16);border-radius:2px;
+}
+.site-hint::before{
+  content:'';position:absolute;bottom:0;left:0;height:2px;width:34%;
+  border-radius:2px;z-index:1;
+  background:linear-gradient(90deg,transparent,#fff 45%,#fff 55%,transparent);
+  animation:hintSweep 1.45s cubic-bezier(.65,.02,.35,1) infinite;
+}
+@keyframes hintSweep{
+  0%   {transform:translateX(-110%)}
+  100% {transform:translateX(305%)}
+}
+body.reduced .site-hint::before{animation:none;width:100%;opacity:.5}
 @media (max-width:700px){
   /* the bar cannot hold both; while it is loading, that is the thing to say */
   .site.busy .site-url{display:none}
-  .site-hint{white-space:normal;font-size:calc(var(--u)*.58)}
+  .site-hint{white-space:normal;font-size:calc(var(--u)*.66);letter-spacing:.1em}
 }
+
+/* ── whose work this is, on the work itself ───────────────────────────
+   The name used to sit in a caption under the picture, which is the one place
+   nobody looks at a grid of pictures. It rides the thumbnail now, with the
+   company's own mark beside it, over a scrim dark enough to hold white type
+   against a screenshot whose colours we do not control. */
+.work-badge{
+  position:absolute;top:0;left:0;right:0;z-index:2;
+  display:flex;align-items:center;gap:calc(var(--u)*.6);
+  padding:calc(var(--u)*.7) calc(var(--u)*.85);
+  background:linear-gradient(180deg,rgba(4,5,10,.82),rgba(4,5,10,.42) 58%,rgba(4,5,10,0));
+  pointer-events:none;
+}
+.work-logo{
+  flex:none;width:calc(var(--u)*1.9);height:calc(var(--u)*1.9);
+  border-radius:calc(var(--u)*.4);object-fit:contain;
+  background:rgba(255,255,255,.06);
+}
+.work-badge b{
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.74);
+  letter-spacing:.11em;text-transform:uppercase;color:#fff;line-height:1.2;
+  text-shadow:0 1px 12px rgba(0,0,0,.8);
+}
+/* the caption keeps the trade, now that it no longer carries the name */
+.work-meta i{margin-top:0}

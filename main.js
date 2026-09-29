@@ -3164,7 +3164,7 @@ function sitePreview() {
     if (!url) return;
     openedBy = a;
     const bg = $('.work-shot', a)?.style.backgroundImage || '';
-    const name = $('.work-meta b', a)?.textContent || '';
+    const name = $('.work-badge b', a)?.textContent.trim() || '';
 
     shot.style.backgroundImage = bg;
     shot.classList.remove('gone');
