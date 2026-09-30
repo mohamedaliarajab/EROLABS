@@ -498,7 +498,11 @@ const sky = (() => {
   let stars = [], W = 0, H = 0;
 
   const size = () => {
-    const d = Math.min(devicePixelRatio || 1, 2);
+    /* One device pixel per CSS pixel, not two. These are 1–2px glows on a
+       black field: at 2x on a retina screen the canvas is four times the area
+       for a difference nobody can point to, and it is repainted every frame.
+       The fill rate saved here is the single biggest cost on this page. */
+    const d = Math.min(devicePixelRatio || 1, 1);
     W = vw; H = vh;
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -579,7 +583,7 @@ const field = (() => {
   }
 
   function resize() {
-    dpr = Math.min(devicePixelRatio || 1, 2);
+    dpr = Math.min(devicePixelRatio || 1, 1);   // hairlines on black: see the note in sky
     cv.width = vw * dpr; cv.height = vh * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     build();
@@ -795,7 +799,7 @@ function layersRig() {
   const size = () => {
     const r = cv.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const d = Math.min(devicePixelRatio || 1, 2);
+    const d = Math.min(devicePixelRatio || 1, 1.5);
     W = r.width; H = r.height;
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -1489,7 +1493,7 @@ function projFlow() {
   flowLayout = () => {
     W = stage.offsetWidth; H = stage.offsetHeight;
     if (!W || !H) return;
-    const d = Math.min(devicePixelRatio || 1, 2);
+    const d = Math.min(devicePixelRatio || 1, 1.5);
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
 
@@ -1896,7 +1900,7 @@ const readerVis = (() => {
   const size = () => {
     const r = cv.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    const d = Math.min(devicePixelRatio || 1, 2);
+    const d = Math.min(devicePixelRatio || 1, 1.5);
     W = r.width; H = r.height;
     cv.width = W * d; cv.height = H * d;
     ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -2407,7 +2411,29 @@ function films() {
   });
 
   // decode only where the camera actually is
+  /* On a phone nothing is fetched until it is played, and only one plays at a
+     time. The About stop carries three films: on a desktop they are a
+     composition and all three belong on screen, but on a phone they are three
+     H.264 streams downloading and decoding at once, on the device least able
+     to spare the bandwidth, the battery or the memory — and only one of them
+     can be in front of you anyway. It also starves everything else on the
+     connection, which is why the Our Work previews crawled on mobile. */
+  if (flat) $$('video').forEach(v => { v.preload = 'none'; });
+
+  const nearestCard = () => {
+    let best = null, bestD = Infinity;
+    cards.forEach(c => {
+      if (c.closest('[hidden]')) return;
+      const r = c.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;     // not on screen at all
+      const d = Math.abs(r.top + r.height / 2 - innerHeight / 2);
+      if (d < bestD) { bestD = d; best = c; }
+    });
+    return best;
+  };
+
   filmsLive = () => {
+    const only = flat ? nearestCard() : null;
     cards.forEach(c => {
       if (c.dataset.hoverOnly !== undefined) return;      // hover decides that one
       const v = c.querySelector('video');
@@ -2415,6 +2441,7 @@ function films() {
       // the case study that is not on show is display:none — playing it costs
       // a decode nobody can see, and it competes with the one you can
       if (c.closest('[hidden]')) { v.pause(); return; }
+      if (flat) { c === only ? v.play().catch(() => {}) : v.pause(); return; }
       c.closest('.stop')?.classList.contains('live')
         ? v.play().catch(() => {}) : v.pause();
     });
@@ -3387,6 +3414,8 @@ const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hud
       pHead = $('#progressHead'), pPct = $('#progressPct'),
       navLinksEl = $('#navLinks'), poleEl = $('#pole'), wordmark = $('.wordmark');
 let lastSector = -1, lastNavMode = null, lastArrived = -1, nearIdx = -1;
+const lastOp = [];
+let lastFilmPick = 0;
 const dists = [];
 
 /* Frame counter, for the work a phone does not need done sixty times a second.
@@ -3503,8 +3532,22 @@ function tick(t) {
        you are meant to scroll past them, so fading the one above out as you
        read the one below would just be losing content. */
     if (!flat) {
-      stops[i].style.opacity = clamp(1.65 - d * 2.05, 0, 1).toFixed(3);
-      stops[i].classList.toggle('hidden', d > 1.4);
+      /* Written only when it moves. This ran every frame for all five stops,
+         and each write invalidates the style of an entire section — five full
+         style recalculations a frame for a number that is usually identical
+         to the one already there. */
+      const o = clamp(1.65 - d * 2.05, 0, 1);
+      if (Math.abs(o - (lastOp[i] ?? -1)) > .006) {
+        lastOp[i] = o;
+        stops[i].style.opacity = o.toFixed(3);
+      }
+      /* Hysteresis on the cull, and this is the blinking. A stop parked near
+         the threshold crossed it on alternate frames, and every crossing hid
+         and re-showed a whole section — which makes the browser throw away
+         its decoded images and decode them again. That is the flicker. */
+      const hid = stops[i].classList.contains('hidden');
+      if (!hid && d > 1.45) stops[i].classList.add('hidden');
+      else if (hid && d < 1.30) stops[i].classList.remove('hidden');
     }
   }
   /* Hysteresis, and it matters more than it looks. The camera lerps toward
@@ -3528,6 +3571,12 @@ function tick(t) {
     lastArrived = near;
     if (near !== 0) flashWordmark();
   }
+
+  /* In flat mode the sector rarely changes, but which film is in front of you
+     changes constantly as you scroll — so the choice is re-made on a timer
+     rather than on arrival. Twice a second, five rect reads: cheap next to the
+     decode it prevents. */
+  if (flat && t - lastFilmPick > 450) { lastFilmPick = t; filmsLive(); }
 
   hudArrow.textContent = ARROWS[Math.min(leg, ARROWS.length - 1)];
   hudCoord.textContent =
@@ -3590,9 +3639,13 @@ function tick(t) {
      So on a phone they run on a third of the frames — twenty a second, which
      is more than a drifting gradient or a blinking star needs — and the field,
      which is the most expensive and the least alive of them, on a sixth. */
-  const slow = flat && (fno % 3);
-  if (!slow) { sky.draw(t, heroD); galaxy.draw(t, heroD); }
-  if (!flat || fno % 6 === 0) field.draw(t);
+  /* Cadence, on a desktop too. The camera lerps at .09 a frame and the stars
+     breathe over seconds; thirty repaints a second of the background is
+     indistinguishable from sixty and leaves the other half of the budget to
+     the thing that actually has to be smooth, which is the scroll. */
+  const every = flat ? 3 : 2;
+  if (fno % every === 0) { sky.draw(t, heroD); galaxy.draw(t, heroD); }
+  if (fno % (flat ? 6 : 2) === 0) field.draw(t);
   requestAnimationFrame(tick);
 }
 
@@ -3703,7 +3756,7 @@ function boot() {
     let stars = [], sw = 0, sh = 0;
     const seed = () => {
       if (!innerWidth || !innerHeight) return;
-      const d = Math.min(devicePixelRatio || 1, 2);
+      const d = Math.min(devicePixelRatio || 1, 1.5);
       sw = innerWidth; sh = innerHeight;
       sky.width = sw * d; sky.height = sh * d;
       sx.setTransform(d, 0, 0, d, 0, 0);

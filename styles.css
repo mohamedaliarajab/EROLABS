@@ -2836,6 +2836,11 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
    would serve its phone layout, and the work would not be the work */
 .site-live{
   position:absolute;width:1440px;height:900px;border:0;
+  /* An iframe with nothing in it is WHITE, and a white rectangle is what you
+     saw for the half second between the frame appearing and the site painting
+     its own background. It cannot be styled from in here once the site paints,
+     but until then this is the colour underneath. */
+  background:#06050b;
   transform-origin:0 0;opacity:0;transition:opacity .45s var(--ease);
 }
 .site-live.on{opacity:1}
