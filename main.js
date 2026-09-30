@@ -966,14 +966,12 @@ function layersRig() {
    being handed off, not a decorative loop. Lanes are evenly spaced rather
    than pinned to DOM rows, so the substrate keeps running whatever the
    section above it is made of. Only animates while Projects is on screen. */
-let audioEnable = () => {}, audioRamp = () => {}, audioDuck = () => {};
+let audioEnable = () => {}, audioRamp = () => {};
 function audioRig() {
   const el = $('#ambient'), wrap = $('#vol'), btn = $('#volBtn'), slider = $('#volSlider');
   if (!el || !wrap) return;
 
   let base = +slider.value / 100, on = false, boost = 1, lastTouch = 0, wired = false;
-  /* Ducking, for when another site is playing inside ours. */
-  let duck = 1, duckTo = 1;
 
   /* A page may not start audio without a gesture, and entering the site is no
      longer one — there is no door to click any more. Both the play attempt and
@@ -1029,7 +1027,7 @@ function audioRig() {
     } catch (e) { wired = true; /* no analyser: the aurora drifts without a beat */ }
   };
 
-  const effective = () => clamp(base * boost * duck, 0, 1);
+  const effective = () => clamp(base * boost, 0, 1);
   const apply = () => { el.volume = effective(); };
 
   /* The slider shows the volume you can actually hear, not the setting
@@ -1115,18 +1113,8 @@ function audioRig() {
     else { apply(); paintState(); }
   });
 
-  /* Some of the sites shown in the preview have music of their own, and two
-     beds at once is just noise. The bed drops to a tenth while a site is open
-     and comes back when it closes — a fade rather than a cut, so it reads as
-     making room rather than as a fault. */
-  audioDuck = down => { duckTo = down ? .1 : 1; };
-
   audioRamp = (target, dt) => {
     if (!on) { boost = 1; return; }
-    if (Math.abs(duckTo - duck) > .002) {
-      duck += (duckTo - duck) * (1 - Math.pow(.86, dt / 16));
-      apply(); showLevel();
-    }
     if (performance.now() - lastTouch < 1200) { boost = 1; apply(); return; }
     boost += (target - boost) * (1 - Math.pow(.90, dt / 16));
     apply(); showLevel();
@@ -2420,15 +2408,30 @@ function films() {
      connection, which is why the Our Work previews crawled on mobile. */
   if (flat) $$('video').forEach(v => { v.preload = 'none'; });
 
+  /* Sticky, and it has to be. Two cards sitting almost equally near the middle
+     would otherwise trade places every time this ran, and each trade is a
+     pause and a play — which, with preload off, throws away what had been
+     fetched and starts again. That is a second source of flickering, and it
+     was mine. A new card has to be a clear eighth of a screen closer before
+     it takes over. */
+  let playing = null;
   const nearestCard = () => {
+    const mid = c => {
+      const r = c.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return Infinity;   // not on screen
+      return Math.abs(r.top + r.height / 2 - innerHeight / 2);
+    };
     let best = null, bestD = Infinity;
     cards.forEach(c => {
       if (c.closest('[hidden]')) return;
-      const r = c.getBoundingClientRect();
-      if (r.bottom < 0 || r.top > innerHeight) return;     // not on screen at all
-      const d = Math.abs(r.top + r.height / 2 - innerHeight / 2);
+      const d = mid(c);
       if (d < bestD) { bestD = d; best = c; }
     });
+    if (playing && playing !== best && !playing.closest('[hidden]')) {
+      const held = mid(playing);
+      if (held < bestD + innerHeight * .125) return playing;      // not enough in it
+    }
+    playing = best;
     return best;
   };
 
@@ -3104,242 +3107,6 @@ function chat() {
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) show(false); });
 }
 
-/* ── the live site, inside this one ────────────────────────────────
-   A tile in Our Work used to be a door out of the site. It is a window now:
-   the work opens in a frame here, over the panel it was picked from.
-
-   The honest part of this is the fallback. A site can refuse to be shown
-   inside another one — X-Frame-Options, or frame-ancestors in a CSP — and a
-   great many do by default. There is no way to ask in advance and no way to
-   read the failure: a blocked frame and a slow one look identical from out
-   here. So the screenshot stays underneath until the frame actually loads,
-   the way out stays in the bar the whole time, and if nothing has loaded
-   after six seconds it says so plainly instead of leaving a blank rectangle.
-
-   The frame is rendered at desktop width and scaled down to fit, because a
-   site squeezed into a 900px box would serve its phone layout and the work
-   would not be the work. */
-const SITE_W = 1440, SITE_H = 900, SITE_WAIT = 14000, SITE_MIN = 900;
-function sitePreview() {
-  const box = $('#site'), frame = $('#siteFrame'), shot = $('#siteShot'),
-        stage = $('#siteStage'), urlEl = $('#siteUrl'), note = $('#siteNote'),
-        load = $('#siteLoad'), prevB = $('#sitePrev'), nextB = $('#siteNext');
-  if (!box || !frame) return;
-  let timer = 0, openedBy = null, list = [], cur = 0, busyFrom = 0, settleT = 0;
-  const warmed = new Set();
-
-  /* The stage is whatever the panel leaves us; the site inside it is always
-     1440 wide. One number reconciles them, and it is rewritten on resize. */
-  const fit = () => {
-    const r = stage.getBoundingClientRect();
-    if (!r.width) return;
-    /* On a phone the frame is the phone's width, at one to one. Scaling a
-       1440-wide desktop render down to fit 375px puts the whole site at a
-       quarter size and nobody can read a word of it — and worse, it shows the
-       desktop layout of a site whose phone layout is the thing worth seeing.
-       Let the frame be narrow and the site inside it answers accordingly. */
-    if (flat) {
-      frame.classList.add('native');
-      ['transform', 'left', 'top'].forEach(k => frame.style.removeProperty(k));
-      return;
-    }
-    frame.classList.remove('native');
-    const k = Math.min(r.width / SITE_W, r.height / SITE_H);
-    frame.style.transform = `scale(${k.toFixed(4)})`;
-    frame.style.left = ((r.width - SITE_W * k) / 2).toFixed(1) + 'px';
-    frame.style.top  = ((r.height - SITE_H * k) / 2).toFixed(1) + 'px';
-  };
-  addEventListener('resize', () => { if (!box.hidden) fit(); });
-
-  const close = () => {
-    if (box.hidden) return;
-    clearTimeout(timer);
-    clearTimeout(settleT);
-    box.hidden = true;
-    box.classList.remove('busy');
-    box.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('siting');
-    frame.src = 'about:blank';        // stop whatever it was running
-    frame.classList.remove('on');
-    audioDuck(false);                 // and the bed comes back up
-    openedBy?.focus({ preventScroll: true });
-    openedBy = null;
-  };
-
-  /* Left and right move through the projects in the category that is on
-     show, so the window is a way through the work rather than one thing at a
-     time. It wraps, and it hides itself when there is only one to see. */
-  const step = d => {
-    if (list.length < 2) return;
-    cur = (cur + d + list.length) % list.length;
-    show(list[cur]);
-  };
-
-  const open = a => {
-    const grid = a.closest('.work-grid');
-    const cat = a.dataset.cat;
-    list = grid ? $$('.work-item[data-site][data-cat="' + cat + '"]', grid) : [a];
-    cur = Math.max(0, list.indexOf(a));
-    show(a);
-  };
-
-  const show = a => {
-    /* The address lives in a data attribute and never in an href, so there is
-       no link to hover, no status bar, and nothing under "copy link address".
-       Worth saying plainly: this is not secrecy. The browser has to be told
-       where to go, so anyone who opens developer tools can read it. What it
-       does is stop the address being handed out by accident. */
-    const url = a.dataset.site;
-    if (!url) return;
-    openedBy = a;
-    const bg = $('.work-shot', a)?.style.backgroundImage || '';
-    const name = $('.work-badge b', a)?.textContent.trim() || '';
-
-    shot.style.backgroundImage = bg;
-    shot.classList.remove('gone');
-    note.hidden = true;
-    frame.classList.remove('on');
-    urlEl.textContent = name;          // the project, not the address
-    audioDuck(true);
-
-    box.hidden = false;
-    box.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('siting');
-    const many = list.length > 1;
-    prevB.hidden = nextB.hidden = !many;
-
-    /* A site that refuses to be framed still opens — as the screenshot, at
-       full size, with a line saying why. Better than a dead tile, and better
-       than a black rectangle. */
-    if (!a.hasAttribute('data-frame')) {
-      fit();
-      box.classList.remove('busy');
-      note.hidden = false;
-      note.textContent = 'This one cannot be shown inside another site — a security setting on its own end. What you are looking at is a screenshot.';
-      return;
-    }
-    /* Twice: once now, and once on the next frame. The panel is unhidden and
-       measured in the same breath, and its opening animation can hand back a
-       box that is not its final one — which leaves the site rendering at 1440
-       with the right-hand third of it outside the window. */
-    fit();
-    requestAnimationFrame(fit);
-    frame.src = url;
-
-    box.classList.add('busy');
-    busyFrom = performance.now();
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      if (frame.classList.contains('on')) return;
-      /* Not "it refused" — a declared site that has not painted yet is far
-         more likely to be a heavy one on a slow connection, and telling
-         someone their site is blocked when it is merely loading is worse than
-         saying nothing. The refusal wording belongs to the path above, where
-         it is known for a fact. */
-      note.hidden = false;
-      note.textContent = 'Still loading the live site.';
-    }, SITE_WAIT);
-  };
-
-  /* Two reasons this is not just "clear it on load".
-
-     One: switching sites fires a load event for the document on its way OUT,
-     which arrives within a few milliseconds of setting src and would clear the
-     line before the new site had started. Anything that fast is not a site
-     arriving over a network.
-
-     Two: a line that flashes for 200ms has not been read by anyone. It stays
-     up for most of a second whatever happens, so every site — including the
-     ones reached with the arrows — actually says what it is doing. */
-  const settled = () => {
-    clearTimeout(settleT);
-    const left = SITE_MIN - (performance.now() - busyFrom);
-    if (left > 0) { settleT = setTimeout(settled, left); return; }
-    clearTimeout(timer);
-    box.classList.remove('busy');
-    fit();                       // and again now the frame has something in it
-    frame.classList.add('on');
-    shot.classList.add('gone');
-    note.hidden = true;
-    warmNeighbours();
-  };
-
-  frame.addEventListener('load', () => {
-    if (frame.src === 'about:blank') return;
-    if (performance.now() - busyFrom < 120) return;   // the outgoing document
-    settled();
-  });
-
-  /* Once someone is looking at one project they are a keypress away from the
-     next and the one before. Fetching their HTML now means the arrow pays for
-     rendering and not for the round trip as well.
-
-     Only the documents, and only with fetch — not hidden iframes holding whole
-     sites open. Several of these have music, and a site kept alive out of
-     sight is a site that can still be heard. */
-  const warmNeighbours = () => {
-    if (list.length < 2) return;
-    [cur + 1, cur - 1].forEach(i => {
-      const t = list[(i + list.length) % list.length];
-      const u = t && t.dataset.site;
-      if (!u || warmed.has('doc:' + u)) return;
-      warmed.add('doc:' + u);
-      fetch(u, { mode: 'no-cors', credentials: 'omit' }).catch(() => {});
-    });
-  };
-
-  /* Delegated on the document: the work grid is CLONED into the reading panel
-     every time it opens, so anything bound to the markup in the page would be
-     left behind on the original. */
-  document.addEventListener('click', e => {
-    const a = e.target.closest('.work-item');
-    if (!a) return;
-    /* Declared, not detected — and that is not laziness. A frame that has been
-       refused and a frame that has loaded are IDENTICAL from out here: both
-       fire load, both throw SecurityError on contentWindow.location, both
-       report contentDocument null and length 0. Tested, not assumed. The
-       browser hides the difference on purpose, so guessing means showing an
-       empty rectangle to anyone whose site says no.
-
-       hasAttribute, not dataset: a valueless attribute reads back as the empty
-       string, which is falsy, and this exact mistake has already cost a day on
-       this site once.
-
-       A tile without the attribute keeps being an ordinary link and opens in a
-       new tab, which is what it did before any of this existed. */
-    if (!a.dataset.site) return;
-    e.preventDefault();
-    e.stopPropagation();
-    open(a);
-  });
-
-  /* Hovering a tile is most of a decision. Warming the connection there means
-     the click pays for the page and not for the handshake as well. no-cors
-     because we want nothing back — only the socket left open behind it. */
-  document.addEventListener('pointerenter', e => {
-    const a = e.target instanceof Element ? e.target.closest?.('.work-item[data-site]') : null;
-    if (!a || warmed.has(a.dataset.site)) return;
-    warmed.add(a.dataset.site);
-    fetch(a.dataset.site, { mode: 'no-cors', credentials: 'omit' }).catch(() => {});
-  }, true);
-
-  prevB.addEventListener('click', e => { e.stopPropagation(); step(-1); });
-  nextB.addEventListener('click', e => { e.stopPropagation(); step(1); });
-  addEventListener('keydown', e => {
-    if (box.hidden) return;
-    if (e.key === 'ArrowLeft')  step(-1);
-    if (e.key === 'ArrowRight') step(1);
-  });
-
-  /* The way back to the grid. It is the same action as the ✕ — the panel it
-     came from is still open underneath — but it says where it goes, which
-     the ✕ does not. */
-  $('#siteBack').addEventListener('click', close);
-  $('#siteX').addEventListener('click', close);
-  $('#siteScrim').addEventListener('click', close);
-  addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) close(); });
-}
-
 /* ── cursor ────────────────────────────────────────────────────── */
 function cursor() {
   const c = $('#cursor'); if (touch || reduced) return;
@@ -3521,7 +3288,14 @@ function tick(t) {
     dists[i] = d;
     if (i === 0) heroD = d;
     if (d < dists[best]) best = i;
-    stops[i].classList.toggle('live', d < 1.05);
+    /* Hysteresis, for the same reason the cull below has it. This was a bare
+       threshold, so a stop left sitting at 1.05 — which is exactly where a
+       phone rests between two sections — added and removed `live` on
+       alternate frames. Every add restarts the entrance animations inside
+       that section, which is the flickering. */
+    const wasLive = stops[i].classList.contains('live');
+    if (!wasLive && d < 1.00) stops[i].classList.add('live');
+    else if (wasLive && d > 1.12) stops[i].classList.remove('live');
     /* Fade by distance. Without this, neighbouring stops sit in frame at full
        strength during a leg and the screen reads as several sections piled on
        each other — which is exactly what "mixed up" looks like. Full at a
@@ -3653,7 +3427,7 @@ function tick(t) {
 function boot() {
   $$('[data-split]').forEach(split);
   $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
-  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat(); sitePreview();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while
