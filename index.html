@@ -511,17 +511,6 @@
           <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="dashboards">Dashboards</button>
           <button class="work-tab"    type="button" role="tab" aria-selected="false" data-cat="apps">Apps</button>
         </nav>
-
-        <!-- data-frame = this site allows being shown inside another one, so the
-             tile opens in the preview window rather than a new tab.
-
-             There is no way to test this from the page: a refused frame and a
-             loaded one look exactly the same to JavaScript. So it is declared
-             here, per project. Rule of thumb — sites we built and host: yes.
-             Wix, Squarespace, Shopify, most GitHub and Vercel defaults: no,
-             they send X-Frame-Options or frame-ancestors and the window would
-             come up empty. When in doubt, drop the attribute: the tile then
-             opens in a new tab, which always works. -->
         <div class="work-grid" data-show="websites">
             <a class="work-item" data-cat="websites" href="https://fisolak-temp.netlify.app/" target="_blank" rel="noopener noreferrer">
               <i class="work-shot" style="background-image:url('media/work-fisolak.jpg')" aria-hidden="true"></i>
