@@ -3426,7 +3426,6 @@ function tick(t) {
 /* ── boot ──────────────────────────────────────────────────────── */
 function boot() {
   $$('[data-split]').forEach(split);
-  $$('.case-step').forEach((el, i) => el.style.setProperty('--step', i));
   audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat();
 
   /* Mode comes from the media query, not from measuring the window. Size

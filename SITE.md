@@ -1,6 +1,8 @@
 # Ẹ̀rọ Labs — the whole site
 
-The complete current state, at tag **`final`** (2 Sep 2026, commit `92d52d4`, 86 commits).
+The complete current state, at tag **`final-5.0`** (30 Sep 2026), plus the work
+committed after it. Sections 14–17 cover everything added since `final`: Our Work,
+the Ask us panel, the idle melt and the performance pass.
 
 This is the document to read first. `BRIEF.md` describes the site as it stood at
 `satisfied-1` and is still accurate on the visual system and the core mechanic;
@@ -240,15 +242,36 @@ EB Garamond for the hero dictionary entry only and Poppins for the wordmark only
 
 ## 9 · The films
 
-Five, all 1920×1080 H.264, `preload="metadata"` so they stay off the critical path.
+Five, all **1280×720** H.264, `preload="metadata"` on desktop.
 
 | File | Size | What it is |
 |---|---|---|
-| `intelligence.mp4` | 13.8 MB | Category film |
-| `automation.mp4` | 14.4 MB | Category film |
-| `design.mp4` | 14.1 MB | Category film |
-| `case.mp4` | 9.97 MB | Freight study, 30s |
-| `case-2.mp4` | 9.93 MB | Studio study, 30s |
+| `intelligence.mp4` | 2.3 MB | Category film |
+| `automation.mp4` | 2.3 MB | Category film |
+| `design.mp4` | 2.3 MB | Category film |
+| `case.mp4` | 2.2 MB | Freight study, 30s |
+| `case-2.mp4` | 2.1 MB | Studio study, 30s |
+
+**They were 1920×1080 at up to 3.7 Mbps — 62 MB in total — until 30 Sep.** That is
+broadcast bitrate for flat motion graphics never seen larger than a card, and it
+was by a wide margin the heaviest thing on the site. Re-encoded with
+`AVAssetExportSession` at the 720p preset under a per-file ceiling
+(`fileLengthLimit`), which needs no ffmpeg; `media/` went 60 MB → 12 MB with no
+visible loss. The script is `shrink.swift` in the session scratchpad.
+
+### On a phone, one at a time
+
+`filmsLive()` plays every film on a live stop. On a desktop the three About films
+are a composition and all three belong on screen. On a phone that was three
+simultaneous downloads and three H.264 decodes on the device least able to spare
+either — and it starved everything else sharing the connection.
+
+In flat mode now: `preload` is set to `none` (nothing is fetched until it plays),
+and only the film nearest the middle of the screen plays, re-chosen twice a second
+as you scroll. **The choice is sticky** — a card must be an eighth of a screen
+closer before it takes over — because two cards sitting equally near would
+otherwise trade places on every pass, and each trade is a pause and a play that
+throws away what had been fetched. That was a visible flicker.
 
 ### The two case films were generated on this machine
 
@@ -312,8 +335,9 @@ Run `rm -rf dist && node build.mjs` before deploying so `dist/` matches source.
 
 ## 11 · First-load weight
 
-Measured at tag `final`: **~751 KB across 19 requests**. The 60 MB of film is
-*not* on the critical path — `preload="metadata"` fetches headers only.
+Measured 30 Sep: **~0.71 MB across 15 requests**, DOMContentLoaded 577 ms, load
+1.8 s. The 12 MB of film is *not* on the critical path — `preload="metadata"`
+fetches headers only, and on a phone `preload="none"` fetches nothing at all.
 
 Cross-origin font files report zero transfer without `Timing-Allow-Origin`, so
 the true figure is somewhat higher. Fonts and their CSS are the largest
@@ -348,7 +372,120 @@ remaining win.
 
 ---
 
-## 14 · Outstanding
+## 14 · Our Work
+
+Not in the menu, by instruction. The way in is a vertical pill in the left gutter
+on a desktop and a quiet chip in the bottom corner on a phone, carried on every
+stop. It opens the reading panel with four category tabs: **Websites** has four
+projects, **Automation / Dashboards / Apps** each say *Coming soon*.
+
+Each tile is a plain link — screenshot, the client's own logo and name, the address
+it opens, `target="_blank"` with `rel="noopener noreferrer"`.
+
+### It was a live preview for two days, and that is worth knowing
+
+Between 29 and 30 Sep the tiles opened the real site in an iframe inside the
+panel, with arrows between projects and a loading line. It worked, and it was
+removed: a whole second website loading inside this one is a cost no amount of
+preconnecting fixes, and the client sites each run their own entrance sequences
+(Doculand counts from 0 %, Craneshore holds at 100 %, Studio24 waits behind a
+door) which happen *after* the document arrives.
+
+Two findings from it that still matter if it is ever revived:
+
+- **A refused frame and a loaded one are identical to JavaScript.** Both fire
+  `load`, both throw `SecurityError` on `contentWindow.location`, both report
+  `contentDocument` null and `length` 0. Tested against github.com and
+  example.com side by side. So embeddability cannot be detected, only declared.
+- **`interstyleceramics.com` sends `X-Frame-Options: SAMEORIGIN`** and will never
+  embed. It was dropped from the grid for that reason.
+
+### The thumbnails
+
+1440×900 screenshots taken with the system's own WebKit (`shots.swift`, scratchpad)
+— there is no Homebrew here — captured **mid-page rather than at the top**, because
+these heroes are sparse, still animating, or behind a door. Studio24 and Doculand
+would not composite in an offscreen window and were taken with a render service
+instead. The logos are each site's own favicon or mark, fetched from the site.
+
+---
+
+## 15 · Ask us
+
+A scripted FAQ panel, not a model. It gates on name, company, email and phone
+before any question, answers from a fixed list, and removes each question once it
+has been read. The last option is always their own words.
+
+Three ways a conversation reaches the inbox, and the subject line says which:
+
+| How | Subject | Trigger |
+|---|---|---|
+| Sent | `Question <ref>` | they press send |
+| Unfinished | `Unfinished <ref>` | two minutes of silence |
+| Unfinished | `Unfinished <ref>` | the tab closes |
+
+The last one leaves by `navigator.sendBeacon` — a `fetch` is killed mid-flight
+when the page goes away. **`pagehide`, not `visibilitychange`:** hiding fires on
+every tab switch and would fill the inbox with people who merely looked away.
+
+Still gated on the same FormSubmit activation as the enquiry form (§18). Until
+that click, none of this is delivered.
+
+---
+
+## 16 · The idle melt
+
+Thirty seconds without scroll, pointer or key and the page gives way: turbulence
+displacement, blur, drained colour, and a sag that keeps going for as long as it
+is left alone. Any input recovers it in under a second.
+
+Two things changed on 28 Sep:
+
+- **It runs on phones and pads.** It used to bail on `touch || flat`. In flat mode
+  it melts **the section in view, not `#viewport`** — there `#viewport` *is* the
+  document, so filtering it would rasterise every stop at once, and its sag would
+  move the scroll under a reading thumb. No displacement map on a phone either:
+  the turbulence is the expensive half.
+- **The fixed chrome melts with it.** The launchers, the wordmark, the telemetry,
+  the progress rail and the open Ask us panel are at body level, outside
+  `#viewport`, which is why they used to sit crisp on top of a page that had
+  given way. They take it now under their own `--cmelt` / `--cblur`, because
+  `--melt` and `--blur` would inherit into the reading panel and drip the very
+  thing being read. No sag for chrome: a top bar sliding 300 px down parks itself
+  mid-screen.
+
+The reading view and the film frame stay out of it — thirty still seconds is an
+ordinary amount to spend on a paragraph.
+
+---
+
+## 17 · The performance pass (30 Sep)
+
+Everything here was measured, not assumed.
+
+- **Canvas resolution.** `#sky` and `#field` were drawn at 2× device pixels and
+  repainted every frame — about 15 million pixels a second for 1–2 px glows and
+  hairlines on black. One device pixel each now.
+- **Cadence.** The background canvases run at a third of the frames on a phone and
+  half on a desktop. The camera lerps at .09 a frame and stars breathe over
+  seconds; nobody can see the difference.
+- **Per-frame style writes.** Stop opacity was written for all five stops every
+  frame — five whole-section style invalidations for a number usually identical to
+  the one already there. Written only when it moves by more than .006 now.
+- **Two threshold oscillations, both of which read as flickering.** `live` was a
+  bare comparison at 1.05 — exactly where a phone rests between sections — so it
+  added and removed on alternate frames, restarting every entrance animation
+  inside that section. It is 1.00 on, 1.12 off. The cull (`hidden`) is 1.45 on,
+  1.30 off; without that, hiding and re-showing a section makes the browser throw
+  away its decoded images and decode them again.
+
+Measured across a 5,600 px scroll at phone size afterwards: **8 `live` transitions,
+0 hidden transitions, 8 play/pause events** — one per section and one per film,
+which is the theoretical minimum.
+
+---
+
+## 18 · Outstanding
 
 ### Blocking launch
 
@@ -362,29 +499,35 @@ remaining win.
 
 ### Soon
 
-- [ ] **`/media/*` cache header** in `netlify.toml` (§10).
+- [ ] **`/media/*` cache header** in `netlify.toml` (§10). Still absent. Now that
+      the films are 2 MB rather than 14, a week (`max-age=604800`) is the sane
+      value — *not* `immutable`, because the filenames are not versioned and a
+      replaced film would be stranded in caches.
 - [ ] **The case-study figures are unqualified.** Both studies assert specific
       numbers under a "verified / audit" framing. If they are modelled rather
       than measured, the framing has outrun the evidence. A decision, not a bug.
-- [ ] **Real-device testing.** All mobile work has been verified *numerically*,
-      at 390×844, never seen on a phone. With three interacting switchers this
-      now matters more than it did.
+- [ ] **Real-device testing.** Still the largest gap. Everything is verified
+      numerically at 375×812 and 390×844; the only phone report so far was
+      "glitches and flickering", which traced to the two threshold oscillations
+      in §17. The performance pass has not been confirmed on hardware.
 
 ### Worth deciding
 
-- [ ] **`media/` is 60 MB and `.git` is 118 MB.** Every film added is permanent,
-      and the superseded 14.65 MB `case.mp4` is still in history. Git LFS, or
-      serving films from Netlify and dropping them from the repo, would fix it —
-      but it is a history rewrite, so it needs an explicit go-ahead and gets more
-      disruptive with every film.
+- [ ] **`media/` is 12 MB; `.git` is 131 MB.** The working tree is fixed but
+      history still holds every version of the old 62 MB of film. `git gc` packs
+      the loose objects and is safe; going below what those blobs compress to
+      needs a history rewrite, which means an explicit go-ahead on a branch that
+      has already been pushed.
 - [ ] **Content gaps**: the hero is abstract where stop 01 is concrete; nothing
       says *who this is for* (no industries or company shapes); the budget tiers
       ask visitors to price themselves without ever anchoring what a tier buys.
-- [ ] `.case-track` / `.case-step` CSS is dead (~15 rules), left deliberately.
+- [x] ~~`.case-track` / `.case-step` CSS is dead~~ — removed 1 Oct, along with
+      `.case-claim`, `.case-lower`, `.cd-bar`, `.foot-mail` and the `.case-step`
+      loop in `main.js`. Nothing on the page used any of them.
 
 ---
 
-## 15 · Checkpoints
+## 19 · Checkpoints
 
 | Tag | Date | What it is |
 |---|---|---|
@@ -392,7 +535,12 @@ remaining win.
 | `satisfied-1` … `satisfied-3` | 29 Aug | approved states |
 | `satisfied-4` | 30 Aug | last approved desktop look before this session |
 | `pre-edits` | 2 Sep | before the case study / video / reach work |
-| **`final`** | **2 Sep** | **two case studies, the enquiry choosers, both films, the scroll rail** |
+| `final` | 2 Sep | two case studies, the enquiry choosers, both films, the scroll rail |
+| `final-2` | Sep | — |
+| `final-3.0` | Sep | the design pass; nothing scaled down any more |
+| `final-4.0` | 28 Sep | Our Work, Ask us, the melt reaching the whole frame |
+| `final-4.1` | 28 Sep | the mobile frame budget |
+| **`final-5.0`** | **30 Sep** | **Our Work with live previews** (since replaced by plain links) |
 
 ### Known-stale docs
 
