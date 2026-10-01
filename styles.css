@@ -2759,3 +2759,19 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
   color:var(--violet-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
 .work-item:hover .work-meta u{color:#fff}
+
+/* ── the film arrival, on a phone ─────────────────────────────────────
+   filmGrow sweeps a bloom out behind the frame as it lands: at its peak a
+   155px glow with 31px of spread at 47%. On a wide screen that is a light
+   coming on behind a small panel. On a phone the frame is nearly the whole
+   screen, so the same glow is the whole screen going bright and back — which
+   reads as a flash, not as an arrival.
+
+   !important because this has to beat the keyframes, which a normal
+   declaration cannot. The morph itself — the transform and the opacity — is
+   untouched; only the bloom goes. It is also the most expensive part of that
+   animation, repainting a large blurred area every frame on the device least
+   able to afford it. */
+@media (max-width:700px){
+  .filmbox-frame{box-shadow:0 24px 70px rgba(0,0,0,.72)!important}
+}

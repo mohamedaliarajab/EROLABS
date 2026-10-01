@@ -2437,6 +2437,20 @@ function films() {
 
   filmsLive = () => {
     const only = flat ? nearestCard() : null;
+    /* The one in front of you is the one about to be pressed, so it gets its
+       headers fetched — tens of kilobytes, not the film. Without this, a tap
+       pays for a metadata round trip before the first byte of video is even
+       requested, which is most of what "slow to start" actually is. The rest
+       stay at none and cost nothing. */
+    if (flat && only) {
+      const v = only.querySelector('video');
+      if (v && v.preload !== 'metadata') v.preload = 'metadata';
+      cards.forEach(c => {
+        if (c === only) return;
+        const o = c.querySelector('video');
+        if (o && o.preload !== 'none' && o.paused) o.preload = 'none';
+      });
+    }
     cards.forEach(c => {
       if (c.dataset.hoverOnly !== undefined) return;      // hover decides that one
       const v = c.querySelector('video');
@@ -3545,7 +3559,16 @@ function boot() {
       });
     };
     seed();
-    addEventListener('resize', seed);
+    /* A phone fires resize continuously while its URL bar collapses, and every
+       one of those re-ran seed(): setting canvas.width CLEARS the canvas, and
+       the stars were given new random positions each time. That is the flicker
+       on the loader — the whole sky being thrown away and redrawn somewhere
+       else, several times a second, for a viewport that has not meaningfully
+       changed. Width changes and real rotations still go through. */
+    addEventListener('resize', () => {
+      if (Math.abs(innerWidth - sw) < 2 && Math.abs(innerHeight - sh) < 140) return;
+      seed();
+    });
     (function twinkle(t) {
       if (sw) {
         sx.clearRect(0, 0, sw, sh);
