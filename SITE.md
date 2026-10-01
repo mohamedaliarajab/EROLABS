@@ -495,7 +495,9 @@ which is the theoretical minimum.
 - [ ] **Domain.** Blocks the above, and blocks the OG image.
 - [ ] **OG image + favicon set.** Every share on WhatsApp or LinkedIn currently
       unfurls as a grey box with a bare URL. Capture `?stop=0` at 1200×630.
-- [ ] **Three social links are still `href="#"`.**
+- [x] ~~Three social links are still `href="#"`.~~ — settled 1 Oct. LinkedIn and
+      X removed rather than parked on a dead link; Instagram points at
+      instagram.com/ero.labs. There are now no `href="#"` anywhere in the page.
 
 ### Soon
 
