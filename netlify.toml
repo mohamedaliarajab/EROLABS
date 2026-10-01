@@ -27,3 +27,18 @@
   for = "/audio/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# The films, the posters and the Our Work thumbnails. Without this they fall
+# back to Netlify's default and revalidate on every visit, so a returning
+# visitor re-pulls all 12 MB.
+#
+# A week, not a year, and deliberately NOT immutable: these filenames carry no
+# version, so media/case.mp4 can be replaced by a different film at the same
+# path. `immutable` tells a browser never to check again, which would strand
+# the old one in people's caches with no way to flush it. A week is long enough
+# that nobody re-downloads a film twice in a sitting, and short enough that a
+# replacement reaches everyone without a rename.
+[[headers]]
+  for = "/media/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

@@ -326,10 +326,10 @@ Run `rm -rf dist && node build.mjs` before deploying so `dist/` matches source.
 
 `netlify.toml` sets `no-cache` on `/*.js` and `/*.css`, and a year on `/audio/*`.
 
-> **There is no rule for `/media/*`.** The films fall back to Netlify's default
-> and revalidate rather than cache, so a returning visitor — or one who replays a
-> film — can re-pull 10–14 MB. Add the same block `/audio/*` has. This is the
-> highest-value performance fix available and it is two lines.
+`/media/*` gets `max-age=604800` — a week, and **not** `immutable`. The audio
+file can be immutable because it never changes; a film can be replaced at the
+same path, and `immutable` tells a browser never to check again, which would
+strand the old one in caches with no way to flush it.
 
 ---
 
@@ -499,10 +499,10 @@ which is the theoretical minimum.
 
 ### Soon
 
-- [ ] **`/media/*` cache header** in `netlify.toml` (§10). Still absent. Now that
-      the films are 2 MB rather than 14, a week (`max-age=604800`) is the sane
-      value — *not* `immutable`, because the filenames are not versioned and a
-      replaced film would be stranded in caches.
+- [x] ~~**`/media/*` cache header** in `netlify.toml`~~ — added 1 Oct:
+      `max-age=604800`, a week, and deliberately *not* `immutable`, because the
+      filenames are not versioned and a replaced film would be stranded in
+      caches with no way to flush it.
 - [ ] **The case-study figures are unqualified.** Both studies assert specific
       numbers under a "verified / audit" framing. If they are modelled rather
       than measured, the framing has outrun the evidence. A decision, not a bug.
