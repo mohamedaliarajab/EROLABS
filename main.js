@@ -1640,7 +1640,8 @@ function enquiry() {
         Email: v.email,
         Phone: v.phone,
         Service: v.service,
-        Budget: v.budget,
+        Budget: v.budget || '—',
+        Package: v.package || '—',
         'Problem they face': v.problem,
         'They request': v.request,
         Sent: new Date().toLocaleString()
@@ -1804,6 +1805,26 @@ function selects() {
   });
 
   if (!all.length) return;
+
+  /* "Start with Starter" and its siblings live in the reading panel, which is
+     a clone — so this is delegated, and it drives the real controls rather
+     than a copy of them: set the two answers, let the cross-field rule run,
+     shut the panel the way Escape does and travel to the form. */
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-pick]');
+    if (!b) return;
+    const svc = all.find(s => s.sel.name === 'service');
+    const pk  = all.find(s => s.sel.name === 'package');
+    if (!svc || !pk) return;
+    svc.sel.value = 'Social Media Management';
+    svc.sel.dispatchEvent(new Event('change', { bubbles: true }));
+    svc.paint();
+    pk.sel.value = b.dataset.pick;
+    pk.paint();
+    dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    setTimeout(() => $('.nav-cta')?.click(), 240);
+  });
+
   document.addEventListener('pointerdown', e => {
     all.forEach(s => { if (!s.wrap.contains(e.target)) s.close(false); });
   });
@@ -1819,7 +1840,25 @@ function selects() {
      last person's answer. */
   const service = all.find(s => s.sel.name === 'service');
   const budget  = all.find(s => s.sel.name === 'budget');
+  const pack    = all.find(s => s.sel.name === 'package');
   if (!service || !budget) return;
+
+  /* Social Media Management is a monthly retainer with published figures, so
+     a project tier is the wrong question to ask about it. The package chooser
+     takes the budget's place in the grid — only ever one of the two is in it,
+     so the three columns hold. Disabled, not merely hidden: a disabled field
+     is skipped by validation and by FormData alike, where a hidden required
+     one would block the send with nothing on screen to explain why. */
+  const SOCIAL = 'Social Media Management';
+  const swap = social => {
+    if (!pack) return;
+    pack.wrap.hidden = !social;
+    pack.sel.disabled = !social;
+    budget.wrap.hidden = social;
+    budget.sel.disabled = social;
+    if (!social && pack.sel.value) { pack.sel.value = ''; pack.paint(); }
+    pack.close(false);
+  };
 
   const AUTO = 'To be discussed';
   let held = '';                       // the last tier they chose themselves
@@ -1842,6 +1881,9 @@ function selects() {
   const OPEN = ['More than one', 'Not sure yet'];
 
   const sync = () => {
+    const social = service.sel.value === SOCIAL;
+    swap(social);
+    if (social) return;          // the budget is out of the grid; its rule is moot
     const many = OPEN.includes(service.sel.value);
     if (many) {
       if (budget.sel.value && budget.sel.value !== AUTO) held = budget.sel.value;
@@ -1868,6 +1910,7 @@ function selects() {
   const form = $('#enquiry');
   if (form) form.addEventListener('reset', () => setTimeout(() => {
     held = '';
+    swap(false);
     if (autoOpt) { autoOpt.remove(); autoOpt = null; }
     budget.wrap.classList.remove('locked');
     budget.btn.disabled = false;
@@ -2630,7 +2673,11 @@ function reader() {
      these blocks, so they are deliberately not part of the reading view. */
   /* The brief only. It no longer shows itself in the panel either — it carries
      data-read, so the panel fills with the full study instead. */
-  const BLOCKS = '.case-brief, .work-open';
+  /* .sm-plans joins them for the same reason .work-open did: it carries
+     data-read, so it is a way into the panel rather than something the panel
+     shows. Adding the selector is the whole integration — the cue, the grow
+     from source, the rail, Escape and the scrim all come with it. */
+  const BLOCKS = '.case-brief, .work-open, .sm-plans';
   let dwell = null, open = false, srcEl = null, minTimer = null, growTimer = null;
 
   const swapBtn = $('.reader-swap', shell);
@@ -3188,8 +3235,9 @@ function nav() {
 }
 
 /* ── frame ─────────────────────────────────────────────────────── */
-const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / HOW WE WORK', '03 / CASE STUDIES', '04 / REACH'];
-const ARROWS  = ['↘', '↓', '←', '↘'];
+const SECTORS = ['00 / ORIGIN', '01 / ABOUT', '02 / HOW WE WORK', '03 / CASE STUDIES',
+                 '04 / SOCIAL', '05 / REACH'];
+const ARROWS  = ['↘', '↓', '←', '↘', '↘'];
 const hudSector = $('#hudSector'), hudArrow = $('#hudArrow'), hudCoord = $('#hudCoord'),
       pFill = $('#progressFill'), navLinks = $$('.nav-links a'),
       pHead = $('#progressHead'), pPct = $('#progressPct'),

@@ -2775,3 +2775,174 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
 @media (max-width:700px){
   .filmbox-frame{box-shadow:0 24px 70px rgba(0,0,0,.72)!important}
 }
+
+/* ═══ social media management ═════════════════════════════════════════
+   Built from the tokens already here — no new font, colour, easing or
+   animation. The stop carries the claim and the pipeline; the panel carries
+   the money, because a stop is one screen by construction and the packages
+   are four. */
+.sm-body{margin-top:calc(var(--u)*1.6);max-width:92ch}
+.sm-lead{font-size:calc(var(--u)*1.02);line-height:1.6;color:var(--ink-2);max-width:72ch}
+
+/* the eight things that leave your desk, in the order they happen */
+.sm-flow{
+  list-style:none;display:flex;flex-wrap:wrap;gap:calc(var(--u)*.5);
+  margin:calc(var(--u)*1.5) 0 calc(var(--u)*.9);padding:0;
+}
+.sm-flow li{
+  display:flex;align-items:baseline;gap:calc(var(--u)*.42);
+  padding:calc(var(--u)*.5) calc(var(--u)*1);
+  border:1px solid var(--line);border-radius:999px;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.72);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-2);white-space:nowrap;
+}
+.sm-flow li em{font-style:normal;font-size:calc(var(--u)*.6);color:var(--blue);opacity:.9}
+.sm-note{font-size:calc(var(--u)*.92);line-height:1.6;color:var(--ink-3);max-width:66ch}
+
+/* The primary action on this site is type with a lit arrow, not a filled
+   pill — that is what Send Enquiry is, so that is what Get Started is. The
+   bordered one beside it is the quieter of the two. */
+.sm-cta{display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--u)*1.6);margin-top:calc(var(--u)*1.6)}
+.sm-cta .btn-primary{display:inline-flex;align-items:center;gap:calc(var(--u)*.6)}
+.sm-cta .btn-primary svg{width:calc(var(--u)*1.15);height:calc(var(--u)*1.15)}
+.sm-plans{
+  position:relative;display:inline-flex;align-items:center;
+  padding:calc(var(--u)*.82) calc(var(--u)*1.7);
+  border:1px solid rgba(255,255,255,.2);border-radius:999px;background:none;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.74);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink);cursor:pointer;
+  transition:border-color .35s,background .35s,color .35s;
+}
+.sm-plans:hover{border-color:rgba(166,37,238,.75);background:rgba(166,37,238,.12)}
+.sm-plans span{position:relative;z-index:1}
+
+/* ── inside the panel ── */
+.sm-chain{
+  list-style:none;display:flex;flex-wrap:wrap;gap:calc(var(--u)*.4);
+  margin:calc(var(--u)*1) 0 0;padding:0;
+}
+.sm-chain li{
+  padding:calc(var(--u)*.4) calc(var(--u)*.85);
+  border:1px dashed rgba(255,255,255,.16);border-radius:999px;
+  font-family:var(--f-mono);font-size:calc(var(--u)*.66);letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.sm-chain li:last-child{border-style:solid;border-color:rgba(166,37,238,.5);color:var(--violet-ink)}
+
+/* the one number that is not in the packages, said where it cannot be missed */
+.sm-sep{
+  margin:calc(var(--u)*1) 0 calc(var(--u)*1.4);
+  padding:calc(var(--u)*.9) calc(var(--u)*1.1);
+  border:1px solid rgba(166,37,238,.34);border-radius:calc(var(--u)*.6);
+  background:rgba(166,37,238,.07);
+  font-size:calc(var(--u)*.9);line-height:1.6;color:var(--ink-2);
+}
+.sm-sep b{color:#fff;font-weight:500}
+
+.sm-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*1)}
+.sm-tier{
+  position:relative;display:flex;flex-direction:column;
+  padding:calc(var(--u)*1.3) calc(var(--u)*1.2);
+  border:1px solid var(--line);border-radius:calc(var(--u)*.7);
+  background:rgba(255,255,255,.015);
+}
+.sm-tier.is-pop{border-color:rgba(166,37,238,.55);background:rgba(166,37,238,.06)}
+.sm-pop{
+  position:absolute;top:calc(var(--u)*-.62);left:calc(var(--u)*1.1);
+  padding:calc(var(--u)*.26) calc(var(--u)*.8);border-radius:999px;
+  background:var(--grad-v,linear-gradient(90deg,#1E90FF,#A625EE));
+  font-family:var(--f-mono);font-size:calc(var(--u)*.58);letter-spacing:.16em;
+  text-transform:uppercase;color:#fff;
+}
+.sm-tier-k{
+  font-family:var(--f-mono);font-size:calc(var(--u)*.7);letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.sm-price{
+  font-family:var(--f-display);font-weight:500;font-size:calc(var(--u)*1.9);
+  line-height:1.1;letter-spacing:-.015em;color:#fff;margin:calc(var(--u)*.3) 0 calc(var(--u)*.5);
+}
+.sm-price em{
+  font-style:normal;font-family:var(--f-mono);font-size:calc(var(--u)*.64);
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin-left:calc(var(--u)*.35);
+}
+.sm-tier-for{font-size:calc(var(--u)*.86);line-height:1.6;color:var(--ink-2);margin-bottom:calc(var(--u)*.9)}
+.sm-tier ul{list-style:none;margin:0 0 calc(var(--u)*1.2);padding:0;flex:1}
+.sm-tier li{
+  position:relative;padding-left:calc(var(--u)*1.1);margin-bottom:calc(var(--u)*.42);
+  font-size:calc(var(--u)*.84);line-height:1.5;color:var(--ink-2);
+}
+.sm-tier li::before{
+  content:"";position:absolute;left:0;top:calc(var(--u)*.52);
+  width:calc(var(--u)*.3);height:calc(var(--u)*.3);border-radius:50%;
+  background:var(--violet);opacity:.8;
+}
+.sm-pick{
+  position:relative;align-self:flex-start;
+  padding:calc(var(--u)*.6) calc(var(--u)*1.25);
+  border:1px solid rgba(166,37,238,.5);border-radius:999px;
+  background:linear-gradient(180deg,rgba(166,37,238,.24),rgba(166,37,238,.1));
+  font-family:var(--f-mono);font-size:calc(var(--u)*.66);letter-spacing:.14em;
+  text-transform:uppercase;color:#fff;cursor:pointer;
+  transition:border-color .3s,background .3s;
+}
+.sm-pick:hover{border-color:var(--violet);background:linear-gradient(180deg,rgba(166,37,238,.4),rgba(166,37,238,.18))}
+.sm-pick span{position:relative;z-index:1}
+
+.sm-cmp{width:100%;border-collapse:collapse;margin-top:calc(var(--u)*1)}
+.sm-cmp th,.sm-cmp td{
+  padding:calc(var(--u)*.6) calc(var(--u)*.7);text-align:left;
+  border-bottom:1px solid var(--line-2);
+  font-size:calc(var(--u)*.82);line-height:1.45;color:var(--ink-2);vertical-align:top;
+}
+.sm-cmp thead th{
+  font-family:var(--f-mono);font-size:calc(var(--u)*.64);letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);border-bottom-color:var(--line);
+}
+.sm-cmp tbody th{
+  font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.66);
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);white-space:nowrap;
+}
+.sm-cmp tbody tr:last-child th,.sm-cmp tbody tr:last-child td{border-bottom:0}
+
+.sm-rid{
+  list-style:none;margin:calc(var(--u)*1) 0 calc(var(--u)*1.2);padding:0;
+  display:grid;grid-template-columns:repeat(2,1fr);gap:calc(var(--u)*.4) calc(var(--u)*1.4);
+}
+.sm-rid li{
+  position:relative;padding-left:calc(var(--u)*1.2);
+  font-size:calc(var(--u)*.86);line-height:1.55;color:var(--ink-2);
+}
+.sm-rid li::before{
+  content:"";position:absolute;left:0;top:calc(var(--u)*.6);
+  width:calc(var(--u)*.62);height:1px;background:var(--violet);opacity:.75;
+}
+.sm-one{
+  font-family:var(--f-display);font-weight:400;font-size:calc(var(--u)*1.3);
+  line-height:1.35;letter-spacing:-.01em;color:#fff;
+}
+
+@media (max-width:900px){
+  .sm-tiers{grid-template-columns:1fr}
+  .sm-pop{top:calc(var(--u)*-.55)}
+}
+@media (max-width:700px){
+  .sm-rid{grid-template-columns:1fr}
+  .sm-flow li{font-size:calc(var(--u)*.66);padding:calc(var(--u)*.42) calc(var(--u)*.8)}
+  .sm-cta{flex-direction:column;align-items:stretch}
+  .sm-cta .btn-primary,.sm-plans{justify-content:center;text-align:center}
+  /* the comparison stops being a table and becomes nine small cards, because
+     four columns on a phone is either a horizontal scroll or unreadable type */
+  .sm-cmp,.sm-cmp tbody,.sm-cmp tr,.sm-cmp th,.sm-cmp td{display:block;width:auto}
+  .sm-cmp thead{display:none}
+  .sm-cmp tbody tr{
+    border:1px solid var(--line-2);border-radius:calc(var(--u)*.5);
+    padding:calc(var(--u)*.7) calc(var(--u)*.9);margin-bottom:calc(var(--u)*.7);
+  }
+  .sm-cmp tbody th{border:0;padding:0 0 calc(var(--u)*.4);color:var(--violet-ink)}
+  .sm-cmp tbody td{border:0;padding:calc(var(--u)*.18) 0}
+  .sm-cmp tbody td::before{
+    content:attr(data-h) " ";font-family:var(--f-mono);font-size:calc(var(--u)*.6);
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  }
+}

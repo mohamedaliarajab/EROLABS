@@ -24,7 +24,7 @@ const mp3  = readFileSync('audio/ambient.mp3');
   const problems = [];
   if (open !== close) problems.push(`<section> ${open} vs </section> ${close}`);
   if (divO !== divC) problems.push(`<div> ${divO} vs </div> ${divC}`);
-  if (stops !== 5) problems.push(`expected 5 .stop sections, found ${stops}`);
+  if (stops !== 6) problems.push(`expected 6 .stop sections, found ${stops}`);
   if (open !== stops) problems.push(`${open - stops} <section> that is not a stop`);
   if (problems.length) {
     console.error('index.html structure is wrong:\n  - ' + problems.join('\n  - '));
