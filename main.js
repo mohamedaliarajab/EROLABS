@@ -3349,7 +3349,14 @@ function socialRig() {
        this cannot predict. */
     document.fonts?.ready.then(() => { size(); });
     let remeasuredAt = 0;
-    const nx = i => cols ? cols[i] : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
+    /* Clamped into the canvas whatever the measurement says. If the row ever
+       overflows its column again, the chain compresses to fit instead of
+       drawing its last stations off the edge — a squeezed chain is a layout
+       bug, a severed one looks like the page is broken. */
+    const nx = i => {
+      const raw = cols ? cols[i] : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
+      return Math.min(Math.max(raw, 16), W - 16);
+    };
     const ny = () => H * .40;
     const tone = i => {                        // blue at the start, violet by the end
       const k = i / (SM_NODES.length - 1);

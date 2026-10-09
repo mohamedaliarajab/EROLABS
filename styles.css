@@ -2926,13 +2926,33 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
      into the one beside it. Each is now the width of what it says, and the
      space left over goes into the gaps — the row still reaches both edges,
      and nothing can collide because nothing is narrower than its label. */
-  .sm-toggles{flex-wrap:nowrap;width:100%;justify-content:space-between;gap:calc(var(--u)*.3)}
+  /* The row is sized from the COLUMN, not from --u. --u is min(1vw,1.72vh),
+     so on a wide screen it keeps growing after the column has stopped at its
+     1080px cap — the pills outgrew the space they had to sit in, the row
+     overflowed, and the last two stations ended up outside the canvas, which
+     is the hard edge the rail was stopping at.
+
+     Everything here is in em of a font that is itself a fraction of the
+     column, so the row is the same proportion of its container at every
+     width and cannot overflow. The eight labels come to about 75em including
+     their padding, gaps and letter-spacing — measured, not estimated,
+     because the first guess was out by a fifth and the row overflowed again.
+
+     The 01–08 numerals came off the tags to buy the size back. Eight
+     numbered labels in an 860px column force the type down to 8.6px, which
+     is the complaint; without them the same column carries 11.6px. The order
+     is not lost — the chain underneath runs left to right and names every
+     station in sequence. */
+  .sm-toggles{
+    flex-wrap:nowrap;width:100%;justify-content:space-between;
+    gap:clamp(3px,.45vw,9px);
+  }
   .sm-toggles .ly-t{
     flex:0 0 auto;min-width:max-content;justify-content:center;
-    padding:calc(var(--u)*.42) calc(var(--u)*.7);
-    font-size:calc(var(--u)*.66);letter-spacing:.09em;gap:5px;white-space:nowrap;
+    font-size:clamp(9px,calc(min(1080px,84vw) / 74),14px);
+    padding:.42em .7em;letter-spacing:.09em;gap:.4em;white-space:nowrap;
   }
-  .sm-toggles .ly-t em{font-size:calc(var(--u)*.52)}
+  .sm-toggles .ly-t em{font-size:.8em}
 }
 
 /* And the glow comes down. The About stop has three of these with room around
