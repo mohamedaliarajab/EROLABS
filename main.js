@@ -3340,6 +3340,15 @@ function socialRig() {
         ? rects.map(r => r.left - base.left + r.width / 2)
         : null;
     };
+    /* Measured once at startup is measured too early. The row is laid out in
+       a fallback font, the mono face arrives a beat later, every tag changes
+       width and the chain is left pointing at where they used to be — which
+       is why the last station drifted off the end while the first still
+       looked right. Re-read when the fonts land, and once a second while the
+       stop is on screen, which costs eight rect reads and fixes any reflow
+       this cannot predict. */
+    document.fonts?.ready.then(() => { size(); });
+    let remeasuredAt = 0;
     const nx = i => cols ? cols[i] : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
     const ny = () => H * .40;
     const tone = i => {                        // blue at the start, violet by the end
@@ -3350,6 +3359,7 @@ function socialRig() {
     smUpdate = (t, dt, live) => {
       if (!live) return;
       if (!W && !size()) return;
+      if (t - remeasuredAt > 1000) { remeasuredAt = t; measure(); }
       ctx.clearRect(0, 0, W, H);
       const step = dt / 16;
 
@@ -3412,10 +3422,10 @@ function socialRig() {
            one the width of two — the row stays readable rather than becoming
            a grey smear. */
         const tight = W < 520;
-        ctx.font = (tight ? 7.5 : 9) + 'px ui-monospace,monospace';
+        ctx.font = (tight ? 9 : 11) + 'px ui-monospace,monospace';
         ctx.textAlign = 'center';
         ctx.fillStyle = `rgba(190,205,235,${(alive ? .26 + l * .60 : .17).toFixed(2)})`;
-        ctx.fillText(label, x, tight ? (i % 2 ? y + 42 : y + 30) : y + 34);
+        ctx.fillText(label, x, tight ? (i % 2 ? y + 46 : y + 32) : y + 38);
         /* The break itself, marked where it happens. */
         if (i === gapAt && on.size) {
           ctx.strokeStyle = 'rgba(190,200,225,.5)';
@@ -3463,7 +3473,7 @@ function socialRig() {
          bubble at REPLY — and at CAPTURE a lead drops out of it into a tray
          that counts up. Anyone can follow that without being told. */
       const card = (x, y, st, alpha) => {
-        const w = W < 520 ? 16 : 22, h = W < 520 ? 12 : 16;
+        const w = W < 520 ? 18 : 26, h = W < 520 ? 13 : 19;
         ctx.globalAlpha = alpha;
         ctx.fillStyle = 'rgba(12,16,28,.96)';
         ctx.strokeStyle = st >= 3 ? 'rgba(150,230,190,.85)' : 'rgba(150,180,255,.5)';
@@ -3557,17 +3567,17 @@ function socialRig() {
 
       /* The tray sits below the station labels, not on top of them — it was
          printing straight through CAPTURE. */
-      const trayX = nx(5), trayY = ny() + (W < 520 ? 58 : 50);
+      const trayX = nx(5), trayY = ny() + (W < 520 ? 64 : 58);
       const chilling = !warm && leads > 0;
       const hue = chilling ? '206,170,150' : '130,255,180';
       const flash = chilling ? Math.max(0, 1 - (t - coldAt) / 900) : 0;
       ctx.textAlign = 'center';
-      ctx.font = '9px ui-monospace,monospace';
+      ctx.font = '11px ui-monospace,monospace';
       ctx.strokeStyle = `rgba(${hue},${(leads ? .45 : .16) + flash * .4})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(trayX - 34, trayY - 9, 68, 13, 3);
-      else ctx.rect(trayX - 34, trayY - 9, 68, 13);
+      if (ctx.roundRect) ctx.roundRect(trayX - 42, trayY - 11, 84, 16, 3);
+      else ctx.rect(trayX - 42, trayY - 11, 84, 16);
       ctx.stroke();
       ctx.fillStyle = `rgba(${hue},${leads || !on.size ? .95 : .55})`;
       ctx.fillText(

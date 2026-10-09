@@ -2929,8 +2929,8 @@ body.melting .nav,body.melting .hud,body.melting .progress-rail{
   .sm-toggles{flex-wrap:nowrap;width:100%;justify-content:space-between;gap:calc(var(--u)*.3)}
   .sm-toggles .ly-t{
     flex:0 0 auto;min-width:max-content;justify-content:center;
-    padding:calc(var(--u)*.34) calc(var(--u)*.52);
-    font-size:calc(var(--u)*.55);letter-spacing:.08em;gap:4px;white-space:nowrap;
+    padding:calc(var(--u)*.42) calc(var(--u)*.7);
+    font-size:calc(var(--u)*.66);letter-spacing:.09em;gap:5px;white-space:nowrap;
   }
   .sm-toggles .ly-t em{font-size:calc(var(--u)*.52)}
 }
@@ -2987,7 +2987,7 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 @media (max-width:700px){.vol-credit{display:none}}
 
 /* the chain itself — a wide, short band under the controls that drives it */
-.sm-canvas{display:block;width:100%;height:calc(var(--u)*13);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
+.sm-canvas{display:block;width:100%;height:calc(var(--u)*14);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
 @media (max-width:900px){.sm-canvas{height:calc(var(--u)*8.5)}}
 
 /* ── the first thirty days ────────────────────────────────────────────
