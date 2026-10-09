@@ -3336,9 +3336,22 @@ function socialRig() {
       const base = cv.getBoundingClientRect();
       const rects = btns.map(b => b.getBoundingClientRect());
       const oneRow = rects.every(r => Math.abs(r.top - rects[0].top) < 2);
-      cols = oneRow && base.width
-        ? rects.map(r => r.left - base.left + r.width / 2)
-        : null;
+      if (!oneRow || !base.width) { cols = null; return; }
+      let c = rects.map(r => r.left - base.left + r.width / 2);
+      /* If the row sits even slightly outside the canvas — a wider screen, a
+         font that loaded late, a reflow nobody predicted — the whole chain is
+         squeezed back inside rather than its end stations being clamped on
+         top of each other or drawn past the edge. Scaled, it still reads as
+         the same chain and every station keeps its label. Clamping one node
+         at a time was not enough: it kept the last one visible but left the
+         rail running off the edge to meet it. */
+      const lo = 18, hi = base.width - 18;
+      const a = Math.min(...c), z = Math.max(...c);
+      if (a < lo || z > hi) {
+        const k = (hi - lo) / Math.max(1, z - a);
+        c = c.map(v => lo + (v - a) * k);
+      }
+      cols = c;
     };
     /* Measured once at startup is measured too early. The row is laid out in
        a fallback font, the mono face arrives a beat later, every tag changes
@@ -3353,10 +3366,8 @@ function socialRig() {
        overflows its column again, the chain compresses to fit instead of
        drawing its last stations off the edge — a squeezed chain is a layout
        bug, a severed one looks like the page is broken. */
-    const nx = i => {
-      const raw = cols ? cols[i] : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
-      return Math.min(Math.max(raw, 16), W - 16);
-    };
+    const nx = i => cols ? cols[i]
+                         : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
     const ny = () => H * .40;
     const tone = i => {                        // blue at the start, violet by the end
       const k = i / (SM_NODES.length - 1);
@@ -3366,7 +3377,12 @@ function socialRig() {
     smUpdate = (t, dt, live) => {
       if (!live) return;
       if (!W && !size()) return;
-      if (t - remeasuredAt > 1000) { remeasuredAt = t; measure(); }
+      if (t - remeasuredAt > 1000) {
+        remeasuredAt = t;
+        const r = cv.getBoundingClientRect();
+        if (Math.abs(r.width - W) > 1 || Math.abs(r.height - H) > 1) size();
+        else measure();
+      }
       ctx.clearRect(0, 0, W, H);
       const step = dt / 16;
 
@@ -3391,7 +3407,7 @@ function socialRig() {
         const both = Math.min(lit[i], lit[i + 1]);
         ctx.strokeStyle = carries
           ? `rgba(150,180,255,${(.10 + both * .32).toFixed(3)})`
-          : 'rgba(120,132,160,.10)';          // a line with nothing on it
+          : 'rgba(126,138,166,.26)';          // a line with nothing on it
         ctx.lineWidth = 1;
         ctx.setLineDash(carries ? [] : [2, 7]);
         ctx.beginPath(); ctx.moveTo(nx(i), ny()); ctx.lineTo(nx(i + 1), ny()); ctx.stroke();
@@ -3418,10 +3434,16 @@ function socialRig() {
           ctx.fillStyle = `rgba(${r},${g},${b2},${(l * .14 + f * .26).toFixed(3)})`;
           ctx.beginPath(); ctx.arc(x, y, 8 + l * 4 + f * 8, 0, 7); ctx.fill();
         }
-        ctx.strokeStyle = `rgba(${r},${g},${b2},${(alive ? .20 + l * .70 : .16 + l * .10).toFixed(3)})`;
+        /* An unlit station has to look OFF, not absent. At 16% alpha on black
+           it simply disappeared and the chain read as cut at that point —
+           which is what it was mistaken for. It is a visible empty socket
+           now: clearly there, clearly not running. The difference between
+           having a stage and not having it is the argument, and it only
+           works if you can see both. */
+        ctx.strokeStyle = `rgba(${r},${g},${b2},${(alive ? .24 + l * .66 : .46).toFixed(3)})`;
         ctx.lineWidth = 1.2 + (alive ? f : 0);
         ctx.beginPath(); ctx.arc(x, y, 5.4 + f * 1.6, 0, 7); ctx.stroke();
-        ctx.fillStyle = `rgba(255,255,255,${(alive ? .14 + l * .86 : .10).toFixed(3)})`;
+        ctx.fillStyle = `rgba(255,255,255,${(alive ? .14 + l * .86 : .22).toFixed(3)})`;
         ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fill();
         /* On a phone the eight stations have about 39px each and CAPTURE
            alone measures 38, so the labels would sit on top of one another.
@@ -3431,7 +3453,7 @@ function socialRig() {
         const tight = W < 520;
         ctx.font = (tight ? 9 : 11) + 'px ui-monospace,monospace';
         ctx.textAlign = 'center';
-        ctx.fillStyle = `rgba(190,205,235,${(alive ? .26 + l * .60 : .17).toFixed(2)})`;
+        ctx.fillStyle = `rgba(190,205,235,${(alive ? .30 + l * .58 : .46).toFixed(2)})`;
         ctx.fillText(label, x, tight ? (i % 2 ? y + 46 : y + 32) : y + 38);
         /* The break itself, marked where it happens. */
         if (i === gapAt && on.size) {
