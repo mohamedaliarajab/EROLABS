@@ -578,7 +578,7 @@ const field = (() => {
         const a = nodes[i], b = nodes[j];
         if (Math.abs(a.d - b.d) > .34) continue;
         const dx = a.x - b.x, dy = a.y - b.y, dist = Math.hypot(dx, dy);
-        if (dist < R) links.push({ a, b, dist, flow: Math.random() < .22, off: Math.random() });
+        if (dist < R) links.push({ a, b, dist, flow: Math.random() < .08, off: Math.random() });
       }
   }
 
@@ -610,12 +610,18 @@ const field = (() => {
       ctx.strokeStyle = `rgba(150,175,255,${o})`;
       ctx.beginPath(); ctx.moveTo(a.sx, a.sy); ctx.lineTo(b.sx, b.sy); ctx.stroke();
 
-      if (l.flow) {                                   // automation, made visible
-        const k = ((t * .00016) + l.off) % 1;
+      /* Automation, made visible — but quietly. This was on 22% of the links
+         at better than twice this speed, which put a few dozen bright lights
+         crossing the screen at any moment: the background competing with the
+         section in front of it. A quarter as many, moving at a drift rather
+         than a dart, and dimmer. It should be noticed on the second look, not
+         the first. */
+      if (l.flow) {
+        const k = ((t * .00007) + l.off) % 1;
         const px = lerp(a.sx, b.sx, k), py = lerp(a.sy, b.sy, k);
-        const g = ctx.createRadialGradient(px, py, 0, px, py, 7);
-        g.addColorStop(0, 'rgba(120,170,255,.85)'); g.addColorStop(1, 'rgba(120,170,255,0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, 7, 0, 7); ctx.fill();
+        const g = ctx.createRadialGradient(px, py, 0, px, py, 6);
+        g.addColorStop(0, 'rgba(120,170,255,.52)'); g.addColorStop(1, 'rgba(120,170,255,0)');
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
       }
     }
 
@@ -3168,6 +3174,426 @@ function chat() {
   addEventListener('keydown', e => { if (e.key === 'Escape' && !box.hidden) show(false); });
 }
 
+/* ── the social system, switched on ────────────────────────────────
+   The About stop does not describe what the layers do, it lets you switch
+   them on and watch the meters move. This is the same demo for the same
+   reason: eight services listed as eight pills is a menu, and nobody buys a
+   menu. Switched on one at a time, with the rhythm climbing, the leads
+   appearing and the hours falling away, the argument makes itself — and the
+   point lands that it is the combination that works, not any one part.
+
+   It plays itself through once when the stop is reached and hands over the
+   instant anyone touches it, because a demo that keeps driving while you are
+   trying to use it is a video, not a control. */
+const SM_SAY = [
+  'A month planned in advance, so nothing goes out because somebody panicked.',
+  'Posts written to that plan, in your voice, before the week starts.',
+  'Designed to look like you — not like a template with your logo dropped on it.',
+  'Published on time, whether or not anybody remembered it was Tuesday.',
+  'Comments and messages answered while the interest is still warm.',
+  'The people asking about buying are captured, not lost somewhere in an inbox.',
+  'What worked and what did not, post by post, in numbers you can read.',
+  'Next month is built from this month\'s numbers rather than from a hunch.'
+];
+const SM_ALL = 'Eight parts, one system — and none of it is on your desk.';
+/* Switching a stage OFF is the more persuasive half, so it gets its own line.
+   Nobody is moved by a list of what they would receive; they are moved by
+   recognising the week they are already having. */
+const SM_LOSE = [
+  'With no plan, the month is whatever somebody thinks of on the day.',
+  'Nothing gets written, so nothing goes out.',
+  'It ships looking like a template with your logo dropped on it.',
+  'Written and never published — the most ordinary way this fails.',
+  'People ask, nobody answers, and they go somewhere that does.',
+  'The ones ready to buy are left sitting unread in an inbox.',
+  'You keep posting with no idea which of it is working.',
+  'Next month repeats this month, including the parts that did not work.'
+];
+const SM_NODES = ['PLAN','WRITE','DESIGN','POST','REPLY','CAPTURE','MEASURE','IMPROVE'];
+let smUpdate = () => {};
+/* A chain, not a checklist. Posting needs every stage up to PUBLISH; a lead
+   needs every stage up to CAPTURE. Averaging these — which is what this did
+   at first — quietly tells a client that six of eight buys them 75% of the
+   result. It does not. Work stops dead at the first gap, so the reading has
+   to stop dead there too. That is the entire argument for hiring anyone. */
+const SM_RHYTHM = [0, 1, 2, 3];          // plan, write, design, publish
+const SM_LEADS  = [0, 1, 2, 3, 4, 5];    // ...and answered, and captured
+
+function socialRig() {
+  const rig = $('#smRig'), host = $('#social');
+  if (!rig || !host) return;
+  const btns = $$('.ly-t', rig);
+  const bar = { r: $('#smRhythm'), l: $('#smLeads'), t: $('#smTime') };
+  const note = $('#smNote');
+  if (!btns.length || !note || !bar.r) return;
+  const OFF = note.textContent;
+  const on = new Set();
+  let touched = false, demo = null, last = null, lastOn = true, revert = 0;
+
+  /* The first stage that is missing. Everything downstream of it is theory. */
+  const firstGap = () => {
+    for (let i = 0; i < btns.length; i++) if (!on.has(i)) return i;
+    return -1;
+  };
+
+  const paint = () => {
+    /* A chain reads as its weakest link, not its average. Miss one stage and
+       the number it feeds goes to nothing, however much of the rest is on. */
+    const chain = set => set.every(i => on.has(i)) ? 1 : 0;
+    const built = set => set.filter(i => on.has(i)).length / set.length;
+    /* Not quite nothing: a broken chain still produces the ghost of an effort,
+       and showing a flat zero would look like the control was broken rather
+       than the process. It shows what was put in, at a fifth of its value — 
+       which is roughly what unfinished work is worth. */
+    bar.r.style.width = Math.round((chain(SM_RHYTHM) || built(SM_RHYTHM) * .2) * 100) + '%';
+    bar.l.style.width = Math.round((chain(SM_LEADS) || built(SM_LEADS) * .12) * 100) + '%';
+    /* Hours falls rather than fills, and never reaches nothing: somebody still
+       approves the month. Claiming zero would be the one dishonest number on
+       the page. */
+    bar.t.style.width = Math.round(100 - (on.size / btns.length) * 88) + '%';
+    rig.classList.toggle('full', on.size === btns.length);
+    /* What it says, in order of what matters most to hear: the finished
+       system, then nothing at all, then — whatever you just did — where the
+       work is still stopping. Switching a stage on shows what it buys for a
+       moment, and then the line goes back to the gap, because the gap is
+       still the fact. */
+    const gap = firstGap();
+    const settled = gap < 0 ? SM_ALL : on.size ? SM_LOSE[gap] : OFF;
+    note.textContent = last === null ? settled
+                     : lastOn && gap >= 0 ? SM_SAY[last]
+                     : settled;
+    clearTimeout(revert);
+    if (last !== null && lastOn && gap >= 0) revert = setTimeout(() => {
+      note.textContent = firstGap() < 0 ? SM_ALL : SM_LOSE[firstGap()];
+    }, 2600);
+  };
+
+  const set = (i, state) => {
+    state ? on.add(i) : on.delete(i);
+    last = i; lastOn = state;
+    if (!state && !on.size) last = null;        // nothing on is its own sentence
+    btns[i].setAttribute('aria-pressed', String(state));
+    paint();
+  };
+
+  const hand = () => { touched = true; clearInterval(demo); demo = null; };
+  btns.forEach((b, i) => b.addEventListener('click', () => {
+    hand();
+    set(i, b.getAttribute('aria-pressed') !== 'true');
+  }));
+
+  const play = () => {
+    if (touched || demo || on.size) return;
+    let i = 0;
+    demo = setInterval(() => {
+      if (touched || i >= btns.length) { clearInterval(demo); demo = null; return; }
+      set(i++, true);
+    }, 820);
+  };
+
+  /* Reduced motion gets the finished state rather than the performance: the
+     argument is the combination, and that is visible standing still. */
+  /* ── the chain ──────────────────────────────────────────────────
+     The same picture the About stop draws, making a different argument. Work
+     moves left to right through eight stations and returns along an arc
+     underneath, because this is a loop: what you learn in MEASURE is what you
+     plan next month from. The loop only closes when every station is lit.
+
+     A station that is off is a hole in the floor. Work reaching it drops out
+     of the band and fades, and it keeps dropping for as long as the gap is
+     there. That is the entire case for the service, and it is better watched
+     than read: switch one off and you see exactly where your week goes. */
+  const cv = $('#smCanvas');
+  if (cv && !reduced) {
+    const ctx = cv.getContext('2d');
+    let W = 0, H = 0, posts = [], spawnAt = 0, lost = 0, lostAt = 0, leads = 0, chips = [];
+    let cold = 0, coldAt = 0;
+    let queue = SM_NODES.map(() => 0);
+    const pulse = SM_NODES.map(() => 0);   // a station flares as work leaves it
+    const lit = SM_NODES.map(() => 0);        // eased, so stations come up rather than blink
+
+    const size = () => {
+      const r = cv.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const d = Math.min(devicePixelRatio || 1, 1.5);
+      W = r.width; H = r.height;
+      cv.width = W * d; cv.height = H * d;
+      ctx.setTransform(d, 0, 0, d, 0, 0);
+      measure();
+      return true;
+    };
+    addEventListener('resize', () => { size(); });
+
+    /* The stations sit under the toggles that switch them, read from the
+       buttons themselves rather than spaced evenly across the canvas. Even
+       spacing left the chain narrower than the row above it and the two read
+       as unrelated; measured, every station lands under its own tag however
+       the row lays out. Falls back to even spacing when the toggles wrap,
+       which they do on a phone. */
+    const PAD = 30;
+    let cols = null;
+    const measure = () => {
+      const base = cv.getBoundingClientRect();
+      const rects = btns.map(b => b.getBoundingClientRect());
+      const oneRow = rects.every(r => Math.abs(r.top - rects[0].top) < 2);
+      cols = oneRow && base.width
+        ? rects.map(r => r.left - base.left + r.width / 2)
+        : null;
+    };
+    const nx = i => cols ? cols[i] : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
+    const ny = () => H * .40;
+    const tone = i => {                        // blue at the start, violet by the end
+      const k = i / (SM_NODES.length - 1);
+      return [Math.round(30 + 136 * k), Math.round(144 - 107 * k), Math.round(255 - 17 * k)];
+    };
+
+    smUpdate = (t, dt, live) => {
+      if (!live) return;
+      if (!W && !size()) return;
+      ctx.clearRect(0, 0, W, H);
+      const step = dt / 16;
+
+      SM_NODES.forEach((_, i) => {
+        const want = on.has(i) ? 1 : 0;
+        lit[i] += (want - lit[i]) * (1 - Math.pow(.86, step));
+      });
+      const closed = Math.min(...lit);
+      /* Switched on is not the same as working, and that distinction is the
+         whole argument. A stage downstream of a gap is paid for and idle:
+         nothing reaches it, so it produces nothing. It is drawn as what it
+         is — present, lit, and starved — rather than as healthy. Everything
+         past the break greys out and the line between them goes dead, which
+         is the point made in one look and without a word. */
+      let flow2 = 1;
+      const reach = lit.map(l => (flow2 = Math.min(flow2, l > .5 ? 1 : 0)));
+      const gapAt = reach.indexOf(0);
+
+      // the rails
+      for (let i = 0; i < SM_NODES.length - 1; i++) {
+        const carries = reach[i] && reach[i + 1];
+        const both = Math.min(lit[i], lit[i + 1]);
+        ctx.strokeStyle = carries
+          ? `rgba(150,180,255,${(.10 + both * .32).toFixed(3)})`
+          : 'rgba(120,132,160,.10)';          // a line with nothing on it
+        ctx.lineWidth = 1;
+        ctx.setLineDash(carries ? [] : [2, 7]);
+        ctx.beginPath(); ctx.moveTo(nx(i), ny()); ctx.lineTo(nx(i + 1), ny()); ctx.stroke();
+      }
+      // the return — only a real line once every station is lit
+      ctx.strokeStyle = `rgba(166,37,238,${(.05 + closed * .40).toFixed(3)})`;
+      ctx.setLineDash(closed > .75 ? [] : [3, 7]);
+      ctx.beginPath();
+      ctx.moveTo(nx(SM_NODES.length - 1), ny());
+      ctx.bezierCurveTo(nx(SM_NODES.length - 1) + 20, H * .97, nx(0) - 20, H * .97, nx(0), ny());
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      /* The stations. Each flares as work leaves it, so the eye follows the
+         work rather than scanning the row. */
+      SM_NODES.forEach((label, i) => {
+        const x = nx(i), y = ny(), l = lit[i], f = pulse[i], alive = reach[i];
+        pulse[i] = Math.max(0, f - .035 * step);
+        /* Colour is reserved for the part that is actually running. Past the
+           break everything is the same cold grey, so the eye reads the chain
+           as ending there. */
+        const [r, g, b2] = alive ? tone(i) : [128, 138, 160];
+        if (l > .02 && alive) {
+          ctx.fillStyle = `rgba(${r},${g},${b2},${(l * .14 + f * .26).toFixed(3)})`;
+          ctx.beginPath(); ctx.arc(x, y, 8 + l * 4 + f * 8, 0, 7); ctx.fill();
+        }
+        ctx.strokeStyle = `rgba(${r},${g},${b2},${(alive ? .20 + l * .70 : .16 + l * .10).toFixed(3)})`;
+        ctx.lineWidth = 1.2 + (alive ? f : 0);
+        ctx.beginPath(); ctx.arc(x, y, 5.4 + f * 1.6, 0, 7); ctx.stroke();
+        ctx.fillStyle = `rgba(255,255,255,${(alive ? .14 + l * .86 : .10).toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(x, y, 2, 0, 7); ctx.fill();
+        /* On a phone the eight stations have about 39px each and CAPTURE
+           alone measures 38, so the labels would sit on top of one another.
+           They alternate above and below the rail instead, which gives each
+           one the width of two — the row stays readable rather than becoming
+           a grey smear. */
+        const tight = W < 520;
+        ctx.font = (tight ? 7.5 : 9) + 'px ui-monospace,monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = `rgba(190,205,235,${(alive ? .26 + l * .60 : .17).toFixed(2)})`;
+        ctx.fillText(label, x, tight ? (i % 2 ? y + 42 : y + 30) : y + 34);
+        /* The break itself, marked where it happens. */
+        if (i === gapAt && on.size) {
+          ctx.strokeStyle = 'rgba(190,200,225,.5)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x - 4.5, y - 4.5); ctx.lineTo(x + 4.5, y + 4.5);
+          ctx.moveTo(x + 4.5, y - 4.5); ctx.lineTo(x - 4.5, y + 4.5);
+          ctx.stroke();
+        }
+
+        /* The backlog: work arriving at a stage nobody runs does not vanish
+           politely, it stacks up until the pile tips over. */
+        /* The pile. These were small orange dots, which read as insects and
+           belonged to no other part of this site. They are what they actually
+           are now: finished posts, stacked up unpublished, drawn in the same
+           cold grey as everything else that is not running. */
+        const q = queue[i];
+        if (q) for (let n = 0; n < q; n++) {
+          const wob = Math.sin(t * .0022 + i * 2 + n) * 1.1;
+          const py = y - 19 - n * 7;
+          /* A breath of light on them. Everything else on this page is lit
+             from behind; flat rectangles read as a rendering mistake rather
+             than as waiting work. The glow is cool and faint — enough to
+             belong here, not enough to look like it is working. */
+          ctx.globalAlpha = .24 + n * .08;
+          ctx.shadowColor = 'rgba(140,168,230,.75)';
+          ctx.shadowBlur = 7 + n;
+          ctx.fillStyle = 'rgba(18,23,38,.92)';
+          ctx.strokeStyle = 'rgba(168,184,225,.72)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(x - 7 + wob, py - 2.5, 14, 5, 1.5);
+          else ctx.rect(x - 7 + wob, py - 2.5, 14, 5);
+          ctx.fill(); ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.globalAlpha = 1;
+        }
+      });
+
+      /* ── the post itself ──────────────────────────────────────────
+         This is the whole change. A travelling dot is decoration: it tells
+         somebody who has never bought this before precisely nothing. What
+         travels now is a post, and you watch it being built — it picks up a
+         caption at WRITE, an image at DESIGN, a live pip at POST, a reply
+         bubble at REPLY — and at CAPTURE a lead drops out of it into a tray
+         that counts up. Anyone can follow that without being told. */
+      const card = (x, y, st, alpha) => {
+        const w = W < 520 ? 16 : 22, h = W < 520 ? 12 : 16;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = 'rgba(12,16,28,.96)';
+        ctx.strokeStyle = st >= 3 ? 'rgba(150,230,190,.85)' : 'rgba(150,180,255,.5)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 3);
+        else ctx.rect(x - w / 2, y - h / 2, w, h);
+        ctx.fill(); ctx.stroke();
+        if (st >= 2) {                                  // it has a picture
+          ctx.fillStyle = 'rgba(120,140,255,.6)';
+          ctx.fillRect(x - w / 2 + 2.5, y - h / 2 + 2.5, 6, h - 5);
+        }
+        if (st >= 1) {                                  // it has words
+          const lx = x - w / 2 + (st >= 2 ? 10 : 2.5), lw = st >= 2 ? 6 : 13.5;
+          ctx.fillStyle = 'rgba(205,218,245,.75)';
+          ctx.fillRect(lx, y - 2.5, lw, 1.2);
+          ctx.fillRect(lx, y + .8, lw * .66, 1.2);
+        }
+        if (st >= 3) {                                  // it is live
+          ctx.fillStyle = 'rgba(130,255,180,.95)';
+          ctx.beginPath(); ctx.arc(x + w / 2 - 2.6, y - h / 2 + 2.6, 1.5, 0, 7); ctx.fill();
+        }
+        if (st >= 4) {                                  // somebody replied
+          ctx.fillStyle = 'rgba(255,255,255,.85)';
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(x - 4, y - h / 2 - 9, 11, 6, 2);
+          else ctx.rect(x - 4, y - h / 2 - 9, 11, 6);
+          ctx.fill();
+          ctx.beginPath(); ctx.moveTo(x - 1, y - h / 2 - 3); ctx.lineTo(x + 2, y - h / 2 - 3);
+          ctx.lineTo(x - 1, y - h / 2 - .5); ctx.closePath(); ctx.fill();
+        }
+        if (st >= 6) {                                  // and it was measured
+          ctx.fillStyle = 'rgba(166,120,255,.9)';
+          for (let n = 0; n < 3; n++) ctx.fillRect(x - 5 + n * 4, y + h / 2 + 2, 2.4, 2 + n * 2);
+        }
+        ctx.globalAlpha = 1;
+      };
+
+      if (t - spawnAt > 2600) { spawnAt = t; posts.push({ i: 0, k: 0, st: 0, fall: 0, a: 1, q: 0 }); }
+      queue = SM_NODES.map(() => 0);
+      for (const w of posts) {
+        if (w.fall) {
+          w.fall += .55 * step; w.a -= .012 * step;
+          card(nx(w.i) + w.drift, ny() + w.fall * 6, w.st, Math.max(0, w.a * .45));
+          continue;
+        }
+        if (lit[w.i] < .4) {
+          w.q = (w.q || 0) + 1; queue[w.i]++;
+          if (queue[w.i] > 3 && w.q > 50) {
+            w.fall = .01; w.drift = (Math.random() - .5) * 8; lost++; lostAt = t;
+          }
+          continue;
+        }
+        w.k += .0085 * step;                            // slow enough to read
+        if (w.k >= 1) {
+          w.k = 0; pulse[w.i] = 1; w.st = Math.max(w.st, w.i + 1);
+          if (w.i === 5) {                              // a lead falls out here
+            chips.push({ x: nx(5), y: ny(), vy: .35, life: 1 });
+          }
+          if (w.i >= SM_NODES.length - 1) {
+            if (closed > .75) { w.i = 0; w.st = 0; } else { w.a = 0; }
+          } else w.i++;
+          continue;
+        }
+        const ax = nx(w.i), bx2 = nx(Math.min(w.i + 1, SM_NODES.length - 1));
+        card(ax + (bx2 - ax) * w.k, ny(), w.st, 1);
+      }
+      posts = posts.filter(w => w.a > 0 && w.fall < 30);
+
+      /* Leads go cold. This is the part that makes the case: a lead is not a
+         trophy you keep, it is someone waiting for an answer. With REPLY or
+         CAPTURE missing, nothing new arrives AND what you already have drains
+         away while you watch — because that is what happens to a message
+         nobody returns. The number coming down is the argument. */
+      const warm = SM_LEADS.every(i => on.has(i));
+      if (!warm && leads > 0) {
+        cold += dt;
+        if (cold > 1400) { cold = 0; leads--; coldAt = t; }
+      } else if (warm) cold = 0;
+
+      /* The tray. A number that moves while they watch is worth more than any
+         sentence on this page — and it is worth most when it moves the wrong
+         way. */
+      for (const c of chips) {
+        c.y += c.vy * step; c.vy += .035 * step;
+        if (c.y >= ny() + 42) { c.life = 0; leads++; continue; }
+        ctx.fillStyle = 'rgba(130,255,180,.9)';
+        ctx.beginPath(); ctx.arc(c.x, c.y, 2.4, 0, 7); ctx.fill();
+      }
+      chips = chips.filter(c => c.life > 0);
+
+      /* The tray sits below the station labels, not on top of them — it was
+         printing straight through CAPTURE. */
+      const trayX = nx(5), trayY = ny() + (W < 520 ? 58 : 50);
+      const chilling = !warm && leads > 0;
+      const hue = chilling ? '206,170,150' : '130,255,180';
+      const flash = chilling ? Math.max(0, 1 - (t - coldAt) / 900) : 0;
+      ctx.textAlign = 'center';
+      ctx.font = '9px ui-monospace,monospace';
+      ctx.strokeStyle = `rgba(${hue},${(leads ? .45 : .16) + flash * .4})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(trayX - 34, trayY - 9, 68, 13, 3);
+      else ctx.rect(trayX - 34, trayY - 9, 68, 13);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(${hue},${leads || !on.size ? .95 : .55})`;
+      ctx.fillText(
+        chilling ? leads + ' GOING COLD'
+        : leads ? leads + (leads === 1 ? ' LEAD' : ' LEADS')
+        : on.size ? 'NO RESULT'              // paid for, and producing nothing
+        : 'LEADS',
+        trayX, trayY);
+
+      if (lost) {
+        const fade = Math.max(.4, 1 - (t - lostAt) / 4000);
+        ctx.textAlign = 'left';
+        ctx.fillStyle = `rgba(176,186,210,${(fade * .8).toFixed(2)})`;
+        ctx.fillText(lost + (lost === 1 ? ' POST NEVER WENT OUT' : ' POSTS NEVER WENT OUT'), 2, H - 3);
+      }
+    };
+    size();
+  }
+
+  if (reduced) { btns.forEach((_, i) => set(i, true)); return; }
+
+  if (host.classList.contains('live')) play();
+  new MutationObserver(() => { if (host.classList.contains('live')) play(); })
+    .observe(host, { attributes: true, attributeFilter: ['class'] });
+}
+
 /* ── cursor ────────────────────────────────────────────────────── */
 function cursor() {
   const c = $('#cursor'); if (touch || reduced) return;
@@ -3461,6 +3887,7 @@ function tick(t) {
      thrown away before it is painted. */
   if (!flat) poleUpdate(t, dt, heroD);
   flowUpdate(t, dt, near === 2 && nearD < 1.2);
+  smUpdate(t, dt, near === 4 && nearD < 1.2);
   layersUpdate(t, dt, near === 1 && nearD < 1.2);
   numGlow();
 
@@ -3488,7 +3915,7 @@ function tick(t) {
 /* ── boot ──────────────────────────────────────────────────────── */
 function boot() {
   $$('[data-split]').forEach(split);
-  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat();
+  audioRig(); auroraRig(); layersRig(); enquiry(); selects(); reader(); caseFilm(); cases(); films(); cursor(); nav(); poleRig(); projFlow(); chat(); socialRig();
 
   /* Mode comes from the media query, not from measuring the window. Size
      changes still need a re-measure, and iOS fires resize continuously while
