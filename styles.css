@@ -3026,6 +3026,10 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
   transition:border-color .3s,background .3s,color .3s;
 }
 .sm-dl:hover{border-color:rgba(166,37,238,.75);background:rgba(166,37,238,.12);color:#fff}
+/* Centred in the panel. It follows three tier cards and a notice, all of
+   which are full width, so left-aligned it read as the start of another
+   column rather than as the one thing to take away. */
+.cf-sec > .sm-dl{display:flex;width:max-content;max-width:100%;margin-left:auto;margin-right:auto}
 .sm-dl svg{width:calc(var(--u)*1);height:calc(var(--u)*1);flex:none}
 .sm-dl i{font-style:normal;font-size:calc(var(--u)*.6);letter-spacing:.1em;color:var(--ink-3)}
 
