@@ -3624,6 +3624,17 @@ function socialRig() {
         ctx.clip();
       };
 
+      /* Named where they stand. A key at the foot of the band meant looking
+         away from the figures to find out who they were, and at that size it
+         was unreadable anyway. The name sits over each of them, centred, in
+         their own colour, so the swatches are not needed at all. */
+      const nameOver = (x, y, k, text, col) => {
+        ctx.font = '600 ' + (W < 520 ? 8 : 10) + 'px ui-monospace,monospace';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = col;
+        ctx.fillText(text, x, y - 9.5 * k);
+      };
+
       const human = (x, y, a, mode, type) => {
         const k = FIG, ink = `rgba(240,234,218,${(.96 * a).toFixed(2)})`;
         const work = mode === 'work';
@@ -3672,10 +3683,11 @@ function socialRig() {
         ctx.stroke(); ctx.lineCap = 'butt';
         ctx.restore();
 
+        nameOver(x, y, k, 'OUR TEAM', `rgba(244,238,224,${(.92 * a).toFixed(2)})`);
         if (!work && type) {                                                  // standing by
           ctx.font = (W < 520 ? 7 : 8.5) + 'px ui-monospace,monospace';
           ctx.textAlign = 'center';
-          ctx.fillStyle = `rgba(240,234,218,${(.5 * a).toFixed(2)})`;
+          ctx.fillStyle = `rgba(240,234,218,${(.55 * a).toFixed(2)})`;
           ctx.fillText('STANDING BY', x, y + 25.5 * k);
         }
       };
@@ -3740,17 +3752,27 @@ function socialRig() {
         ctx.moveTo(3.3 * k, 18.6 * k); ctx.lineTo(.8 * k, 18.6 * k);
         ctx.stroke(); ctx.lineCap = 'butt';
         ctx.restore();
+        nameOver(x, y, k, 'OUR SYSTEM', `rgba(196,154,255,${(.95 * a).toFixed(2)})`);
       };
 
       const escort = (cx, stage, busy, moving) => {
-        const k = FIG, near = 12 * k, far = 26 * k;
+        const k = FIG, near = 12 * k;
         const needH = (SM_CREW[stage] || [1, 1])[0];
-        const want = cx - (needH ? near : far);
-        if (hx === null) { hx = want; }
+        if (hx === null) hx = cx - near;
 
-        /* Teleport, not a trot. If where he should be has moved more than a
-           step, he goes out in scanlines and comes back in them. */
-        if (!tp && Math.abs(want - hx) > 3) { tp = { p: 0, to: want }; }
+        /* He is called, he is not followed. While a stage runs without him he
+           stays exactly where he last stood — he does not drift along behind
+           the post at a polite distance, which is what he was doing and which
+           made him look like an assistant rather than the person you call
+           when something needs deciding.
+
+           So a destination only exists when a stage that needs judgement has
+           the post in front of it. Then he goes out in scanlines and comes
+           back in them, at the station that called him. */
+        if (needH && busy) {
+          const want = cx - near;
+          if (!tp && Math.abs(want - hx) > 3) tp = { p: 0, to: want };
+        }
         if (tp) {
           tp.p += .055 * step;
           if (tp.p >= .5 && hx !== tp.to) hx = tp.to;
