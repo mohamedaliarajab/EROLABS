@@ -47,34 +47,65 @@
 # publish = "." serves the whole repository, so every note written for
 # ourselves was readable by anyone who guessed the filename: SITE.md alone
 # carries the enquiry address, the outstanding list, and the fact that the
-# case-study figures are a model. Netlify cannot exclude files from a publish
-# directory, so they are refused at the edge instead.
+# case-study figures are a model.
+#
+# Named one by one, not globbed. Netlify's `from` does NOT support extension
+# patterns — the splat only matches a trailing path remainder, so "/*.md"
+# matches nothing and the rules sat there doing nothing through two deploys.
+# A short explicit list is verifiable; a clever pattern was not.
+#
+# ANY NEW DOC OR SCRIPT AT THE ROOT NEEDS A LINE HERE, or it is public.
+
 [[redirects]]
-  from = "/*.md"
+  from = "/SITE.md"
   to = "/404.html"
   status = 404
   force = true
 
 [[redirects]]
-  from = "/*.mjs"
+  from = "/README.md"
   to = "/404.html"
   status = 404
   force = true
 
 [[redirects]]
-  from = "/*.py"
+  from = "/BRIEF.md"
   to = "/404.html"
   status = 404
   force = true
 
 [[redirects]]
-  from = "/*.swift"
+  from = "/HANDOFF.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/build.mjs"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/serve.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tools-sheet.swift"
   to = "/404.html"
   status = 404
   force = true
 
 [[redirects]]
   from = "/package-lock.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
   to = "/404.html"
   status = 404
   force = true
