@@ -3007,8 +3007,8 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 @media (max-width:700px){.vol-credit{display:none}}
 
 /* the chain itself — a wide, short band under the controls that drives it */
-.sm-canvas{display:block;width:100%;height:calc(var(--u)*20);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
-@media (max-width:900px){.sm-canvas{height:calc(var(--u)*13)}}
+.sm-canvas{display:block;width:100%;height:calc(var(--u)*24);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
+@media (max-width:900px){.sm-canvas{height:calc(var(--u)*16)}}
 
 /* ── the first thirty days ────────────────────────────────────────────
    A rail with the month on it. Same shape as the chain on the stop — this
