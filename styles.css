@@ -3074,3 +3074,11 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 .sm-key .k-bot{background:rgba(176,122,255,.95);margin-left:calc(var(--u)*.9)}
 .sm-key em{font-style:normal;margin-left:auto;color:rgba(130,255,180,.75)}
 @media (max-width:700px){.sm-key em{display:none}}
+
+/* the sentence the demo is drawing */
+.sm-claim{
+  margin:calc(var(--u)*.25) 0 calc(var(--u)*.6);
+  font-size:calc(var(--u)*.9);line-height:1.55;color:var(--ink-3);
+}
+.sm-claim b{color:#fff;font-weight:500;margin-left:.4em}
+@media (max-width:700px){.sm-claim b{display:block;margin-left:0}}
