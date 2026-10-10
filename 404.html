@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Not here — Ẹ̀rọ Labs</title>
+<!-- Standalone by necessity: this is served for paths that do not exist,
+     including the .md and source files the redirects refuse, so it cannot
+     depend on anything that might itself be missing. No fonts fetched, no
+     script, no stylesheet — one file that always renders. -->
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;display:grid;place-items:center;padding:24px;
+    background:#05060A;color:#EDEFF4;
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    text-align:center;
+  }
+  .w{max-width:46ch}
+  .mark{display:block;margin:0 auto 26px;width:46px;height:46px}
+  h1{
+    margin:0 0 14px;font-size:clamp(28px,5vw,44px);font-weight:600;
+    letter-spacing:-.02em;line-height:1.1;
+  }
+  p{margin:0 0 28px;font-size:clamp(15px,1.5vw,17px);line-height:1.6;color:#9AA3B5}
+  a{
+    display:inline-flex;align-items:center;gap:8px;padding:12px 22px;
+    border:1px solid rgba(166,37,238,.55);border-radius:999px;
+    background:linear-gradient(180deg,rgba(166,37,238,.26),rgba(166,37,238,.1));
+    color:#fff;text-decoration:none;
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:13px;letter-spacing:.14em;text-transform:uppercase;
+    transition:border-color .3s,background .3s;
+  }
+  a:hover{border-color:#A625EE;background:linear-gradient(180deg,rgba(166,37,238,.4),rgba(166,37,238,.18))}
+</style>
+</head>
+<body>
+  <div class="w">
+    <svg class="mark" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="g" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#1E90FF"/><stop offset="1" stop-color="#A625EE"/>
+      </linearGradient></defs>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#EDEFF4" stroke-width="13"/>
+      <circle cx="50" cy="50" r="15" fill="url(#g)"/>
+    </svg>
+    <h1>There is nothing at this address.</h1>
+    <p>Either the link is wrong, or it points at something that was never meant to be public.</p>
+    <a href="/">Back to Ẹ̀rọ Labs</a>
+  </div>
+</body>
+</html>
