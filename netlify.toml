@@ -42,3 +42,39 @@
   for = "/media/*"
   [headers.values]
     Cache-Control = "public, max-age=604800"
+
+# ── keep the workings off the web ──────────────────────────────────────
+# publish = "." serves the whole repository, so every note written for
+# ourselves was readable by anyone who guessed the filename: SITE.md alone
+# carries the enquiry address, the outstanding list, and the fact that the
+# case-study figures are a model. Netlify cannot exclude files from a publish
+# directory, so they are refused at the edge instead.
+[[redirects]]
+  from = "/*.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.mjs"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.py"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.swift"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/404.html"
+  status = 404
+  force = true
