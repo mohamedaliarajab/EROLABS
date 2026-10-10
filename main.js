@@ -3196,6 +3196,18 @@ const SM_SAY = [
   'Next month is built from this month\'s numbers rather than from a hunch.'
 ];
 const SM_ALL = 'Eight parts, one system — and none of it is on your desk.';
+/* What is being achieved at the station the post is standing on. Not what we
+   offer — what has just happened to this particular post. */
+const SM_DOING = [
+  ['Strategy',    'The month is planned: what goes out, when, and what each post is for.'],
+  ['Content',     'Every post is written to that plan, in your voice rather than a generic one.'],
+  ['Creative',    'Each one is designed to look like you — not like a template with your logo on it.'],
+  ['Publishing',  'It goes out on schedule, whether or not anybody remembered it was Tuesday.'],
+  ['Community',   'Comments and messages are answered while the person is still interested.'],
+  ['Leads',       'Anyone asking about buying is captured and sent to you the same day.'],
+  ['Analytics',   'The post is measured: what it reached, what it returned, what it did not.'],
+  ['Optimisation','Next month is rewritten from this month\'s numbers rather than from a hunch.']
+];
 /* Switching a stage OFF is the more persuasive half, so it gets its own line.
    Nobody is moved by a list of what they would receive; they are moved by
    recognising the week they are already having. */
@@ -3316,8 +3328,10 @@ function socialRig() {
      of the band and fades, and it keeps dropping for as long as the gap is
      there. That is the entire case for the service, and it is better watched
      than read: switch one off and you see exactly where your week goes. */
-  const cv = $('#smCanvas');
-  if (cv && !reduced) {
+  const cv = $('#smCanvas'), stepEl = $('#smStep');
+  const stepK = stepEl && $('b', stepEl), stepV = stepEl && $('span', stepEl);
+  let shown = null;
+  if (cv && stepEl && !reduced) {
     const ctx = cv.getContext('2d');
     let W = 0, H = 0, spawnAt = 0, lost = 0, lostAt = 0, leads = 0, chips = [];
     let trip = null, hx = null, tp = null;
@@ -3521,6 +3535,17 @@ function socialRig() {
          and the client has not appeared once, because the client never does.
          That is the argument, and nobody has to read a word of it. */
       const WORK = 760, HOP = 0.014;
+
+      /* The commentary. Written only when it changes — this runs every frame
+         and setting textContent on every one of them would be a layout pass
+         sixty times a second for a sentence that holds for a second. */
+      const say = (key, label, text, gap) => {
+        if (key === shown) return;
+        shown = key;
+        stepK.textContent = label;
+        stepV.textContent = text;
+        stepEl.classList.toggle('gap', !!gap);
+      };
 
       /* The post itself, gaining a little more of itself at every station: a
          caption at WRITE, a picture at DESIGN, a live pip at POST, a reply
@@ -3805,6 +3830,8 @@ function socialRig() {
       if (trip) {
         const at = trip.i;
         if (trip.dead) {                           // it never got past the gap
+          say('d' + at, 'Stopped',
+              'It gets as far as ' + SM_NODES[at] + ' and stops. Nothing after this happens at all.', true);
           trip.dead += .7 * step;
           card(nx(at), ny() + trip.dead * 5, trip.st, Math.max(0, 1 - trip.dead / 16));
           escort(nx(at), at, false, false);         // standing over work they cannot finish
@@ -3813,6 +3840,7 @@ function socialRig() {
         } else if (lit[at] < .4) {
           trip.dead = .01;
         } else if (trip.phase === 'work') {
+          say('w' + at, SM_DOING[at][0], SM_DOING[at][1], false);
           trip.wt += dt;
           card(nx(at), ny(), trip.st, 1);
           escort(nx(at), at, true, false);
@@ -3828,6 +3856,7 @@ function socialRig() {
           trip.k += HOP * step;
           const from = nx(at - 1), to = nx(at);
           const cx = from + (to - from) * trip.k;
+          say('m' + at, SM_DOING[at - 1][0], SM_DOING[at - 1][1], false);
           card(cx, ny(), trip.st, 1);
           escort(cx, at, false, true);              // carried, not teleported
           if (trip.k >= 1) { trip.phase = 'work'; trip.wt = 0; }

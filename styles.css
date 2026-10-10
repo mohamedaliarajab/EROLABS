@@ -3063,10 +3063,26 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 .sm-dl-inline:hover{color:#fff}
 
 
-/* the sentence the demo is drawing */
-.sm-claim{
-  margin:calc(var(--u)*.25) 0 calc(var(--u)*.6);
-  font-size:calc(var(--u)*.9);line-height:1.55;color:var(--ink-3);
+/* ── what is happening right now ──────────────────────────────────────
+   Sits in the gap between the switches and the chain, which is where the eye
+   already is. Two fixed lines of height, so a longer sentence cannot shove
+   the diagram down the page while someone is watching it. */
+.sm-step{
+  display:flex;align-items:baseline;gap:calc(var(--u)*.8);
+  margin:calc(var(--u)*1.1) 0 0;min-height:calc(var(--u)*2.6);
 }
-.sm-claim b{color:#fff;font-weight:500;margin-left:.4em}
-@media (max-width:700px){.sm-claim b{display:block;margin-left:0}}
+.sm-step b{
+  flex:none;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.72);
+  letter-spacing:.2em;text-transform:uppercase;color:var(--blue);
+  min-width:9.5em;
+}
+.sm-step span{
+  font-size:calc(var(--u)*1.06);line-height:1.5;color:#fff;max-width:64ch;
+  transition:opacity .25s;
+}
+.sm-step.gap b{color:rgba(226,150,130,.9)}
+.sm-step.gap span{color:var(--ink-2)}
+@media (max-width:700px){
+  .sm-step{flex-direction:column;gap:calc(var(--u)*.3);min-height:calc(var(--u)*4)}
+  .sm-step span{font-size:calc(var(--u)*.96)}
+}
