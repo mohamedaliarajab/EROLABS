@@ -3007,7 +3007,7 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 @media (max-width:700px){.vol-credit{display:none}}
 
 /* the chain itself — a wide, short band under the controls that drives it */
-.sm-canvas{display:block;width:100%;height:calc(var(--u)*24);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
+.sm-canvas{display:block;width:100%;height:calc(var(--u)*24);margin:calc(var(--u)*.35) 0 calc(var(--u)*.2)}
 @media (max-width:900px){.sm-canvas{height:calc(var(--u)*16)}}
 
 /* ── the first thirty days ────────────────────────────────────────────
@@ -3067,14 +3067,17 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
    Sits in the gap between the switches and the chain, which is where the eye
    already is. Two fixed lines of height, so a longer sentence cannot shove
    the diagram down the page while someone is watching it. */
+/* Centred, and pushed down toward the figures. Left-aligned under the
+   switches it read as a caption for the switches; sitting low and centred
+   over the chain it reads as a caption for the work, which is what it is. */
 .sm-step{
-  display:flex;align-items:baseline;gap:calc(var(--u)*.8);
-  margin:calc(var(--u)*1.1) 0 0;min-height:calc(var(--u)*2.6);
+  display:flex;align-items:baseline;justify-content:center;
+  gap:calc(var(--u)*.8);text-align:center;
+  margin:calc(var(--u)*2.4) 0 0;min-height:calc(var(--u)*2.6);
 }
 .sm-step b{
   flex:none;font-family:var(--f-mono);font-weight:400;font-size:calc(var(--u)*.72);
   letter-spacing:.2em;text-transform:uppercase;color:var(--blue);
-  min-width:9.5em;
 }
 .sm-step span{
   font-size:calc(var(--u)*1.06);line-height:1.5;color:#fff;max-width:64ch;
@@ -3083,6 +3086,6 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 .sm-step.gap b{color:rgba(226,150,130,.9)}
 .sm-step.gap span{color:var(--ink-2)}
 @media (max-width:700px){
-  .sm-step{flex-direction:column;gap:calc(var(--u)*.3);min-height:calc(var(--u)*4)}
+  .sm-step{flex-direction:column;align-items:center;gap:calc(var(--u)*.3);min-height:calc(var(--u)*4);margin-top:calc(var(--u)*1.6)}
   .sm-step span{font-size:calc(var(--u)*.96)}
 }
