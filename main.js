@@ -3216,6 +3216,19 @@ let smUpdate = () => {};
    at first — quietly tells a client that six of eight buys them 75% of the
    result. It does not. Work stops dead at the first gap, so the reading has
    to stop dead there too. That is the entire argument for hiring anyone. */
+/* Who it takes, stage by stage. A hard hat is our team, a robot is our
+   system. Three stages need nobody at all — which is exactly the part a
+   client is paying for and the part they can never quite picture. */
+const SM_CREW = [
+  [1, 1],   // PLAN     judgement, on the numbers the system gathered
+  [1, 1],   // WRITE    drafted by the system, finished by a person
+  [1, 1],   // DESIGN   made by a person, varied by the system
+  [0, 1],   // POST     nobody. it publishes itself
+  [1, 1],   // REPLY    answered in seconds, escalated when it is real
+  [0, 1],   // CAPTURE  nobody. the buyer is caught on the way past
+  [0, 1],   // MEASURE  nobody. it counts itself
+  [1, 1]    // IMPROVE  a decision, taken on what the month actually did
+];
 const SM_RHYTHM = [0, 1, 2, 3];          // plan, write, design, publish
 const SM_LEADS  = [0, 1, 2, 3, 4, 5];    // ...and answered, and captured
 
@@ -3306,7 +3319,8 @@ function socialRig() {
   const cv = $('#smCanvas');
   if (cv && !reduced) {
     const ctx = cv.getContext('2d');
-    let W = 0, H = 0, posts = [], spawnAt = 0, lost = 0, lostAt = 0, leads = 0, chips = [];
+    let W = 0, H = 0, spawnAt = 0, lost = 0, lostAt = 0, leads = 0, chips = [];
+    let trip = null, crew = SM_NODES.map(() => 0);
     let cold = 0, coldAt = 0;
     let queue = SM_NODES.map(() => 0);
     const pulse = SM_NODES.map(() => 0);   // a station flares as work leaves it
@@ -3368,7 +3382,7 @@ function socialRig() {
        bug, a severed one looks like the page is broken. */
     const nx = i => cols ? cols[i]
                          : PAD + (i * (W - PAD * 2)) / (SM_NODES.length - 1);
-    const ny = () => H * .40;
+    const ny = () => H * .54;
     const tone = i => {                        // blue at the start, violet by the end
       const k = i / (SM_NODES.length - 1);
       return [Math.round(30 + 136 * k), Math.round(144 - 107 * k), Math.round(255 - 17 * k)];
@@ -3494,13 +3508,23 @@ function socialRig() {
         }
       });
 
-      /* ── the post itself ──────────────────────────────────────────
-         This is the whole change. A travelling dot is decoration: it tells
-         somebody who has never bought this before precisely nothing. What
-         travels now is a post, and you watch it being built — it picks up a
-         caption at WRITE, an image at DESIGN, a live pip at POST, a reply
-         bubble at REPLY — and at CAPTURE a lead drops out of it into a tray
-         that counts up. Anyone can follow that without being told. */
+      /* ── one post, and the crew who make it ───────────────────────
+         Eight dots moving at once showed throughput. It did not show the
+         thing a buyer is actually trying to work out: who does all this, and
+         how much of it lands on me. So there is one post now, and you watch
+         it being made — and at every station the people doing the work walk
+         on, do it, and stay.
+
+         A hard hat is our team. A robot is our system. Most stations need
+         both; publishing, capture and measurement need no one at all. By the
+         time the post is finished the whole crew is standing along the chain,
+         and the client has not appeared once, because the client never does.
+         That is the argument, and nobody has to read a word of it. */
+      const WORK = 760, HOP = 0.014;
+
+      /* The post itself, gaining a little more of itself at every station: a
+         caption at WRITE, a picture at DESIGN, a live pip at POST, a reply
+         bubble at REPLY, a chart at MEASURE. */
       const card = (x, y, st, alpha) => {
         const w = W < 520 ? 18 : 26, h = W < 520 ? 13 : 19;
         ctx.globalAlpha = alpha;
@@ -3511,110 +3535,133 @@ function socialRig() {
         if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, 3);
         else ctx.rect(x - w / 2, y - h / 2, w, h);
         ctx.fill(); ctx.stroke();
-        if (st >= 2) {                                  // it has a picture
+        if (st >= 2) {
           ctx.fillStyle = 'rgba(120,140,255,.6)';
-          ctx.fillRect(x - w / 2 + 2.5, y - h / 2 + 2.5, 6, h - 5);
+          ctx.fillRect(x - w / 2 + 2.5, y - h / 2 + 2.5, 7, h - 5);
         }
-        if (st >= 1) {                                  // it has words
-          const lx = x - w / 2 + (st >= 2 ? 10 : 2.5), lw = st >= 2 ? 6 : 13.5;
+        if (st >= 1) {
+          const lx = x - w / 2 + (st >= 2 ? 11.5 : 3), lw = st >= 2 ? 8 : 19;
           ctx.fillStyle = 'rgba(205,218,245,.75)';
-          ctx.fillRect(lx, y - 2.5, lw, 1.2);
-          ctx.fillRect(lx, y + .8, lw * .66, 1.2);
+          ctx.fillRect(lx, y - 3, lw, 1.4);
+          ctx.fillRect(lx, y + 1, lw * .66, 1.4);
         }
-        if (st >= 3) {                                  // it is live
+        if (st >= 4) {
           ctx.fillStyle = 'rgba(130,255,180,.95)';
-          ctx.beginPath(); ctx.arc(x + w / 2 - 2.6, y - h / 2 + 2.6, 1.5, 0, 7); ctx.fill();
+          ctx.beginPath(); ctx.arc(x + w / 2 - 3, y - h / 2 + 3, 1.7, 0, 7); ctx.fill();
         }
-        if (st >= 4) {                                  // somebody replied
+        if (st >= 5) {
           ctx.fillStyle = 'rgba(255,255,255,.85)';
           ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(x - 4, y - h / 2 - 9, 11, 6, 2);
-          else ctx.rect(x - 4, y - h / 2 - 9, 11, 6);
+          if (ctx.roundRect) ctx.roundRect(x - 4, y - h / 2 - 10, 12, 7, 2);
+          else ctx.rect(x - 4, y - h / 2 - 10, 12, 7);
           ctx.fill();
-          ctx.beginPath(); ctx.moveTo(x - 1, y - h / 2 - 3); ctx.lineTo(x + 2, y - h / 2 - 3);
-          ctx.lineTo(x - 1, y - h / 2 - .5); ctx.closePath(); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(x - 1, y - h / 2 - 3); ctx.lineTo(x + 2.5, y - h / 2 - 3);
+          ctx.lineTo(x - 1, y - h / 2 - .4); ctx.closePath(); ctx.fill();
         }
-        if (st >= 6) {                                  // and it was measured
+        if (st >= 7) {
           ctx.fillStyle = 'rgba(166,120,255,.9)';
-          for (let n = 0; n < 3; n++) ctx.fillRect(x - 5 + n * 4, y + h / 2 + 2, 2.4, 2 + n * 2);
+          for (let n = 0; n < 3; n++) ctx.fillRect(x - 6 + n * 4.5, y + h / 2 + 2, 2.6, 2 + n * 2.4);
         }
         ctx.globalAlpha = 1;
       };
 
-      if (t - spawnAt > 2600) { spawnAt = t; posts.push({ i: 0, k: 0, st: 0, fall: 0, a: 1, q: 0 }); }
+      const hat = (x, y, a, busy) => {            // our team
+        const bob = busy ? Math.sin(t * .012) * 1.1 : 0;
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = 'rgba(240,226,190,.92)';
+        ctx.fillStyle = 'rgba(240,226,190,.92)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath(); ctx.arc(x, y + bob, 2.6, 0, 7); ctx.fill();      // head
+        ctx.beginPath();                                                  // hard hat
+        ctx.arc(x, y - 1.4 + bob, 4.2, Math.PI, 0); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x - 5.2, y - 1.2 + bob); ctx.lineTo(x + 5.2, y - 1.2 + bob); ctx.stroke();
+        ctx.beginPath();                                                  // body
+        ctx.moveTo(x, y + 3.4 + bob); ctx.lineTo(x, y + 9 + bob); ctx.stroke();
+        const arm = busy ? Math.sin(t * .018) * 2.4 : 0;                  // and an arm at work
+        ctx.beginPath();
+        ctx.moveTo(x, y + 5 + bob); ctx.lineTo(x + 4.4, y + 7 + arm + bob); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y + 9 + bob); ctx.lineTo(x - 3, y + 13.5 + bob);
+        ctx.moveTo(x, y + 9 + bob); ctx.lineTo(x + 3, y + 13.5 + bob); ctx.stroke();
+        ctx.globalAlpha = 1;
+      };
+
+      const bot = (x, y, a, busy) => {            // our system
+        const hum = busy ? Math.sin(t * .02) * .9 : 0;
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = 'rgba(176,122,255,.95)';
+        ctx.fillStyle = 'rgba(176,122,255,.95)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();                                                  // antenna
+        ctx.moveTo(x, y - 6 + hum); ctx.lineTo(x, y - 3.6 + hum); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y - 7 + hum, 1.1, 0, 7); ctx.fill();
+        ctx.beginPath();                                                  // head
+        if (ctx.roundRect) ctx.roundRect(x - 3.4, y - 3.6 + hum, 6.8, 5.6, 1.6);
+        else ctx.rect(x - 3.4, y - 3.6 + hum, 6.8, 5.6);
+        ctx.stroke();
+        ctx.fillStyle = busy ? 'rgba(130,255,180,.95)' : 'rgba(176,122,255,.6)';
+        ctx.beginPath(); ctx.arc(x - 1.2, y - .9 + hum, .8, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 1.2, y - .9 + hum, .8, 0, 7); ctx.fill();
+        ctx.strokeStyle = 'rgba(176,122,255,.95)';
+        ctx.beginPath();                                                  // body
+        if (ctx.roundRect) ctx.roundRect(x - 2.8, y + 2.6 + hum, 5.6, 6.4, 1.4);
+        else ctx.rect(x - 2.8, y + 2.6 + hum, 5.6, 6.4);
+        ctx.stroke();
+        ctx.beginPath();                                                  // arms
+        ctx.moveTo(x - 2.8, y + 4.4 + hum); ctx.lineTo(x - 5.6, y + 6.6 + hum);
+        ctx.moveTo(x + 2.8, y + 4.4 + hum); ctx.lineTo(x + 5.6, y + 6.6 + hum);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+      };
+
+      if (!trip && t - spawnAt > 1100) {
+        trip = { i: 0, k: 0, st: 0, phase: 'work', wt: 0, dead: 0 };
+        crew = SM_NODES.map(() => 0);
+      }
+
       queue = SM_NODES.map(() => 0);
-      for (const w of posts) {
-        if (w.fall) {
-          w.fall += .55 * step; w.a -= .012 * step;
-          card(nx(w.i) + w.drift, ny() + w.fall * 6, w.st, Math.max(0, w.a * .45));
-          continue;
-        }
-        if (lit[w.i] < .4) {
-          w.q = (w.q || 0) + 1; queue[w.i]++;
-          if (queue[w.i] > 3 && w.q > 50) {
-            w.fall = .01; w.drift = (Math.random() - .5) * 8; lost++; lostAt = t;
+      if (trip) {
+        const at = trip.i;
+        if (trip.dead) {                           // it never got past the gap
+          trip.dead += .7 * step;
+          card(nx(at), ny() + trip.dead * 5, trip.st, Math.max(0, 1 - trip.dead / 16));
+          queue[at] = 1;
+          if (trip.dead > 16) { trip = null; spawnAt = t; lost++; lostAt = t; }
+        } else if (lit[at] < .4) {
+          trip.dead = .01;
+        } else if (trip.phase === 'work') {
+          crew[at] = Math.min(1, crew[at] + .09 * step);
+          trip.wt += dt;
+          card(nx(at), ny(), trip.st, 1);
+          if (trip.wt > WORK) {
+            trip.st = Math.max(trip.st, at + 1);
+            pulse[at] = 1;
+            if (at === 5) chips.push({ x: nx(5), y: ny(), vy: .35, life: 1 });
+            if (at >= SM_NODES.length - 1) {       // round the arc and start again
+              trip = null; spawnAt = t;
+            } else { trip.phase = 'move'; trip.k = 0; trip.wt = 0; trip.i = at + 1; }
           }
-          continue;
+        } else {
+          trip.k += HOP * step;
+          const from = nx(at - 1), to = nx(at);
+          card(from + (to - from) * trip.k, ny(), trip.st, 1);
+          if (trip.k >= 1) { trip.phase = 'work'; trip.wt = 0; }
         }
-        w.k += .0085 * step;                            // slow enough to read
-        if (w.k >= 1) {
-          w.k = 0; pulse[w.i] = 1; w.st = Math.max(w.st, w.i + 1);
-          if (w.i === 5) {                              // a lead falls out here
-            chips.push({ x: nx(5), y: ny(), vy: .35, life: 1 });
-          }
-          if (w.i >= SM_NODES.length - 1) {
-            if (closed > .75) { w.i = 0; w.st = 0; } else { w.a = 0; }
-          } else w.i++;
-          continue;
-        }
-        const ax = nx(w.i), bx2 = nx(Math.min(w.i + 1, SM_NODES.length - 1));
-        card(ax + (bx2 - ax) * w.k, ny(), w.st, 1);
       }
-      posts = posts.filter(w => w.a > 0 && w.fall < 30);
 
-      /* Leads go cold. This is the part that makes the case: a lead is not a
-         trophy you keep, it is someone waiting for an answer. With REPLY or
-         CAPTURE missing, nothing new arrives AND what you already have drains
-         away while you watch — because that is what happens to a message
-         nobody returns. The number coming down is the argument. */
-      const warm = SM_LEADS.every(i => on.has(i));
-      if (!warm && leads > 0) {
-        cold += dt;
-        if (cold > 1400) { cold = 0; leads--; coldAt = t; }
-      } else if (warm) cold = 0;
-
-      /* The tray. A number that moves while they watch is worth more than any
-         sentence on this page — and it is worth most when it moves the wrong
-         way. */
-      for (const c of chips) {
-        c.y += c.vy * step; c.vy += .035 * step;
-        if (c.y >= ny() + 42) { c.life = 0; leads++; continue; }
-        ctx.fillStyle = 'rgba(130,255,180,.9)';
-        ctx.beginPath(); ctx.arc(c.x, c.y, 2.4, 0, 7); ctx.fill();
-      }
-      chips = chips.filter(c => c.life > 0);
-
-      /* The tray sits below the station labels, not on top of them — it was
-         printing straight through CAPTURE. */
-      const trayX = nx(5), trayY = ny() + (W < 520 ? 64 : 58);
-      const chilling = !warm && leads > 0;
-      const hue = chilling ? '206,170,150' : '130,255,180';
-      const flash = chilling ? Math.max(0, 1 - (t - coldAt) / 900) : 0;
-      ctx.textAlign = 'center';
-      ctx.font = '11px ui-monospace,monospace';
-      ctx.strokeStyle = `rgba(${hue},${(leads ? .45 : .16) + flash * .4})`;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(trayX - 42, trayY - 11, 84, 16, 3);
-      else ctx.rect(trayX - 42, trayY - 11, 84, 16);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(${hue},${leads || !on.size ? .95 : .55})`;
-      ctx.fillText(
-        chilling ? leads + ' GOING COLD'
-        : leads ? leads + (leads === 1 ? ' LEAD' : ' LEADS')
-        : on.size ? 'NO RESULT'              // paid for, and producing nothing
-        : 'LEADS',
-        trayX, trayY);
+      /* The crew stays where it worked. By the end of one post you can see
+         every pair of hands it took, and none of them are the client's. */
+      SM_NODES.forEach((_, i) => {
+        const a = crew[i];
+        if (a < .02) return;
+        const busy = !!trip && trip.i === i && trip.phase === 'work' && !trip.dead;
+        const [h, r] = SM_CREW[i];
+        const fy = ny() - 30;
+        if (h && r) { hat(nx(i) - 11, fy, a, busy); bot(nx(i) + 11, fy, a, busy); }
+        else if (h) hat(nx(i), fy, a, busy);
+        else bot(nx(i), fy, a, busy);
+      });
 
       if (lost) {
         const fade = Math.max(.4, 1 - (t - lostAt) / 4000);

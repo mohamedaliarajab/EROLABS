@@ -3007,7 +3007,7 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
 @media (max-width:700px){.vol-credit{display:none}}
 
 /* the chain itself — a wide, short band under the controls that drives it */
-.sm-canvas{display:block;width:100%;height:calc(var(--u)*14);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
+.sm-canvas{display:block;width:100%;height:calc(var(--u)*17);margin:calc(var(--u)*.8) 0 calc(var(--u)*.2)}
 @media (max-width:900px){.sm-canvas{height:calc(var(--u)*8.5)}}
 
 /* ── the first thirty days ────────────────────────────────────────────
@@ -3061,3 +3061,16 @@ body.reduced .sm-toggles .ly-t[aria-pressed="true"]{animation:none;box-shadow:0 
   font-size:calc(var(--u)*.62);color:var(--ink-2);
 }
 .sm-dl-inline:hover{color:#fff}
+
+/* who is who, said once so the figures never have to be guessed at */
+.sm-key{
+  display:flex;align-items:center;gap:calc(var(--u)*.45);
+  margin:calc(var(--u)*.1) 0 calc(var(--u)*.3);
+  font-family:var(--f-mono);font-size:calc(var(--u)*.62);letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);
+}
+.sm-key i{width:7px;height:7px;border-radius:2px;flex:none}
+.sm-key .k-hat{background:rgba(240,226,190,.92);border-radius:50%}
+.sm-key .k-bot{background:rgba(176,122,255,.95);margin-left:calc(var(--u)*.9)}
+.sm-key em{font-style:normal;margin-left:auto;color:rgba(130,255,180,.75)}
+@media (max-width:700px){.sm-key em{display:none}}
