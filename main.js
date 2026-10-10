@@ -3565,52 +3565,66 @@ function socialRig() {
         ctx.globalAlpha = 1;
       };
 
+      /* Drawn at a scale rather than at fixed sizes, because at twenty pixels
+         tall nobody could tell a hard hat from a robot and the whole point of
+         having two figures was lost. */
+      const FIG = W < 520 ? 1.25 : 1.9;
+
       const hat = (x, y, a, busy) => {            // our team
-        const bob = busy ? Math.sin(t * .012) * 1.1 : 0;
+        const k = FIG, bob = busy ? Math.sin(t * .012) * 1.1 * k : 0;
         ctx.globalAlpha = a;
-        ctx.strokeStyle = 'rgba(240,226,190,.92)';
-        ctx.fillStyle = 'rgba(240,226,190,.92)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath(); ctx.arc(x, y + bob, 2.6, 0, 7); ctx.fill();      // head
-        ctx.beginPath();                                                  // hard hat
-        ctx.arc(x, y - 1.4 + bob, 4.2, Math.PI, 0); ctx.stroke();
+        ctx.strokeStyle = 'rgba(243,230,196,.95)';
+        ctx.fillStyle = 'rgba(243,230,196,.95)';
+        ctx.lineWidth = 1.1 + .5 * k;
+        ctx.beginPath(); ctx.arc(x, y + bob, 2.6 * k, 0, 7); ctx.fill();       // head
+        ctx.beginPath();                                                        // hard hat
+        ctx.arc(x, y - 1.4 * k + bob, 4.2 * k, Math.PI, 0); ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(x - 5.2, y - 1.2 + bob); ctx.lineTo(x + 5.2, y - 1.2 + bob); ctx.stroke();
-        ctx.beginPath();                                                  // body
-        ctx.moveTo(x, y + 3.4 + bob); ctx.lineTo(x, y + 9 + bob); ctx.stroke();
-        const arm = busy ? Math.sin(t * .018) * 2.4 : 0;                  // and an arm at work
+        ctx.moveTo(x - 5.4 * k, y - 1.2 * k + bob);
+        ctx.lineTo(x + 5.4 * k, y - 1.2 * k + bob); ctx.stroke();
+        ctx.beginPath();                                                        // spine
+        ctx.moveTo(x, y + 3.4 * k + bob); ctx.lineTo(x, y + 9 * k + bob); ctx.stroke();
+        const arm = busy ? Math.sin(t * .018) * 2.6 * k : 0;                    // working arm
         ctx.beginPath();
-        ctx.moveTo(x, y + 5 + bob); ctx.lineTo(x + 4.4, y + 7 + arm + bob); ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y + 9 + bob); ctx.lineTo(x - 3, y + 13.5 + bob);
-        ctx.moveTo(x, y + 9 + bob); ctx.lineTo(x + 3, y + 13.5 + bob); ctx.stroke();
+        ctx.moveTo(x, y + 5 * k + bob); ctx.lineTo(x + 4.6 * k, y + 7 * k + arm + bob);
+        ctx.moveTo(x, y + 5.4 * k + bob); ctx.lineTo(x - 4.2 * k, y + 7.6 * k + bob);
+        ctx.stroke();
+        ctx.beginPath();                                                        // legs
+        ctx.moveTo(x, y + 9 * k + bob); ctx.lineTo(x - 3.2 * k, y + 14 * k + bob);
+        ctx.moveTo(x, y + 9 * k + bob); ctx.lineTo(x + 3.2 * k, y + 14 * k + bob);
+        ctx.stroke();
         ctx.globalAlpha = 1;
       };
 
       const bot = (x, y, a, busy) => {            // our system
-        const hum = busy ? Math.sin(t * .02) * .9 : 0;
+        const k = FIG, hum = busy ? Math.sin(t * .02) * .9 * k : 0;
         ctx.globalAlpha = a;
-        ctx.strokeStyle = 'rgba(176,122,255,.95)';
-        ctx.fillStyle = 'rgba(176,122,255,.95)';
-        ctx.lineWidth = 1.2;
-        ctx.beginPath();                                                  // antenna
-        ctx.moveTo(x, y - 6 + hum); ctx.lineTo(x, y - 3.6 + hum); ctx.stroke();
-        ctx.beginPath(); ctx.arc(x, y - 7 + hum, 1.1, 0, 7); ctx.fill();
-        ctx.beginPath();                                                  // head
-        if (ctx.roundRect) ctx.roundRect(x - 3.4, y - 3.6 + hum, 6.8, 5.6, 1.6);
-        else ctx.rect(x - 3.4, y - 3.6 + hum, 6.8, 5.6);
+        ctx.strokeStyle = 'rgba(181,130,255,.97)';
+        ctx.fillStyle = 'rgba(181,130,255,.97)';
+        ctx.lineWidth = 1.1 + .5 * k;
+        ctx.beginPath();                                                        // antenna
+        ctx.moveTo(x, y - 6.4 * k + hum); ctx.lineTo(x, y - 3.8 * k + hum); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, y - 7.4 * k + hum, 1.2 * k, 0, 7); ctx.fill();
+        ctx.beginPath();                                                        // head
+        if (ctx.roundRect) ctx.roundRect(x - 3.6 * k, y - 3.8 * k + hum, 7.2 * k, 5.9 * k, 1.6 * k);
+        else ctx.rect(x - 3.6 * k, y - 3.8 * k + hum, 7.2 * k, 5.9 * k);
         ctx.stroke();
-        ctx.fillStyle = busy ? 'rgba(130,255,180,.95)' : 'rgba(176,122,255,.6)';
-        ctx.beginPath(); ctx.arc(x - 1.2, y - .9 + hum, .8, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 1.2, y - .9 + hum, .8, 0, 7); ctx.fill();
-        ctx.strokeStyle = 'rgba(176,122,255,.95)';
-        ctx.beginPath();                                                  // body
-        if (ctx.roundRect) ctx.roundRect(x - 2.8, y + 2.6 + hum, 5.6, 6.4, 1.4);
-        else ctx.rect(x - 2.8, y + 2.6 + hum, 5.6, 6.4);
+        ctx.fillStyle = busy ? 'rgba(130,255,180,.98)' : 'rgba(181,130,255,.62)';
+        ctx.beginPath(); ctx.arc(x - 1.3 * k, y - .9 * k + hum, .85 * k, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 1.3 * k, y - .9 * k + hum, .85 * k, 0, 7); ctx.fill();
+        ctx.strokeStyle = 'rgba(181,130,255,.97)';
+        ctx.beginPath();                                                        // body
+        if (ctx.roundRect) ctx.roundRect(x - 3 * k, y + 2.8 * k + hum, 6 * k, 6.8 * k, 1.4 * k);
+        else ctx.rect(x - 3 * k, y + 2.8 * k + hum, 6 * k, 6.8 * k);
         ctx.stroke();
-        ctx.beginPath();                                                  // arms
-        ctx.moveTo(x - 2.8, y + 4.4 + hum); ctx.lineTo(x - 5.6, y + 6.6 + hum);
-        ctx.moveTo(x + 2.8, y + 4.4 + hum); ctx.lineTo(x + 5.6, y + 6.6 + hum);
+        const reach = busy ? Math.sin(t * .022) * 1.8 * k : 0;
+        ctx.beginPath();                                                        // arms
+        ctx.moveTo(x - 3 * k, y + 4.6 * k + hum); ctx.lineTo(x - 6 * k, y + 6.8 * k - reach + hum);
+        ctx.moveTo(x + 3 * k, y + 4.6 * k + hum); ctx.lineTo(x + 6 * k, y + 6.8 * k + reach + hum);
+        ctx.stroke();
+        ctx.beginPath();                                                        // feet
+        ctx.moveTo(x - 1.6 * k, y + 9.6 * k + hum); ctx.lineTo(x - 1.6 * k, y + 12.4 * k + hum);
+        ctx.moveTo(x + 1.6 * k, y + 9.6 * k + hum); ctx.lineTo(x + 1.6 * k, y + 12.4 * k + hum);
         ctx.stroke();
         ctx.globalAlpha = 1;
       };
@@ -3657,8 +3671,9 @@ function socialRig() {
         if (a < .02) return;
         const busy = !!trip && trip.i === i && trip.phase === 'work' && !trip.dead;
         const [h, r] = SM_CREW[i];
-        const fy = ny() - 30;
-        if (h && r) { hat(nx(i) - 11, fy, a, busy); bot(nx(i) + 11, fy, a, busy); }
+        const fy = ny() - (22 + 13 * FIG);
+        const sp = 7 * FIG;
+        if (h && r) { hat(nx(i) - sp, fy, a, busy); bot(nx(i) + sp, fy, a, busy); }
         else if (h) hat(nx(i), fy, a, busy);
         else bot(nx(i), fy, a, busy);
       });
