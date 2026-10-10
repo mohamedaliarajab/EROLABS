@@ -3320,7 +3320,7 @@ function socialRig() {
   if (cv && !reduced) {
     const ctx = cv.getContext('2d');
     let W = 0, H = 0, spawnAt = 0, lost = 0, lostAt = 0, leads = 0, chips = [];
-    let trip = null, crew = SM_NODES.map(() => 0);
+    let trip = null;
     let cold = 0, coldAt = 0;
     let queue = SM_NODES.map(() => 0);
     const pulse = SM_NODES.map(() => 0);   // a station flares as work leaves it
@@ -3565,73 +3565,125 @@ function socialRig() {
         ctx.globalAlpha = 1;
       };
 
-      /* Drawn at a scale rather than at fixed sizes, because at twenty pixels
-         tall nobody could tell a hard hat from a robot and the whole point of
-         having two figures was lost. */
-      const FIG = W < 520 ? 1.25 : 1.9;
+      /* ── the two of them ──────────────────────────────────────────
+         One person and one machine, and they travel with the post rather
+         than being stationed along the line. Sixteen figures standing in a
+         row was a crowd scene; two who walk the job from end to end is a
+         story you can follow, and it says the true thing — this is handled
+         by one small team and one system, not by an army.
 
-      const hat = (x, y, a, busy) => {            // our team
-        const k = FIG, bob = busy ? Math.sin(t * .012) * 1.1 * k : 0;
-        ctx.globalAlpha = a;
-        ctx.strokeStyle = 'rgba(243,230,196,.95)';
-        ctx.fillStyle = 'rgba(243,230,196,.95)';
-        ctx.lineWidth = 1.1 + .5 * k;
-        ctx.beginPath(); ctx.arc(x, y + bob, 2.6 * k, 0, 7); ctx.fill();       // head
-        ctx.beginPath();                                                        // hard hat
-        ctx.arc(x, y - 1.4 * k + bob, 4.2 * k, Math.PI, 0); ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x - 5.4 * k, y - 1.2 * k + bob);
-        ctx.lineTo(x + 5.4 * k, y - 1.2 * k + bob); ctx.stroke();
-        ctx.beginPath();                                                        // spine
-        ctx.moveTo(x, y + 3.4 * k + bob); ctx.lineTo(x, y + 9 * k + bob); ctx.stroke();
-        const arm = busy ? Math.sin(t * .018) * 2.6 * k : 0;                    // working arm
-        ctx.beginPath();
-        ctx.moveTo(x, y + 5 * k + bob); ctx.lineTo(x + 4.6 * k, y + 7 * k + arm + bob);
-        ctx.moveTo(x, y + 5.4 * k + bob); ctx.lineTo(x - 4.2 * k, y + 7.6 * k + bob);
-        ctx.stroke();
-        ctx.beginPath();                                                        // legs
-        ctx.moveTo(x, y + 9 * k + bob); ctx.lineTo(x - 3.2 * k, y + 14 * k + bob);
-        ctx.moveTo(x, y + 9 * k + bob); ctx.lineTo(x + 3.2 * k, y + 14 * k + bob);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
+         Where the machine works alone the person stands back and waits, arms
+         down, dimmed. That is the part worth seeing: three of the eight
+         stations need nobody at all, and you watch somebody not be needed. */
+      const FIG = W < 520 ? 1.15 : 1.75;
+      const FY = () => ny() - (20 + 12 * FIG);
+
+      /* A working arm: two segments with a joint, reaching for the post and
+         pulling back. Drawn rather than implied, because "hands moving" is
+         the whole difference between a figure and an icon. */
+      const arm = (x, y, reach, len, col, w) => {
+        const ex = x + Math.cos(reach) * len, ey = y + Math.sin(reach) * len;
+        const jx = x + Math.cos(reach - .5) * len * .55, jy = y + Math.sin(reach - .5) * len * .55;
+        ctx.strokeStyle = col; ctx.lineWidth = w; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(jx, jy); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.lineCap = 'butt';
+        return [ex, ey];
       };
 
-      const bot = (x, y, a, busy) => {            // our system
-        const k = FIG, hum = busy ? Math.sin(t * .02) * .9 * k : 0;
-        ctx.globalAlpha = a;
-        ctx.strokeStyle = 'rgba(181,130,255,.97)';
-        ctx.fillStyle = 'rgba(181,130,255,.97)';
-        ctx.lineWidth = 1.1 + .5 * k;
-        ctx.beginPath();                                                        // antenna
-        ctx.moveTo(x, y - 6.4 * k + hum); ctx.lineTo(x, y - 3.8 * k + hum); ctx.stroke();
-        ctx.beginPath(); ctx.arc(x, y - 7.4 * k + hum, 1.2 * k, 0, 7); ctx.fill();
-        ctx.beginPath();                                                        // head
-        if (ctx.roundRect) ctx.roundRect(x - 3.6 * k, y - 3.8 * k + hum, 7.2 * k, 5.9 * k, 1.6 * k);
-        else ctx.rect(x - 3.6 * k, y - 3.8 * k + hum, 7.2 * k, 5.9 * k);
+      const human = (x, y, a, busy, gait) => {
+        const k = FIG, ink = `rgba(238,232,214,${(.95 * a).toFixed(2)})`;
+        const bob = (busy ? Math.sin(t * .011) * .6 : 0) + Math.abs(Math.sin(gait)) * 1.1 * k;
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+
+        ctx.beginPath();                                   // head
+        ctx.arc(x, y + bob, 2.9 * k, 0, 7); ctx.stroke();
+        ctx.beginPath();                                   // shoulders into waist
+        ctx.moveTo(x - 4.4 * k, y + 7.6 * k + bob);
+        ctx.quadraticCurveTo(x - 4.1 * k, y + 4.4 * k, x, y + 4.2 * k + bob);
+        ctx.quadraticCurveTo(x + 4.1 * k, y + 4.4 * k, x + 4.4 * k, y + 7.6 * k + bob);
+        ctx.lineTo(x + 3 * k, y + 13 * k + bob);
+        ctx.lineTo(x - 3 * k, y + 13 * k + bob);
+        ctx.closePath(); ctx.stroke();
+
+        const swing = Math.sin(gait) * .5;
+        if (busy) {                                        // reaching for the work
+          const [ex, ey] = arm(x + 3.4 * k, y + 7 * k + bob,
+                               -.15 + Math.sin(t * .016) * .42, 7.4 * k, ink, 1.5);
+          ctx.fillStyle = ink;
+          ctx.beginPath(); ctx.arc(ex, ey, 1.1 * k, 0, 7); ctx.fill();
+        } else {                                           // waiting, hands down
+          arm(x + 3.4 * k, y + 7 * k + bob, 1.25 + swing * .3, 6.2 * k, ink, 1.4);
+        }
+        arm(x - 3.4 * k, y + 7 * k + bob, 1.9 - swing * .3, 6.2 * k, ink, 1.4);
+
+        ctx.strokeStyle = ink; ctx.lineWidth = 1.5;        // legs, walking when moving
+        ctx.beginPath();
+        ctx.moveTo(x - 1.4 * k, y + 13 * k + bob);
+        ctx.lineTo(x - 1.4 * k - Math.sin(gait) * 2.6 * k, y + 19 * k + bob);
+        ctx.moveTo(x + 1.4 * k, y + 13 * k + bob);
+        ctx.lineTo(x + 1.4 * k + Math.sin(gait) * 2.6 * k, y + 19 * k + bob);
         ctx.stroke();
-        ctx.fillStyle = busy ? 'rgba(130,255,180,.98)' : 'rgba(181,130,255,.62)';
-        ctx.beginPath(); ctx.arc(x - 1.3 * k, y - .9 * k + hum, .85 * k, 0, 7); ctx.fill();
-        ctx.beginPath(); ctx.arc(x + 1.3 * k, y - .9 * k + hum, .85 * k, 0, 7); ctx.fill();
-        ctx.strokeStyle = 'rgba(181,130,255,.97)';
-        ctx.beginPath();                                                        // body
-        if (ctx.roundRect) ctx.roundRect(x - 3 * k, y + 2.8 * k + hum, 6 * k, 6.8 * k, 1.4 * k);
-        else ctx.rect(x - 3 * k, y + 2.8 * k + hum, 6 * k, 6.8 * k);
+      };
+
+      const robot = (x, y, a, busy, gait) => {
+        const k = FIG, ink = `rgba(178,126,255,${(.97 * a).toFixed(2)})`;
+        const bob = (busy ? Math.sin(t * .022) * .5 : 0) + Math.abs(Math.sin(gait)) * .9 * k;
+        ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineWidth = 1.5;
+
+        ctx.beginPath();                                   // head, with a visor not eyes
+        if (ctx.roundRect) ctx.roundRect(x - 3.6 * k, y - 2.6 * k + bob, 7.2 * k, 5.4 * k, 1.5 * k);
+        else ctx.rect(x - 3.6 * k, y - 2.6 * k + bob, 7.2 * k, 5.4 * k);
         ctx.stroke();
-        const reach = busy ? Math.sin(t * .022) * 1.8 * k : 0;
-        ctx.beginPath();                                                        // arms
-        ctx.moveTo(x - 3 * k, y + 4.6 * k + hum); ctx.lineTo(x - 6 * k, y + 6.8 * k - reach + hum);
-        ctx.moveTo(x + 3 * k, y + 4.6 * k + hum); ctx.lineTo(x + 6 * k, y + 6.8 * k + reach + hum);
+        ctx.fillStyle = busy
+          ? `rgba(132,255,186,${(.95 * a).toFixed(2)})`
+          : `rgba(178,126,255,${(.5 * a).toFixed(2)})`;
+        ctx.fillRect(x - 2.2 * k, y - .9 * k + bob, 4.4 * k, 1.5 * k);
+        ctx.strokeStyle = ink;
+        ctx.beginPath();                                   // neck
+        ctx.moveTo(x, y + 2.8 * k + bob); ctx.lineTo(x, y + 4.2 * k + bob); ctx.stroke();
+        ctx.beginPath();                                   // chassis
+        if (ctx.roundRect) ctx.roundRect(x - 3.9 * k, y + 4.2 * k + bob, 7.8 * k, 8 * k, 1.6 * k);
+        else ctx.rect(x - 3.9 * k, y + 4.2 * k + bob, 7.8 * k, 8 * k);
         ctx.stroke();
-        ctx.beginPath();                                                        // feet
-        ctx.moveTo(x - 1.6 * k, y + 9.6 * k + hum); ctx.lineTo(x - 1.6 * k, y + 12.4 * k + hum);
-        ctx.moveTo(x + 1.6 * k, y + 9.6 * k + hum); ctx.lineTo(x + 1.6 * k, y + 12.4 * k + hum);
+        ctx.globalAlpha = .55 * a;                         // a seam, so it reads as built
+        ctx.beginPath();
+        ctx.moveTo(x - 2.4 * k, y + 7.4 * k + bob); ctx.lineTo(x + 2.4 * k, y + 7.4 * k + bob);
         ctx.stroke();
         ctx.globalAlpha = 1;
+
+        if (busy) {                                        // the arm that does the work
+          const [ex, ey] = arm(x - 3.9 * k, y + 6.4 * k + bob,
+                               Math.PI + .18 - Math.sin(t * .02) * .4, 8 * k, ink, 1.6);
+          ctx.fillStyle = `rgba(132,255,186,${(.9 * a).toFixed(2)})`;
+          ctx.beginPath(); ctx.arc(ex, ey, 1.3 * k, 0, 7); ctx.fill();
+        } else {
+          arm(x - 3.9 * k, y + 6.4 * k + bob, Math.PI - 1.15, 6.6 * k, ink, 1.5);
+        }
+        arm(x + 3.9 * k, y + 6.4 * k + bob, -1.9 + Math.sin(gait) * .25, 6.4 * k, ink, 1.5);
+
+        ctx.strokeStyle = ink; ctx.lineWidth = 1.6;        // treads, stepping when moving
+        ctx.beginPath();
+        ctx.moveTo(x - 1.8 * k, y + 12.2 * k + bob);
+        ctx.lineTo(x - 1.8 * k - Math.sin(gait) * 2 * k, y + 18 * k + bob);
+        ctx.moveTo(x + 1.8 * k, y + 12.2 * k + bob);
+        ctx.lineTo(x + 1.8 * k + Math.sin(gait) * 2 * k, y + 18 * k + bob);
+        ctx.stroke();
+      };
+
+      /* They flank the post and move with it. When the machine is working
+         alone the person steps back and loses half their weight on the page
+         — present, and visibly not needed. */
+      const escort = (cx, stage, busy, moving) => {
+        const k = FIG, gait = moving ? t * .017 : 0;
+        const [needH] = SM_CREW[stage] || [1, 1];
+        const near = 13 * k, far = 21 * k;
+        human(cx - (needH ? near : far), FY(), needH ? 1 : .45, busy && needH, gait);
+        robot(cx + near, FY(), 1, busy, gait);
       };
 
       if (!trip && t - spawnAt > 1100) {
         trip = { i: 0, k: 0, st: 0, phase: 'work', wt: 0, dead: 0 };
-        crew = SM_NODES.map(() => 0);
       }
 
       queue = SM_NODES.map(() => 0);
@@ -3640,14 +3692,15 @@ function socialRig() {
         if (trip.dead) {                           // it never got past the gap
           trip.dead += .7 * step;
           card(nx(at), ny() + trip.dead * 5, trip.st, Math.max(0, 1 - trip.dead / 16));
+          escort(nx(at), at, false, false);         // standing over work they cannot finish
           queue[at] = 1;
           if (trip.dead > 16) { trip = null; spawnAt = t; lost++; lostAt = t; }
         } else if (lit[at] < .4) {
           trip.dead = .01;
         } else if (trip.phase === 'work') {
-          crew[at] = Math.min(1, crew[at] + .09 * step);
           trip.wt += dt;
           card(nx(at), ny(), trip.st, 1);
+          escort(nx(at), at, true, false);
           if (trip.wt > WORK) {
             trip.st = Math.max(trip.st, at + 1);
             pulse[at] = 1;
@@ -3659,24 +3712,50 @@ function socialRig() {
         } else {
           trip.k += HOP * step;
           const from = nx(at - 1), to = nx(at);
-          card(from + (to - from) * trip.k, ny(), trip.st, 1);
+          const cx = from + (to - from) * trip.k;
+          card(cx, ny(), trip.st, 1);
+          escort(cx, at, false, true);              // carried, not teleported
           if (trip.k >= 1) { trip.phase = 'work'; trip.wt = 0; }
         }
       }
 
-      /* The crew stays where it worked. By the end of one post you can see
-         every pair of hands it took, and none of them are the client's. */
-      SM_NODES.forEach((_, i) => {
-        const a = crew[i];
-        if (a < .02) return;
-        const busy = !!trip && trip.i === i && trip.phase === 'work' && !trip.dead;
-        const [h, r] = SM_CREW[i];
-        const fy = ny() - (22 + 13 * FIG);
-        const sp = 7 * FIG;
-        if (h && r) { hat(nx(i) - sp, fy, a, busy); bot(nx(i) + sp, fy, a, busy); }
-        else if (h) hat(nx(i), fy, a, busy);
-        else bot(nx(i), fy, a, busy);
-      });
+      /* Leads, and leads going cold. A lead is not a trophy, it is somebody
+         waiting for an answer: with REPLY or CAPTURE missing nothing new
+         arrives AND what you already have drains away while you watch. The
+         number coming down is the argument. */
+      const warm = SM_LEADS.every(i => on.has(i));
+      if (!warm && leads > 0) {
+        cold += dt;
+        if (cold > 1400) { cold = 0; leads--; coldAt = t; }
+      } else if (warm) cold = 0;
+
+      for (const c of chips) {
+        c.y += c.vy * step; c.vy += .035 * step;
+        if (c.y >= ny() + 42) { c.life = 0; leads++; continue; }
+        ctx.fillStyle = 'rgba(130,255,180,.9)';
+        ctx.beginPath(); ctx.arc(c.x, c.y, 2.6, 0, 7); ctx.fill();
+      }
+      chips = chips.filter(c => c.life > 0);
+
+      const trayX = nx(5), trayY = ny() + (W < 520 ? 64 : 58);
+      const chilling = !warm && leads > 0;
+      const hue = chilling ? '206,170,150' : '130,255,180';
+      const flash = chilling ? Math.max(0, 1 - (t - coldAt) / 900) : 0;
+      ctx.textAlign = 'center';
+      ctx.font = '11px ui-monospace,monospace';
+      ctx.strokeStyle = `rgba(${hue},${(leads ? .45 : .16) + flash * .4})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(trayX - 42, trayY - 11, 84, 16, 3);
+      else ctx.rect(trayX - 42, trayY - 11, 84, 16);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(${hue},${leads || !on.size ? .95 : .55})`;
+      ctx.fillText(
+        chilling ? leads + ' GOING COLD'
+        : leads ? leads + (leads === 1 ? ' LEAD' : ' LEADS')
+        : on.size ? 'NO RESULT'
+        : 'LEADS',
+        trayX, trayY);
 
       if (lost) {
         const fade = Math.max(.4, 1 - (t - lostAt) / 4000);
